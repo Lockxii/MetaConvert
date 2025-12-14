@@ -1,8 +1,5 @@
 # MetaConvert 🚀
 
-![MetaConvert Banner](https://via.placeholder.com/1200x400.png?text=MetaConvert+Platform) 
-*(Note: Replace with actual banner if available)*
-
 **La plateforme tout-en-un pour convertir, compresser et optimiser vos fichiers numériques.**
 
 MetaConvert est une application web moderne construite avec **Next.js**, **Tailwind CSS**, et **Node.js**, conçue pour offrir des outils puissants de traitement de fichiers (PDF, Images, Vidéo, Audio) avec une expérience utilisateur fluide et sécurisée.
