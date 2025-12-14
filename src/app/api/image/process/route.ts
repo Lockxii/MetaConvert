@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
   let originalFileType = "unknown";
   let originalFileSize = 0;
   let userId: string | null = null;
+  let tool = "unknown";
 
   try {
     const session = await getUserSession(req);
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const tool = formData.get("tool") as string;
+    tool = (formData.get("tool") as string) || "unknown";
     const params: Record<string, any> = {};
     formData.forEach((value, key) => {
       if (key !== "file" && key !== "tool") {
@@ -66,6 +67,10 @@ export async function POST(req: NextRequest) {
         
         if (outputFormat && sharpFormats.includes(outputFormat)) {
           // --- Use SHARP (Fast & Native) ---
+          if (outputFormat === 'jpeg' || outputFormat === 'jpg') {
+             // Flatten transparency to white for JPEG
+             image = image.flatten({ background: { r: 255, g: 255, b: 255 } });
+          }
           image = image.toFormat(outputFormat as any);
           outputMimeType = `image/${outputFormat === 'jpg' ? 'jpeg' : outputFormat}`;
         } else if (outputFormat) {
@@ -219,22 +224,25 @@ export async function POST(req: NextRequest) {
       status: 'completed',
     });
 
+    const filename = `${originalFileName.split('.')[0]}_${tool}.${outputFormat || outputMimeType!.split('/').pop()}`;
+    const asciiFilename = filename.replace(/[^\x00-\x7F]/g, "_");
+
     return new NextResponse(outputBuffer as any, {
       headers: {
-        "Content-Type": outputMimeType,
-        "Content-Disposition": `attachment; filename="${originalFileName.split('.')[0]}_${tool}.${outputFormat || outputMimeType.split('/').pop()}"`,
+        "Content-Type": outputMimeType!,
+        "Content-Disposition": `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
       },
     });
   } catch (error: any) {
-    console.error(`Image processing error for tool ${req.formData().then(d=>d.get('tool'))}:`, error);
+    console.error(`Image processing error for tool ${tool}:`, error);
     await logOperation({
         userId: userId || 'anonymous',
-        type: 'conversion', // Default to conversion for logging error
+        type: 'conversion', 
         fileName: originalFileName,
         status: 'failed',
         targetType: 'unknown',
         originalSize: originalFileSize
     });
-    return NextResponse.json({ error: "Failed to process image: " + error.message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to process image: " + (error.message || String(error)) }, { status: 500 });
   }
 }

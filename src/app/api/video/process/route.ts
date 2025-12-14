@@ -186,10 +186,13 @@ export async function POST(req: NextRequest) {
     // However, input file can be deleted.
     try { await fs.unlink(inputFilePath); } catch (e) { /* ignore */ }
 
+    const filename = `${outputFileName}.${outputMimeType.split('/')[1] || 'bin'}`;
+    const asciiFilename = filename.replace(/[^\x00-\x7F]/g, "_");
+
     return new NextResponse(webResponseStream as any, {
       headers: {
         "Content-Type": outputMimeType,
-        "Content-Disposition": `attachment; filename="${outputFileName}.${outputMimeType.split('/')[1] || 'bin'}"`,
+        "Content-Disposition": `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
       },
     });
 

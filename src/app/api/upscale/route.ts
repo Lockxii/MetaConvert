@@ -53,10 +53,13 @@ export async function POST(req: NextRequest) {
         }
     }
 
+    const filename = `upscaled-${factor}x-${file.name}`;
+    const asciiFilename = filename.replace(/[^\x00-\x7F]/g, "_");
+
     return new NextResponse(outputBuffer as any, {
         headers: {
             "Content-Type": file.type,
-            "Content-Disposition": `attachment; filename="upscaled-${factor}x-${file.name}"`
+            "Content-Disposition": `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
         }
     });
 

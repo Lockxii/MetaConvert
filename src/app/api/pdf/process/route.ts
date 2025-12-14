@@ -4,8 +4,8 @@ import { getUserSession, logOperation } from "@/lib/server-utils";
 import { Buffer } from "buffer";
 // @ts-ignore
 import pdf from "pdf-parse/lib/pdf-parse.js";
-import { convert as pdfImgConvert } from "pdf-img-convert";
 import JSZip from "jszip";
+import puppeteer from "puppeteer";
 
 export async function POST(req: NextRequest) {
   let originalFileName = "unknown.pdf";
@@ -143,21 +143,84 @@ export async function POST(req: NextRequest) {
 
       case "to-images":
         if (!inputPdfBytes) throw new Error("PDF file required");
-        // Use pdf-img-convert to render pages
-        const images = await pdfImgConvert(Buffer.from(inputPdfBytes));
         
-        if (images.length === 1) {
-            // Return single image
-            outputPdfBytes = images[0] as Uint8Array; // Buffer (which is Uint8Array compatible)
-            outputFileName = `${originalFileName.split('.')[0]}.png`;
-            outputContentType = "image/png";
-        } else {
-            // Zip multiple images
-            const zip = new JSZip();
-            images.forEach((img, i) => zip.file(`page_${i+1}.png`, img));
-            outputPdfBytes = await zip.generateAsync({ type: "uint8array" });
-            outputFileName = `${originalFileName.split('.')[0]}_images.zip`;
-            outputContentType = "application/zip";
+        // Use Puppeteer for robust rendering
+        const browser = await puppeteer.launch({ 
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+        const page = await browser.newPage();
+        
+        // We use a specific version of PDF.js that is stable and widely compatible
+        const pdfJsUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        const pdfWorkerUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        try {
+            // Load a blank page with PDF.js scripts injected
+            await page.setContent(`
+                <html>
+                <head>
+                    <script src="${pdfJsUrl}"></script>
+                    <script>
+                        // Wait for library to load
+                        window.isPdfJsLoaded = false;
+                        window.onload = function() {
+                           if (window.pdfjsLib) {
+                               window.pdfjsLib.GlobalWorkerOptions.workerSrc = '${pdfWorkerUrl}';
+                               window.isPdfJsLoaded = true;
+                           }
+                        };
+                    </script>
+                </head>
+                <body></body>
+                </html>
+            `);
+
+            // Wait for script to initialize
+            await page.waitForFunction('window.isPdfJsLoaded === true', { timeout: 10000 });
+
+            const pdfBase64 = Buffer.from(inputPdfBytes).toString('base64');
+
+            // Render pages in the browser context
+            const pageImages = await page.evaluate(async (data) => {
+                // @ts-ignore
+                const pdf = await window.pdfjsLib.getDocument({ data: atob(data) }).promise;
+                const images: string[] = [];
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 2.0 }); // 2x scale for quality
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    
+                    if (context) {
+                        await page.render({ canvasContext: context, viewport: viewport }).promise;
+                        images.push(canvas.toDataURL('image/png'));
+                    }
+                }
+                return images;
+            }, pdfBase64);
+
+            const images = pageImages.map((img: string) => Buffer.from(img.split(',')[1], 'base64'));
+            
+            if (images.length === 1) {
+                // Return single image
+                outputPdfBytes = images[0];
+                outputFileName = `${originalFileName.split('.')[0]}.png`;
+                outputContentType = "image/png";
+            } else {
+                // Zip multiple images
+                const zip = new JSZip();
+                images.forEach((img, i) => zip.file(`page_${i+1}.png`, img));
+                outputPdfBytes = await zip.generateAsync({ type: "uint8array" });
+                outputFileName = `${originalFileName.split('.')[0]}_images.zip`;
+                outputContentType = "application/zip";
+            }
+
+        } finally {
+            await browser.close();
         }
         break;
 
@@ -175,10 +238,12 @@ export async function POST(req: NextRequest) {
       status: 'completed',
     });
 
+    const asciiFilename = outputFileName.replace(/[^\x00-\x7F]/g, "_");
+
     return new NextResponse(outputPdfBytes as any, {
       headers: {
         "Content-Type": outputContentType,
-        "Content-Disposition": `attachment; filename="${outputFileName}"`,
+        "Content-Disposition": `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(outputFileName)}`,
       },
     });
   } catch (error: any) {
