@@ -87,9 +87,9 @@ export function FileUploader({
     <div 
       {...getRootProps()} 
       className={cn(
-        "relative border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px] bg-slate-50 hover:bg-slate-100",
-        isDragActive ? "border-blue-500 bg-blue-50" : "border-slate-300",
-        files.length > 0 ? "border-green-500 bg-green-50/30" : "",
+        "relative border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px] bg-muted/30 hover:bg-muted/50",
+        isDragActive ? "border-primary bg-primary/10" : "border-border",
+        files.length > 0 ? "border-green-500 bg-green-500/10" : "",
         className
       )}
     >
@@ -99,12 +99,12 @@ export function FileUploader({
         <div className="w-full flex flex-col items-center gap-4">
           <div className={cn("grid gap-4", multiple ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1")}>
              {files.map((file, index) => (
-                <div key={file.name} className="flex flex-col items-center text-center p-2 rounded-lg bg-white shadow-sm border border-slate-200">
+                <div key={file.name} className="flex flex-col items-center text-center p-2 rounded-lg bg-card shadow-sm border border-border">
                     <div className="w-20 h-20 flex items-center justify-center overflow-hidden rounded-md mb-2">
                         {getFileIcon(file, index)}
                     </div>
-                    <p className="text-xs font-medium text-slate-900 truncate w-full">{file.name}</p>
-                    <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p className="text-xs font-medium text-foreground truncate w-full">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
              ))}
           </div>
@@ -120,14 +120,14 @@ export function FileUploader({
         </div>
       ) : (
         <div className="text-center space-y-4">
-           <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto text-blue-600">
+           <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mx-auto text-primary">
               <Upload size={32} />
            </div>
            <div>
-              <p className="text-lg font-semibold text-slate-700">
+              <p className="text-lg font-semibold text-foreground">
                 {isDragActive ? "Relâchez pour ajouter" : label}
               </p>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {multiple ? "Ou cliquez pour parcourir plusieurs fichiers" : "Ou cliquez pour parcourir"}
               </p>
            </div>

@@ -22,11 +22,11 @@ export function ToolButton({ icon: Icon, label, active = false, onClick }: ToolB
          className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left",
             active 
-               ? "bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100" 
-               : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+               ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20" 
+               : "text-muted-foreground hover:bg-muted hover:text-foreground"
          )}
       >
-         <Icon size={18} className={active ? "text-blue-600" : "text-slate-400"} />
+         <Icon size={18} className={active ? "text-primary" : "text-muted-foreground"} />
          {label}
       </button>
    )

@@ -16,10 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToolButton } from "@/components/dashboard/ToolButton"; 
 
 const tools = [
-  { id: "convert", label: "Convertir", icon: Type, color: "text-blue-500", bg: "bg-blue-50", description: "Changez le format de votre image (PNG, JPG, WEBP)." },
-  { id: "crop", label: "Rogner", icon: Crop, color: "text-green-500", bg: "bg-green-50", description: "Recadrez votre image aux dimensions souhaitées." },
-  { id: "transform", label: "Transformer", icon: RotateCw, color: "text-purple-500", bg: "bg-purple-50", description: "Pivotez ou retournez votre image." },
-  { id: "upscale", label: "Améliorer (Upscale)", icon: Sparkles, color: "text-orange-500", bg: "bg-orange-50", description: "Augmentez la résolution de votre image." },
+  { id: "convert", label: "Convertir", icon: Type, color: "text-blue-500", bg: "bg-blue-500/10", description: "Changez le format de votre image (PNG, JPG, WEBP)." },
+  { id: "crop", label: "Rogner", icon: Crop, color: "text-green-500", bg: "bg-green-500/10", description: "Recadrez votre image aux dimensions souhaitées." },
+  { id: "transform", label: "Transformer", icon: RotateCw, color: "text-purple-500", bg: "bg-purple-500/10", description: "Pivotez ou retournez votre image." },
+  { id: "upscale", label: "Améliorer (Upscale)", icon: Sparkles, color: "text-orange-500", bg: "bg-orange-500/10", description: "Augmentez la résolution de votre image." },
 ];
 
 export default function ImageToolsPage() {
@@ -134,8 +134,8 @@ export default function ImageToolsPage() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Outils Image</h1>
-        <p className="text-slate-500">Transformez, améliorez et convertissez vos images.</p>
+        <h1 className="text-2xl font-bold text-foreground">Outils Image</h1>
+        <p className="text-muted-foreground">Transformez, améliorez et convertissez vos images.</p>
       </div>
 
        {/* Tool Selection Grid */}
@@ -155,17 +155,17 @@ export default function ImageToolsPage() {
                 className={cn(
                    "p-4 rounded-xl border transition-all flex flex-col items-center gap-3 hover:shadow-md relative overflow-hidden",
                    activeToolId === tool.id 
-                      ? "border-blue-500 bg-blue-50/50 ring-1 ring-blue-500" 
-                      : "border-slate-200 bg-white hover:border-blue-300"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
+                      : "border-border bg-card hover:border-primary/50"
                 )}
                 title={tool.description}
              >
                 <div className={cn("p-2 rounded-lg", tool.bg)}>
                    <tool.icon className={cn("h-6 w-6", tool.color)} />
                 </div>
-                <span className="text-sm font-medium text-slate-700">{tool.label}</span>
+                <span className="text-sm font-medium text-foreground">{tool.label}</span>
                 {activeToolId === tool.id && (
-                    <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white">
+                    <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
                         <Check size={12} />
                     </div>
                 )}
@@ -175,10 +175,10 @@ export default function ImageToolsPage() {
 
        {/* Workspace Area */}
        {activeToolId && activeTool && (
-         <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+         <div className="bg-card border border-border rounded-xl p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
                  <activeTool.icon className={cn("h-6 w-6", activeTool.color)} />
-                 <h2 className="text-lg font-bold text-slate-900">{activeTool.label}</h2>
+                 <h2 className="text-lg font-bold text-foreground">{activeTool.label}</h2>
              </div>
 
              <div className="grid lg:grid-cols-2 gap-8">
@@ -191,7 +191,7 @@ export default function ImageToolsPage() {
                     
                     {/* Preview Area for Crop/Transform */}
                     {(activeToolId === "crop" || activeToolId === "transform") && imageSrc && (
-                        <div className="mt-4 bg-slate-100 rounded-lg p-4 flex items-center justify-center min-h-[300px] overflow-hidden">
+                        <div className="mt-4 bg-muted/50 rounded-lg p-4 flex items-center justify-center min-h-[300px] overflow-hidden">
                              <ReactCrop
                                 crop={crop}
                                 onChange={(c) => setCrop(c)}
@@ -211,35 +211,35 @@ export default function ImageToolsPage() {
                     )}
                  </div>
 
-                 <div className="flex flex-col gap-6 p-6 bg-slate-50 rounded-xl border border-slate-100">
+                 <div className="flex flex-col gap-6 p-6 bg-muted/30 rounded-xl border border-border">
                      <div className="space-y-4">
-                        <h3 className="font-semibold text-slate-900">Paramètres</h3>
+                        <h3 className="font-semibold text-foreground">Paramètres</h3>
 
                         {activeToolId === "convert" && (
                             <div className="space-y-2">
-                                <Label>Format de sortie</Label>
+                                <Label className="text-foreground">Format de sortie</Label>
                                 <Select onValueChange={setTargetFormat} value={targetFormat}>
-                                    <SelectTrigger className="bg-white">
+                                    <SelectTrigger className="bg-card border-border">
                                         <SelectValue placeholder="Sélectionner format" />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-[300px]">
-                                        <div className="px-2 py-1.5 text-xs font-semibold text-slate-500">Standards Web</div>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Standards Web</div>
                                         <SelectItem value="png">PNG (Transparence)</SelectItem>
                                         <SelectItem value="jpeg">JPEG (Photo)</SelectItem>
                                         <SelectItem value="webp">WEBP (Optimisé)</SelectItem>
                                         <SelectItem value="gif">GIF (Animé)</SelectItem>
                                         
-                                        <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 mt-2">Pro & Print</div>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2">Pro & Print</div>
                                         <SelectItem value="avif">AVIF (Ultra-compression)</SelectItem>
                                         <SelectItem value="tiff">TIFF (Impression)</SelectItem>
                                         <SelectItem value="pdf">PDF (Document)</SelectItem>
                                         
-                                        <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 mt-2">Software & Legacy</div>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2">Software & Legacy</div>
                                         <SelectItem value="bmp">BMP (Bitmap)</SelectItem>
                                         <SelectItem value="ico">ICO (Favicon)</SelectItem>
                                         <SelectItem value="tga">TGA (Targa)</SelectItem>
                                         
-                                        <div className="px-2 py-1.5 text-xs font-semibold text-slate-500 mt-2">Spécialisés</div>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2">Spécialisés</div>
                                         <SelectItem value="jp2">JP2 (JPEG 2000)</SelectItem>
                                         <SelectItem value="pcx">PCX (Paintbrush)</SelectItem>
                                         <SelectItem value="xpm">XPM (X11 Pixmap)</SelectItem>
@@ -253,7 +253,7 @@ export default function ImageToolsPage() {
 
                         {activeToolId === "upscale" && (
                             <div className="space-y-2">
-                                <Label>Facteur d'agrandissement ({upscaleFactor}x)</Label>
+                                <Label className="text-foreground">Facteur d'agrandissement ({upscaleFactor}x)</Label>
                                 <Slider
                                     min={1.5}
                                     max={4}
@@ -268,9 +268,9 @@ export default function ImageToolsPage() {
                         {activeToolId === "crop" && (
                              <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label>Ratio d'aspect</Label>
+                                    <Label className="text-foreground">Ratio d'aspect</Label>
                                     <Select onValueChange={(val) => setAspect(val === "none" ? undefined : Number(val))}>
-                                        <SelectTrigger className="bg-white">
+                                        <SelectTrigger className="bg-card border-border">
                                             <SelectValue placeholder="Libre" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -283,7 +283,7 @@ export default function ImageToolsPage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Zoom Prévisualisation</Label>
+                                    <Label className="text-foreground">Zoom Prévisualisation</Label>
                                     <Slider
                                         min={0.5}
                                         max={2}
@@ -311,7 +311,7 @@ export default function ImageToolsPage() {
                         size="lg" 
                         onClick={handleProcess} 
                         disabled={!selectedFile || processing}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                         {processing ? "Traitement..." : (activeToolId === "crop" || activeToolId === "transform" ? "Appliquer & Télécharger" : "Lancer le traitement")} 
                         {!processing && <ArrowRight size={18} className="ml-2" />}

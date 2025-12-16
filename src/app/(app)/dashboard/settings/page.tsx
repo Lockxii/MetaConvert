@@ -13,7 +13,6 @@ import { useRouter } from "next/navigation";
 
 
 interface UserSettings {
-    theme: string;
     defaultOutputFormat: string;
     receiveEmailNotifications: boolean;
 }
@@ -55,7 +54,11 @@ export default function SettingsPage() {
         const res = await fetch("/api/settings/user");
         if (res.ok) {
           const data = await res.json();
-          setSettings(data);
+          // We filter out 'theme' from the local state as it's not managed here anymore
+          setSettings({
+              defaultOutputFormat: data.defaultOutputFormat,
+              receiveEmailNotifications: data.receiveEmailNotifications
+          });
         } else {
           toast.error("Échec du chargement des paramètres utilisateur.");
         }
@@ -117,15 +120,15 @@ export default function SettingsPage() {
   if (loadingSettings || loadingPlan) {
       return (
           <div className="flex items-center justify-center h-[50vh]">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
       )
   }
 
   if (!session?.user?.id) {
       return (
-        <div className="flex flex-col items-center justify-center h-[50vh] text-slate-500">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
+        <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
             <p>Chargement de la session utilisateur...</p>
         </div>
       )
@@ -133,7 +136,7 @@ export default function SettingsPage() {
 
   if (!settings || !planInfo) {
       return (
-          <div className="flex flex-col items-center justify-center h-[50vh] text-slate-500">
+          <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground">
               <p>Impossible de charger les paramètres ou le plan. Veuillez réessayer.</p>
               <Button onClick={() => window.location.reload()} className="mt-4">Recharger</Button>
           </div>
@@ -144,47 +147,33 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
         <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Paramètres</h1>
-            <p className="text-slate-500">Gérez vos préférences utilisateur et votre abonnement.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Paramètres</h1>
+            <p className="text-muted-foreground">Gérez vos préférences utilisateur et votre abonnement.</p>
         </div>
 
         {/* User Profile Info */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900">Profil Utilisateur</h2>
+        <div className="bg-card rounded-xl border border-border p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Profil Utilisateur</h2>
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                     <Label htmlFor="name">Nom</Label>
-                    <Input id="name" value={planInfo.user.name} disabled className="bg-slate-50" />
+                    <Input id="name" value={planInfo.user.name} disabled className="bg-muted/30" />
                 </div>
                 <div className="space-y-1">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" value={planInfo.user.email} disabled className="bg-slate-50" />
+                    <Input id="email" value={planInfo.user.email} disabled className="bg-muted/30" />
                 </div>
             </div>
         </div>
 
         {/* General Preferences */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-6">
-            <h2 className="text-lg font-semibold text-slate-900">Préférences Générales</h2>
-            
-            <div className="grid grid-cols-2 gap-4 items-center">
-                <Label htmlFor="theme">Thème de l'interface</Label>
-                <Select value={settings.theme} onValueChange={(value) => setSettings(prev => prev ? { ...prev, theme: value } : null)}>
-                    <SelectTrigger className="w-full bg-white">
-                        <SelectValue placeholder="Sélectionner le thème" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="system">Système</SelectItem>
-                        <SelectItem value="light">Clair</SelectItem>
-                        <SelectItem value="dark">Sombre</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+        <div className="bg-card rounded-xl border border-border p-6 shadow-sm space-y-6">
+            <h2 className="text-lg font-semibold text-foreground">Préférences Générales</h2>
             
             <div className="grid grid-cols-2 gap-4 items-center">
                 <Label htmlFor="defaultOutputFormat">Format de sortie par défaut</Label>
                 <Select value={settings.defaultOutputFormat} onValueChange={(value) => setSettings(prev => prev ? { ...prev, defaultOutputFormat: value } : null)}>
-                    <SelectTrigger className="w-full bg-white">
+                    <SelectTrigger className="w-full bg-card border-border">
                         <SelectValue placeholder="Sélectionner format" />
                     </SelectTrigger>
                     <SelectContent>
@@ -205,37 +194,37 @@ export default function SettingsPage() {
                 />
             </div>
             
-            <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleSave} disabled={isSaving} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                 Sauvegarder les modifications
             </Button>
         </div>
 
         {/* Plan Information */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold text-slate-900">Votre Plan d'Abonnement</h2>
+        <div className="bg-card rounded-xl border border-border p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Votre Plan d'Abonnement</h2>
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <p className="text-sm text-slate-500">Plan actuel</p>
-                    <p className="text-lg font-bold text-blue-600">{planInfo.plan.name}</p>
+                    <p className="text-sm text-muted-foreground">Plan actuel</p>
+                    <p className="text-lg font-bold text-primary">{planInfo.plan.name}</p>
                 </div>
                 <div>
-                    <p className="text-sm text-slate-500">Prix mensuel</p>
-                    <p className="text-lg font-bold text-slate-900">{planInfo.plan.price}€</p>
+                    <p className="text-sm text-muted-foreground">Prix mensuel</p>
+                    <p className="text-lg font-bold text-foreground">{planInfo.plan.price}€</p>
                 </div>
             </div>
             <div className="space-y-2">
-                <p className="text-sm text-slate-500">Fonctionnalités incluses :</p>
-                <ul className="list-disc pl-5 text-sm text-slate-700 space-y-1">
+                <p className="text-sm text-muted-foreground">Fonctionnalités incluses :</p>
+                <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
                     {planInfo.plan.features.map((feature, i) => (
                         <li key={i}>{feature}</li>
                     ))}
                 </ul>
             </div>
             {planInfo.plan.id !== "free" && planInfo.nextBillingDate && (
-                <p className="text-sm text-slate-500">Prochaine facturation : {new Date(planInfo.nextBillingDate).toLocaleDateString()}</p>
+                <p className="text-sm text-muted-foreground">Prochaine facturation : {new Date(planInfo.nextBillingDate).toLocaleDateString()}</p>
             )}
-            <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50">
+            <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/10">
                 Gérer l'abonnement
             </Button>
         </div>

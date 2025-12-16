@@ -12,11 +12,11 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 
 const tools = [
-  { id: "convert", label: "Convertir", icon: Film, color: "text-blue-500", bg: "bg-blue-50", description: "Convertissez la vidéo vers un autre format." },
-  { id: "compress", label: "Compresser", icon: Minimize2, color: "text-purple-500", bg: "bg-purple-50", description: "Réduisez la taille de votre vidéo sans perte visible." },
-  { id: "extract-audio", label: "Extraire Audio", icon: Volume2, color: "text-orange-500", bg: "bg-orange-50", description: "Récupérez la piste audio de votre vidéo." },
-  { id: "to-gif", label: "Vidéo vers GIF", icon: RotateCcw, color: "text-red-500", bg: "bg-red-50", description: "Créez un GIF animé à partir de votre vidéo." },
-  { id: "trim", label: "Découper", icon: Scissors, color: "text-green-500", bg: "bg-green-50", description: "Découpez une partie spécifique de la vidéo." },
+  { id: "convert", label: "Convertir", icon: Film, color: "text-blue-500", bg: "bg-blue-500/10", description: "Convertissez la vidéo vers un autre format." },
+  { id: "compress", label: "Compresser", icon: Minimize2, color: "text-purple-500", bg: "bg-purple-500/10", description: "Réduisez la taille de votre vidéo sans perte visible." },
+  { id: "extract-audio", label: "Extraire Audio", icon: Volume2, color: "text-orange-500", bg: "bg-orange-500/10", description: "Récupérez la piste audio de votre vidéo." },
+  { id: "to-gif", label: "Vidéo vers GIF", icon: RotateCcw, color: "text-red-500", bg: "bg-red-500/10", description: "Créez un GIF animé à partir de votre vidéo." },
+  { id: "trim", label: "Découper", icon: Scissors, color: "text-green-500", bg: "bg-green-500/10", description: "Découpez une partie spécifique de la vidéo." },
 ];
 
 export default function VideoToolsPage() {
@@ -146,8 +146,8 @@ export default function VideoToolsPage() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Outils Vidéo</h1>
-        <p className="text-slate-500 mt-2 text-lg">Suite complète pour éditer, convertir et optimiser vos vidéos.</p>
+        <h1 className="text-3xl font-bold text-foreground tracking-tight">Outils Vidéo</h1>
+        <p className="text-muted-foreground mt-2 text-lg">Suite complète pour éditer, convertir et optimiser vos vidéos.</p>
       </div>
 
        {/* Tool Selection Grid */}
@@ -167,20 +167,20 @@ export default function VideoToolsPage() {
                 className={cn(
                    "p-5 rounded-xl border transition-all flex flex-col items-center gap-4 hover:shadow-lg relative overflow-hidden group text-center h-full",
                    activeToolId === tool.id 
-                      ? "border-blue-500 bg-blue-50/50 ring-2 ring-blue-500 ring-offset-2" 
-                      : "border-slate-200 bg-white hover:border-blue-300 hover:bg-slate-50"
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/20 ring-offset-2" 
+                      : "border-border bg-card hover:border-primary/50 hover:bg-muted"
                 )}
              >
                 <div className={cn("p-3 rounded-full transition-transform group-hover:scale-110", tool.bg)}>
                    <tool.icon className={cn("h-6 w-6", tool.color)} />
                 </div>
                 <div>
-                    <span className="block text-sm font-semibold text-slate-800 mb-1">{tool.label}</span>
-                    <span className="block text-xs text-slate-500 line-clamp-2">{tool.description}</span>
+                    <span className="block text-sm font-semibold text-foreground mb-1">{tool.label}</span>
+                    <span className="block text-xs text-muted-foreground line-clamp-2">{tool.description}</span>
                 </div>
                 
                 {activeToolId === tool.id && (
-                    <div className="absolute top-3 right-3 flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white shadow-sm animate-in zoom-in">
+                    <div className="absolute top-3 right-3 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground shadow-sm animate-in zoom-in">
                         <Check size={14} strokeWidth={3} />
                     </div>
                 )}
@@ -190,14 +190,14 @@ export default function VideoToolsPage() {
 
        {/* Workspace Area */}
        {activeToolId && activeTool && (
-         <div className="bg-white border border-slate-200 rounded-xl p-6 lg:p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="flex items-center gap-3 mb-8 border-b border-slate-100 pb-4">
+         <div className="bg-card border border-border rounded-xl p-6 lg:p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="flex items-center gap-3 mb-8 border-b border-border pb-4">
                  <div className={cn("p-2 rounded-lg", activeTool.bg)}>
                     <activeTool.icon className={cn("h-6 w-6", activeTool.color)} />
                  </div>
                  <div>
-                    <h2 className="text-xl font-bold text-slate-900">{activeTool.label}</h2>
-                    <p className="text-sm text-slate-500">Configurez les paramètres ci-dessous</p>
+                    <h2 className="text-xl font-bold text-foreground">{activeTool.label}</h2>
+                    <p className="text-sm text-muted-foreground">Configurez les paramètres ci-dessous</p>
                  </div>
              </div>
 
@@ -214,7 +214,7 @@ export default function VideoToolsPage() {
                             maxSize={2 * 1024 * 1024 * 1024} // 2GB
                         />
                     ) : (
-                        <div className="w-full h-full min-h-[350px] bg-slate-50 rounded-xl border-2 border-slate-200 flex flex-col overflow-hidden relative group">
+                        <div className="w-full h-full min-h-[350px] bg-muted/30 rounded-xl border-2 border-border flex flex-col overflow-hidden relative group">
                             {/* Header Bar */}
                             <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/50 to-transparent z-10 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button 
@@ -238,22 +238,22 @@ export default function VideoToolsPage() {
                                 ) : (
                                     // Fallback UI for non-playable formats (MOV, AVI, etc.)
                                     <div className="flex flex-col items-center animate-in zoom-in duration-300">
-                                        <div className="w-24 h-24 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                                        <div className="w-24 h-24 bg-primary/20 text-primary rounded-full flex items-center justify-center mb-6 shadow-sm">
                                             <FileVideo size={48} />
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-900 mb-2 max-w-md break-words">
+                                        <h3 className="text-xl font-bold text-foreground mb-2 max-w-md break-words">
                                             {selectedFile.name}
                                         </h3>
-                                        <div className="flex items-center gap-4 text-sm text-slate-500 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+                                        <div className="flex items-center gap-4 text-sm text-muted-foreground bg-card px-4 py-2 rounded-full border border-border shadow-sm">
                                             <span className="font-mono font-medium">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
-                                            <div className="h-4 w-px bg-slate-300" />
+                                            <div className="h-4 w-px bg-border" />
                                             <span className="uppercase">{selectedFile.name.split('.').pop()}</span>
                                         </div>
                                         <div className="mt-8 flex gap-2">
                                              <Button variant="outline" onClick={clearFile}>
                                                 <RotateCcw size={16} className="mr-2" /> Changer
                                              </Button>
-                                             <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 rounded-lg border border-green-200">
+                                             <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 text-green-600 rounded-lg border border-green-500/20">
                                                 <Check size={16} /> Prêt à traiter
                                              </div>
                                         </div>
@@ -266,9 +266,9 @@ export default function VideoToolsPage() {
 
                  {/* Right Column: Settings & Action */}
                  <div className="lg:col-span-5 flex flex-col gap-6">
-                     <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 flex-1 flex flex-col">
-                        <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                            <Clock size={18} className="text-slate-400" />
+                     <div className="p-6 bg-muted/30 rounded-xl border border-border flex-1 flex flex-col">
+                        <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                            <Clock size={18} className="text-muted-foreground" />
                             Paramètres
                         </h3>
                         
@@ -276,9 +276,9 @@ export default function VideoToolsPage() {
                             {activeToolId === "convert" && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-medium text-slate-700">Format de sortie</Label>
+                                        <Label className="text-sm font-medium text-foreground">Format de sortie</Label>
                                         <Select onValueChange={setTargetFormat} value={targetFormat}>
-                                            <SelectTrigger className="bg-white w-full">
+                                            <SelectTrigger className="bg-card w-full border-border">
                                                 <SelectValue placeholder="Sélectionner format" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -289,13 +289,13 @@ export default function VideoToolsPage() {
                                                 <SelectItem value="mkv">MKV (Haute qualité)</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <p className="text-xs text-slate-500">Le format MP4 est recommandé pour la compatibilité.</p>
+                                        <p className="text-xs text-muted-foreground">Le format MP4 est recommandé pour la compatibilité.</p>
                                     </div>
                                     <Button 
                                         size="lg" 
                                         onClick={handleProcess} 
                                         disabled={!selectedFile || loading}
-                                        className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
+                                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-4"
                                     >
                                         {loading ? "Traitement..." : "Convertir & Télécharger"}
                                     </Button>
@@ -305,30 +305,30 @@ export default function VideoToolsPage() {
                             {activeToolId === "trim" && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-medium text-slate-700">Début (HH:mm:ss)</Label>
+                                        <Label className="text-sm font-medium text-foreground">Début (HH:mm:ss)</Label>
                                         <Input 
                                             type="text" 
                                             placeholder="00:00:00" 
                                             value={trimStart} 
                                             onChange={(e) => setTrimStart(e.target.value)} 
-                                            className="bg-white font-mono"
+                                            className="bg-card border-border font-mono"
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="text-sm font-medium text-slate-700">Durée (HH:mm:ss)</Label>
+                                        <Label className="text-sm font-medium text-foreground">Durée (HH:mm:ss)</Label>
                                         <Input 
                                             type="text" 
                                             placeholder="00:00:10" 
                                             value={trimDuration} 
                                             onChange={(e) => setTrimDuration(e.target.value)} 
-                                            className="bg-white font-mono"
+                                            className="bg-card border-border font-mono"
                                         />
                                     </div>
                                     <Button 
                                         size="lg" 
                                         onClick={handleProcess} 
                                         disabled={!selectedFile || loading}
-                                        className="w-full bg-blue-600 hover:bg-blue-700 mt-4"
+                                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-4"
                                     >
                                         {loading ? "Traitement..." : "Découper & Télécharger"}
                                     </Button>
@@ -337,7 +337,7 @@ export default function VideoToolsPage() {
 
                             {activeToolId === "compress" && (
                                 <div className="space-y-3">
-                                    <Label className="text-sm font-medium text-slate-700 mb-2 block">Choisissez un niveau de compression :</Label>
+                                    <Label className="text-sm font-medium text-foreground mb-2 block">Choisissez un niveau de compression :</Label>
                                     <div className="grid grid-cols-1 gap-3">
                                         {[
                                             { id: 'quality', label: 'Haute Qualité', desc: 'Fichier plus lourd, meilleure image', icon: Film },
@@ -352,14 +352,14 @@ export default function VideoToolsPage() {
                                                     else toast.error("Veuillez sélectionner un fichier d'abord.");
                                                 }}
                                                 disabled={loading || !selectedFile}
-                                                className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50 transition-all text-left group"
+                                                className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-muted transition-all text-left group"
                                             >
-                                                <div className="p-2 bg-purple-100 text-purple-600 rounded-lg group-hover:bg-purple-200">
+                                                <div className="p-2 bg-purple-500/10 text-purple-600 rounded-lg group-hover:bg-purple-500/20">
                                                     <opt.icon size={20} />
                                                 </div>
                                                 <div>
-                                                    <span className="block font-semibold text-slate-900">{opt.label}</span>
-                                                    <span className="block text-xs text-slate-500">{opt.desc}</span>
+                                                    <span className="block font-semibold text-foreground">{opt.label}</span>
+                                                    <span className="block text-xs text-muted-foreground">{opt.desc}</span>
                                                 </div>
                                                 {loading && compressionPreset === opt.id && <RotateCcw className="animate-spin ml-auto text-purple-500" />}
                                             </button>
@@ -370,7 +370,7 @@ export default function VideoToolsPage() {
                             
                             {activeToolId === "extract-audio" && (
                                 <div className="space-y-3">
-                                    <Label className="text-sm font-medium text-slate-700 mb-2 block">Format d'extraction :</Label>
+                                    <Label className="text-sm font-medium text-foreground mb-2 block">Format d'extraction :</Label>
                                     <div className="grid grid-cols-1 gap-3">
                                         {[
                                             { id: 'mp3', label: 'MP3', desc: 'Standard universel', icon: Volume2 },
@@ -385,14 +385,14 @@ export default function VideoToolsPage() {
                                                     else toast.error("Veuillez sélectionner un fichier d'abord.");
                                                 }}
                                                 disabled={loading || !selectedFile}
-                                                className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50 transition-all text-left group"
+                                                className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-muted transition-all text-left group"
                                             >
-                                                <div className="p-2 bg-orange-100 text-orange-600 rounded-lg group-hover:bg-orange-200">
+                                                <div className="p-2 bg-orange-500/10 text-orange-600 rounded-lg group-hover:bg-orange-500/20">
                                                     <opt.icon size={20} />
                                                 </div>
                                                 <div>
-                                                    <span className="block font-semibold text-slate-900">{opt.label}</span>
-                                                    <span className="block text-xs text-slate-500">{opt.desc}</span>
+                                                    <span className="block font-semibold text-foreground">{opt.label}</span>
+                                                    <span className="block text-xs text-muted-foreground">{opt.desc}</span>
                                                 </div>
                                                 {loading && audioFormat === opt.id && <RotateCcw className="animate-spin ml-auto text-orange-500" />}
                                             </button>
@@ -403,7 +403,7 @@ export default function VideoToolsPage() {
 
                              {activeToolId === "to-gif" && (
                                 <div className="space-y-3">
-                                    <Label className="text-sm font-medium text-slate-700 mb-2 block">Fluidité du GIF :</Label>
+                                    <Label className="text-sm font-medium text-foreground mb-2 block">Fluidité du GIF :</Label>
                                     <div className="grid grid-cols-2 gap-3">
                                         {[
                                             { id: 5, label: '5 FPS', desc: 'Très léger' },
@@ -419,10 +419,10 @@ export default function VideoToolsPage() {
                                                     else toast.error("Veuillez sélectionner un fichier d'abord.");
                                                 }}
                                                 disabled={loading || !selectedFile}
-                                                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 bg-white hover:border-red-300 hover:bg-red-50 transition-all text-center group"
+                                                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-muted transition-all text-center group"
                                             >
-                                                <span className="font-bold text-lg text-slate-900">{opt.label}</span>
-                                                <span className="text-xs text-slate-500">{opt.desc}</span>
+                                                <span className="font-bold text-lg text-foreground">{opt.label}</span>
+                                                <span className="text-xs text-muted-foreground">{opt.desc}</span>
                                                 {loading && gifFps === opt.id && <RotateCcw className="animate-spin mt-1 text-red-500" />}
                                             </button>
                                         ))}
@@ -431,13 +431,13 @@ export default function VideoToolsPage() {
                             )}
                         </div>
                         
-                        <div className="mt-8 pt-6 border-t border-slate-200 space-y-3">
+                        <div className="mt-8 pt-6 border-t border-border space-y-3">
                              {processingResult && (
                                 <Button 
                                     size="lg"
                                     variant="outline"
                                     onClick={handleDownloadResult}
-                                    className="w-full border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800 hover:border-green-300 animate-in fade-in slide-in-from-top-2"
+                                    className="w-full border-green-500/20 text-green-700 dark:text-green-400 hover:bg-green-500/10 hover:border-green-500/30 animate-in fade-in slide-in-from-top-2"
                                 >
                                     <Download size={18} className="mr-2" />
                                     Télécharger le résultat ({processingResult.fileName})

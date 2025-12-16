@@ -64,11 +64,11 @@ export default function WebToolsPage() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-slate-900">Outils Web</h1>
-        <p className="text-slate-500">Capturez des sites web en image ou PDF.</p>
+        <h1 className="text-2xl font-bold text-foreground">Outils Web</h1>
+        <p className="text-muted-foreground">Capturez des sites web en image ou PDF.</p>
       </div>
 
-       <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
+       <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
          {/* Tool Selection (simplified as only one for now) */}
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
              <button
@@ -77,16 +77,16 @@ export default function WebToolsPage() {
                 className={cn(
                    "p-4 rounded-xl border transition-all flex flex-col items-center gap-3 hover:shadow-md relative overflow-hidden",
                    activeToolId === "capture"
-                      ? "border-blue-500 bg-blue-50/50 ring-1 ring-blue-500"
-                      : "border-slate-200 bg-white hover:border-blue-300"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                      : "border-border bg-card hover:border-primary/50"
                 )}
              >
-                <div className={cn("p-2 rounded-lg bg-blue-50")}>
+                <div className={cn("p-2 rounded-lg bg-blue-500/10")}>
                    <Globe className={cn("h-6 w-6 text-blue-500")} />
                 </div>
-                <span className="text-sm font-medium text-slate-700">Capture URL</span>
+                <span className="text-sm font-medium text-foreground">Capture URL</span>
                 {activeToolId === "capture" && (
-                    <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white">
+                    <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
                         <Check size={12} />
                     </div>
                 )}
@@ -96,22 +96,22 @@ export default function WebToolsPage() {
 
          <div className="flex flex-col gap-6">
             <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">URL à capturer</label>
-                <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
-                   <Globe className="text-slate-400" />
+                <label className="text-sm font-medium text-foreground">URL à capturer</label>
+                <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg border border-border">
+                   <Globe className="text-muted-foreground" />
                    <Input 
                       placeholder="https://example.com" 
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
-                      className="bg-white border-slate-200 flex-1"
+                      className="bg-card border-border flex-1"
                    />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Format de sortie</label>
+                <label className="text-sm font-medium text-foreground">Format de sortie</label>
                 <Select onValueChange={(val: "jpeg" | "pdf") => setFormat(val)} value={format}>
-                    <SelectTrigger className="bg-white">
+                    <SelectTrigger className="bg-card border-border">
                         <SelectValue placeholder="Sélectionner format" />
                     </SelectTrigger>
                     <SelectContent>
@@ -125,7 +125,7 @@ export default function WebToolsPage() {
                size="lg"
                onClick={handleCapture}
                disabled={!url || loading}
-               className="h-12 bg-blue-600 hover:bg-blue-700"
+               className="h-12 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2" />}
                {loading ? `Capture en cours (${format.toUpperCase()})...` : `Capturer en ${format.toUpperCase()}`}

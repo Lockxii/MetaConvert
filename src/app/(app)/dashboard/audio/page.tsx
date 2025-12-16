@@ -12,10 +12,10 @@ import { toast } from "sonner";
 import { ToolButton } from "@/components/dashboard/ToolButton"; // Import shared ToolButton
 
 const tools = [
-  { id: "convert", label: "Convertir Audio", icon: Mic, color: "text-blue-500", bg: "bg-blue-50", description: "Convertissez le fichier audio vers un autre format." },
-  { id: "trim", label: "Découper Audio", icon: Scissors, color: "text-purple-500", bg: "bg-purple-50", description: "Découpez une partie spécifique de l'audio." },
-  { id: "normalize", label: "Normaliser Audio", icon: Gauge, color: "text-orange-500", bg: "bg-orange-50", description: "Ajustez le volume pour une écoute équilibrée." },
-  { id: "speed", label: "Changer Vitesse", icon: Clock, color: "text-green-500", bg: "bg-green-50", description: "Accélérez ou ralentissez l'audio." },
+  { id: "convert", label: "Convertir Audio", icon: Mic, color: "text-blue-500", bg: "bg-blue-500/10", description: "Convertissez le fichier audio vers un autre format." },
+  { id: "trim", label: "Découper Audio", icon: Scissors, color: "text-purple-500", bg: "bg-purple-500/10", description: "Découpez une partie spécifique de l'audio." },
+  { id: "normalize", label: "Normaliser Audio", icon: Gauge, color: "text-orange-500", bg: "bg-orange-500/10", description: "Ajustez le volume pour une écoute équilibrée." },
+  { id: "speed", label: "Changer Vitesse", icon: Clock, color: "text-green-500", bg: "bg-green-500/10", description: "Accélérez ou ralentissez l'audio." },
 ];
 
 export default function AudioToolsPage() {
@@ -82,8 +82,8 @@ export default function AudioToolsPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Outils Audio</h1>
-        <p className="text-slate-500">Transformez vos fichiers audio avec nos outils puissants.</p>
+        <h1 className="text-2xl font-bold text-foreground">Outils Audio</h1>
+        <p className="text-muted-foreground">Transformez vos fichiers audio avec nos outils puissants.</p>
       </div>
 
        {/* Tool Selection Grid */}
@@ -98,17 +98,17 @@ export default function AudioToolsPage() {
                 className={cn(
                    "p-4 rounded-xl border transition-all flex flex-col items-center gap-3 hover:shadow-md relative overflow-hidden",
                    activeToolId === tool.id 
-                      ? "border-blue-500 bg-blue-50/50 ring-1 ring-blue-500" 
-                      : "border-slate-200 bg-white hover:border-blue-300"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
+                      : "border-border bg-card hover:border-primary/50"
                 )}
                 title={tool.description}
              >
                 <div className={cn("p-2 rounded-lg", tool.bg)}>
                    <tool.icon className={cn("h-6 w-6", tool.color)} />
                 </div>
-                <span className="text-sm font-medium text-slate-700">{tool.label}</span>
+                <span className="text-sm font-medium text-foreground">{tool.label}</span>
                 {activeToolId === tool.id && (
-                    <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white">
+                    <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
                         <Check size={12} />
                     </div>
                 )}
@@ -118,10 +118,10 @@ export default function AudioToolsPage() {
 
        {/* Workspace Area */}
        {activeToolId && activeTool && (
-         <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+         <div className="bg-card border border-border rounded-xl p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
                  <activeTool.icon className={cn("h-6 w-6", activeTool.color)} />
-                 <h2 className="text-lg font-bold text-slate-900">{activeTool.label}</h2>
+                 <h2 className="text-lg font-bold text-foreground">{activeTool.label}</h2>
              </div>
 
              <div className="grid lg:grid-cols-2 gap-8">
@@ -132,20 +132,20 @@ export default function AudioToolsPage() {
                     label={`Déposez votre audio pour ${activeTool.label.toLowerCase()}`}
                  />
                  {selectedFile && (
-                    <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 animate-in fade-in">
+                    <div className="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-lg border border-primary/20 animate-in fade-in">
                         <Check size={16} />
                         <span className="text-sm font-medium">Fichier prêt : {selectedFile.name}</span>
                     </div>
                  )}
 
-                 <div className="flex flex-col gap-4 p-6 bg-slate-50 rounded-xl border border-slate-100">
+                 <div className="flex flex-col gap-4 p-6 bg-muted/30 rounded-xl border border-border">
                      <div className="space-y-2">
-                        <h3 className="font-semibold text-slate-900">Paramètres</h3>
+                        <h3 className="font-semibold text-foreground">Paramètres</h3>
                         {activeToolId === "convert" && (
                             <div className="space-y-2">
-                                <label className="text-xs text-slate-500 font-medium">Format de sortie</label>
+                                <label className="text-xs text-muted-foreground font-medium">Format de sortie</label>
                                 <Select onValueChange={setTargetFormat} value={targetFormat}>
-                                    <SelectTrigger className="bg-white">
+                                    <SelectTrigger className="bg-card border-border">
                                         <SelectValue placeholder="Sélectionner format" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -158,36 +158,36 @@ export default function AudioToolsPage() {
                         )}
                         {activeToolId === "trim" && (
                             <div className="space-y-3">
-                                <label className="text-xs text-slate-500 font-medium">Découpage (HH:mm:ss)</label>
+                                <label className="text-xs text-muted-foreground font-medium">Découpage (HH:mm:ss)</label>
                                 <Input 
                                     type="text" 
                                     placeholder="Début (ex: 00:00:10)" 
                                     value={trimStart} 
                                     onChange={(e) => setTrimStart(e.target.value)} 
-                                    className="bg-white"
+                                    className="bg-card border-border"
                                 />
                                 <Input 
                                     type="text" 
                                     placeholder="Durée (ex: 00:00:30)" 
                                     value={trimDuration} 
                                     onChange={(e) => setTrimDuration(e.target.value)} 
-                                    className="bg-white"
+                                    className="bg-card border-border"
                                 />
-                                <p className="text-xs text-slate-500 flex items-center gap-1"><Clock size={12} /> Format : HH:mm:ss</p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock size={12} /> Format : HH:mm:ss</p>
                             </div>
                         )}
                         {activeToolId === "speed" && (
                             <div className="space-y-3">
-                                <label className="text-xs text-slate-500 font-medium">Facteur de vitesse</label>
+                                <label className="text-xs text-muted-foreground font-medium">Facteur de vitesse</label>
                                 <Input 
                                     type="number" 
                                     step="0.1"
                                     placeholder="Ex: 1.5 (plus rapide)" 
                                     value={speedFactor} 
                                     onChange={(e) => setSpeedFactor(e.target.value)} 
-                                    className="bg-white"
+                                    className="bg-card border-border"
                                 />
-                                <p className="text-xs text-slate-500">1.0 = normal, 0.5 = 2x plus lent, 2.0 = 2x plus rapide.</p>
+                                <p className="text-xs text-muted-foreground">1.0 = normal, 0.5 = 2x plus lent, 2.0 = 2x plus rapide.</p>
                             </div>
                         )}
                      </div>
@@ -198,7 +198,7 @@ export default function AudioToolsPage() {
                         size="lg" 
                         onClick={handleProcess} 
                         disabled={!selectedFile || loading}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                         {loading ? `Traitement (${Math.round(progress)}%)` : `Lancer ${activeTool.label.split(' ')[0]} `} <ArrowRight size={18} className="ml-2" />
                     </Button>

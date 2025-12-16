@@ -3,14 +3,13 @@
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import { Bell, Search, User, LogOut, Loader2, FileCheck, Image as ImageIcon } from "lucide-react";
+import { Search, User, LogOut, Loader2, FileCheck, Image as ImageIcon, Sun, Moon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes"; // Import useTheme
@@ -22,13 +21,17 @@ export default function AppLayout({
 }) {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
-  const { theme, setTheme } = useTheme(); // Get setTheme from next-themes
+  const { theme, setTheme, resolvedTheme } = useTheme(); 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any>(null);
   const [searching, setSearching] = useState(false);
-  // const [theme, setTheme] = useState("system"); // This state is now managed by next-themes
 
 
   // Redirect to sign-in if not authenticated
@@ -46,14 +49,22 @@ export default function AppLayout({
             const res = await fetch("/api/settings/user");
             if (res.ok) {
                 const data = await res.json();
-                setTheme(data.theme); // Use setTheme from next-themes
+                // Only set if explicitly 'light' or 'dark' to respect user preference from DB
+                // 'system' is default, so if it's 'system' we let next-themes handle it or do nothing
+                if (data.theme && data.theme !== "system") {
+                    setTheme(data.theme);
+                }
             }
         } catch (e) {
             console.error("Failed to fetch user theme:", e);
         }
     }
-    fetchAndApplyTheme();
-  }, [session, setTheme]); // Add setTheme to dependencies
+    // Only run on mount or when session becomes available
+    if (session?.user?.id && !mounted) {
+         fetchAndApplyTheme();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]); // removed 'mounted' from dep array to avoid re-running, added check inside
 
 
   const handleSearch = async () => {
@@ -83,25 +94,22 @@ export default function AppLayout({
     router.push("/");
   };
 
-
-  const handleThemeChange = async (val: string) => {
-    setTheme(val);
-    // Optimistically update
-    try {
-        await fetch("/api/settings/user", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ theme: val }),
-        });
-    } catch (e) {
-        console.error("Failed to save theme preference:", e);
-    }
+  const toggleTheme = () => {
+    const newTheme = resolvedTheme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    
+    // Persist to DB (Fire and forget)
+    fetch("/api/settings/user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: newTheme }),
+    }).catch(e => console.error("Failed to persist theme:", e));
   };
 
   if (isPending || !session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -115,13 +123,13 @@ export default function AppLayout({
         <header className="h-16 border-b border-border bg-background sticky top-0 z-30 flex items-center justify-between px-6 shadow-sm">
            {/* Global Search */}
            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input 
                 placeholder="Rechercher un outil, un fichier..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-                className="w-64 bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-1.5 text-sm focus:border-blue-500 transition-all"
+                className="w-64 bg-muted/50 border border-input rounded-lg pl-10 pr-4 py-1.5 text-sm focus:border-primary transition-all"
               />
                <AnimatePresence>
                 {searchQuery && searchResults && (
@@ -129,27 +137,27 @@ export default function AppLayout({
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg z-40 max-h-60 overflow-y-auto"
+                        className="absolute left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-lg z-40 max-h-60 overflow-y-auto"
                     >
-                        {searching && <div className="p-2 text-center text-sm text-slate-500">Recherche...</div>}
+                        {searching && <div className="p-2 text-center text-sm text-muted-foreground">Recherche...</div>}
                         {!searching && searchResults.conversions.length === 0 && searchResults.upscales.length === 0 && (
-                            <div className="p-2 text-center text-sm text-slate-500">Aucun résultat trouvé.</div>
+                            <div className="p-2 text-center text-sm text-muted-foreground">Aucun résultat trouvé.</div>
                         )}
                         {searchResults.conversions.map((item: any) => (
-                            <Link href={`/dashboard/image`} key={item.id} className="flex items-center gap-3 p-2 hover:bg-slate-50 border-b border-slate-100 last:border-b-0">
-                                <FileCheck size={16} className="text-blue-500" />
+                            <Link href={`/dashboard/image`} key={item.id} className="flex items-center gap-3 p-2 hover:bg-muted border-b border-border last:border-b-0">
+                                <FileCheck size={16} className="text-primary" />
                                 <div className="text-sm">
                                     <p className="font-medium">{item.fileName}</p>
-                                    <p className="text-xs text-slate-500">Conversion vers {item.targetType}</p>
+                                    <p className="text-xs text-muted-foreground">Conversion vers {item.targetType}</p>
                                 </div>
                             </Link>
                         ))}
                         {searchResults.upscales.map((item: any) => (
-                            <Link href={`/dashboard/image`} key={item.id} className="flex items-center gap-3 p-2 hover:bg-slate-50 border-b border-slate-100 last:border-b-0">
+                            <Link href={`/dashboard/image`} key={item.id} className="flex items-center gap-3 p-2 hover:bg-muted border-b border-border last:border-b-0">
                                 <ImageIcon size={16} className="text-purple-500" />
                                 <div className="text-sm">
                                     <p className="font-medium">{item.fileName}</p>
-                                    <p className="text-xs text-slate-500">Upscale {item.factor}x</p>
+                                    <p className="text-xs text-muted-foreground">Upscale {item.factor}x</p>
                                 </div>
                             </Link>
                         ))}
@@ -159,25 +167,23 @@ export default function AppLayout({
            </div>
 
            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" className="text-slate-500 hover:text-blue-600">
-                 <Bell size={18} />
-              </Button>
+              {/* Notifications removed */}
               
-              <div className="h-6 w-[1px] bg-slate-200" />
+              <div className="h-6 w-[1px] bg-border" />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <div className="flex items-center gap-3 pl-2 cursor-pointer">
                         <div className="text-right hidden sm:block">
-                            <p className="text-sm font-medium text-slate-900 leading-none">{session.user.name}</p>
-                            <p className="text-xs text-slate-500">{session.user.email}</p>
+                            <p className="text-sm font-medium text-foreground leading-none">{session.user.name}</p>
+                            <p className="text-xs text-muted-foreground">{session.user.email}</p>
                         </div>
-                        <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                        <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                             <User size={18} />
                         </div>
                     </div>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 shadow-lg">
+                <DropdownMenuContent align="end" className="w-56 bg-popover border border-border shadow-lg">
                     <DropdownMenuLabel>Mon Compte</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
@@ -187,28 +193,26 @@ export default function AppLayout({
                         <Link href="/pricing" className="cursor-pointer">Mon Plan</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
                         <LogOut className="mr-2 h-4 w-4" /> Déconnexion
                     </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Removed local theme state and use the one from next-themes */}
-              <Select value={theme} onValueChange={handleThemeChange}>
-                <SelectTrigger className="w-28 bg-white border-slate-200">
-                    <SelectValue placeholder="Thème" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="system">Système</SelectItem>
-                    <SelectItem value="light">Clair</SelectItem>
-                    <SelectItem value="dark">Sombre</SelectItem>
-                </SelectContent>
-            </Select>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={toggleTheme}
+                className="ml-2"
+                aria-label="Toggle theme"
+              >
+                {mounted && (resolvedTheme === "dark" ? <Moon size={20} /> : <Sun size={20} />)}
+              </Button>
            </div>
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6 overflow-x-hidden bg-slate-50">
+        <main className="flex-1 p-6 overflow-x-hidden bg-slate-50 dark:bg-background">
           {children}
         </main>
       </div>

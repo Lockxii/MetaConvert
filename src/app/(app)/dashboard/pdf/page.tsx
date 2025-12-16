@@ -11,12 +11,12 @@ import { toast } from "sonner";
 
 
 const tools = [
-  { id: "merge", label: "Fusionner PDF", icon: Merge, color: "text-blue-500", bg: "bg-blue-50", description: "Combinez plusieurs PDF en un seul document." },
-  { id: "split", label: "Diviser PDF", icon: Split, color: "text-purple-500", bg: "bg-purple-50", description: "Extrayez des pages ou divisez un document." },
-  { id: "compress", label: "Compresser PDF", icon: Scissors, color: "text-orange-500", bg: "bg-orange-50", description: "Réduisez la taille de vos PDF sans perte." },
-  { id: "protect", label: "Protéger PDF", icon: Lock, color: "text-red-500", bg: "bg-red-50", description: "Ajoutez un mot de passe à votre document." },
-  { id: "to-word", label: "PDF vers Word", icon: FileText, color: "text-green-500", bg: "bg-green-50", description: "Convertissez votre PDF en document Word modifiable." },
-  { id: "to-images", label: "PDF vers Images", icon: ImageIcon, color: "text-cyan-500", bg: "bg-cyan-50", description: "Convertissez chaque page PDF en image." },
+  { id: "merge", label: "Fusionner PDF", icon: Merge, color: "text-blue-500", bg: "bg-blue-500/10", description: "Combinez plusieurs PDF en un seul document." },
+  { id: "split", label: "Diviser PDF", icon: Split, color: "text-purple-500", bg: "bg-purple-500/10", description: "Extrayez des pages ou divisez un document." },
+  { id: "compress", label: "Compresser PDF", icon: Scissors, color: "text-orange-500", bg: "bg-orange-500/10", description: "Réduisez la taille de vos PDF sans perte." },
+  { id: "protect", label: "Protéger PDF", icon: Lock, color: "text-red-500", bg: "bg-red-500/10", description: "Ajoutez un mot de passe à votre document." },
+  { id: "to-word", label: "PDF vers Word", icon: FileText, color: "text-green-500", bg: "bg-green-500/10", description: "Convertissez votre PDF en document Word modifiable." },
+  { id: "to-images", label: "PDF vers Images", icon: ImageIcon, color: "text-cyan-500", bg: "bg-cyan-500/10", description: "Convertissez chaque page PDF en image." },
 ];
 
 export default function PDFToolsPage() {
@@ -131,8 +131,8 @@ export default function PDFToolsPage() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Outils PDF</h1>
-          <p className="text-slate-500">Sélectionnez un outil et transformez vos documents.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Outils PDF</h1>
+          <p className="text-muted-foreground">Sélectionnez un outil et transformez vos documents.</p>
        </div>
 
        {/* Tool Selection Grid */}
@@ -148,17 +148,17 @@ export default function PDFToolsPage() {
                 className={cn(
                    "p-4 rounded-xl border transition-all flex flex-col items-center gap-3 hover:shadow-md relative overflow-hidden",
                    activeToolId === tool.id 
-                      ? "border-blue-500 bg-blue-50/50 ring-1 ring-blue-500" 
-                      : "border-slate-200 bg-white hover:border-blue-300"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
+                      : "border-border bg-card hover:border-primary/50"
                 )}
                 title={tool.description}
              >
                 <div className={cn("p-2 rounded-lg", tool.bg)}>
                    <tool.icon className={cn("h-6 w-6", tool.color)} />
                 </div>
-                <span className="text-sm font-medium text-slate-700">{tool.label}</span>
+                <span className="text-sm font-medium text-foreground">{tool.label}</span>
                 {activeToolId === tool.id && (
-                    <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-white">
+                    <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
                         <Check size={12} />
                     </div>
                 )}
@@ -168,10 +168,10 @@ export default function PDFToolsPage() {
 
        {/* Workspace Area - Only shown when tool selected */}
        {activeToolId && activeTool && (
-         <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+         <div className="bg-card border border-border rounded-xl p-8 shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
                  <activeTool.icon className={cn("h-6 w-6", activeTool.color)} />
-                 <h2 className="text-lg font-bold text-slate-900">{activeTool.label}</h2>
+                 <h2 className="text-lg font-bold text-foreground">{activeTool.label}</h2>
              </div>
 
              <div className="grid lg:grid-cols-2 gap-8">
@@ -185,7 +185,7 @@ export default function PDFToolsPage() {
                             multiple={true}
                         />
                         {selectedFiles.length > 0 && (
-                            <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 animate-in fade-in">
+                            <div className="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-lg border border-primary/20 animate-in fade-in">
                                 <Check size={16} />
                                 <span className="text-sm font-medium">{selectedFiles.length} fichiers prêts à fusionner</span>
                             </div>
@@ -200,7 +200,7 @@ export default function PDFToolsPage() {
                             label={`Déposez votre PDF pour ${activeTool.label.toLowerCase()}`}
                         />
                          {selectedFile && (
-                            <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-700 rounded-lg border border-blue-100 animate-in fade-in">
+                            <div className="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-lg border border-primary/20 animate-in fade-in">
                                 <Check size={16} />
                                 <span className="text-sm font-medium">Fichier prêt : {selectedFile.name}</span>
                             </div>
@@ -209,9 +209,9 @@ export default function PDFToolsPage() {
                  )}
                  
 
-                 <div className="flex flex-col justify-center gap-4 p-6 bg-slate-50 rounded-xl border border-slate-100">
+                 <div className="flex flex-col justify-center gap-4 p-6 bg-muted/30 rounded-xl border border-border">
                      <div className="space-y-2">
-                        <h3 className="font-semibold text-slate-900">Paramètres</h3>
+                        <h3 className="font-semibold text-foreground">Paramètres</h3>
                         {/* Tool specific parameter inputs */}
                         {activeToolId === "split" && (
                             <Input 
@@ -220,7 +220,7 @@ export default function PDFToolsPage() {
                                 value={splitPageNumber} 
                                 onChange={(e) => setSplitPageNumber(e.target.value)} 
                                 min="1"
-                                className="bg-white"
+                                className="bg-card border-border"
                             />
                         )}
                         {activeToolId === "protect" && (
@@ -230,14 +230,14 @@ export default function PDFToolsPage() {
                                     placeholder="Mot de passe pour le PDF" 
                                     value={protectPassword} 
                                     onChange={(e) => setProtectPassword(e.target.value)} 
-                                    className="bg-white"
+                                    className="bg-card border-border"
                                 />
-                                <p className="text-xs text-slate-500 flex items-center gap-1"><KeyRound size={12} /> Le mot de passe sera appliqué à l'ouverture du PDF.</p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound size={12} /> Le mot de passe sera appliqué à l'ouverture du PDF.</p>
                             </div>
                         )}
 
                         {activeToolId === "compress" && (
-                             <div className="p-3 bg-blue-50 text-blue-700 text-sm rounded-lg border border-blue-100 flex items-center gap-2">
+                             <div className="p-3 bg-blue-500/10 text-blue-500 text-sm rounded-lg border border-blue-500/20 flex items-center gap-2">
                                 <FileWarning size={20} /> La compression est basique via PDF-LIB. Pour une compression avancée, utilisez un outil dédié.
                             </div>
                         )}
@@ -249,7 +249,7 @@ export default function PDFToolsPage() {
                         size="lg" 
                         onClick={handleProcess} 
                         disabled={(activeToolId === "merge" && selectedFiles.length < 2) || (activeToolId !== "merge" && !selectedFile) || loading}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
                         {loading ? `Traitement (${Math.round(progress)}%)` : `Lancer ${activeTool.label.split(' ')[0]} `} <ArrowRight size={18} className="ml-2" />
                     </Button>
