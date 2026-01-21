@@ -8,6 +8,29 @@ import { getUserSession, logOperation } from "@/lib/server-utils";
 
 const execAsync = promisify(exec);
 
+const YT_DLP_URL = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp";
+const YT_DLP_PATH = path.join(os.tmpdir(), "yt-dlp");
+
+async function ensureYtDlp() {
+  if (fs.existsSync(YT_DLP_PATH)) return YT_DLP_PATH;
+
+  console.log("[Web Download API] Downloading yt-dlp...");
+  try {
+    const res = await fetch(YT_DLP_URL);
+    if (!res.ok) throw new Error(`Failed to download yt-dlp: ${res.statusText}`);
+    
+    const buffer = Buffer.from(await res.arrayBuffer());
+    fs.writeFileSync(YT_DLP_PATH, buffer);
+    fs.chmodSync(YT_DLP_PATH, "755");
+    
+    console.log("[Web Download API] yt-dlp downloaded successfully.");
+    return YT_DLP_PATH;
+  } catch (error) {
+    console.error("[Web Download API] Download failed:", error);
+    throw error;
+  }
+}
+
 export async function POST(req: NextRequest) {
   let userId: string | null = null;
   const tempDir = os.tmpdir();
@@ -16,6 +39,8 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getUserSession(req);
     userId = session?.user?.id || null;
+    
+    await ensureYtDlp();
 
     const { url, format, type } = await req.json(); // format: 'mp3' | 'mp4', type: 'youtube' | 'tiktok'
 
@@ -28,11 +53,10 @@ export async function POST(req: NextRequest) {
     
     if (format === "mp3") {
         // Extraction Audio
-        command = `yt-dlp --extract-audio --audio-format mp3 --audio-quality 0 -o "${path.join(tempDir, `${outputId}.%(ext)s`)}" "${url}"`;
+        command = `${YT_DLP_PATH} --extract-audio --audio-format mp3 --audio-quality 0 -o "${path.join(tempDir, `${outputId}.%(ext)s`)}" "${url}"`;
     } else {
         // Téléchargement Vidéo (MP4)
-        // -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" assure un format MP4 compatible
-        command = `yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "${outputPath}" "${url}"`;
+        command = `${YT_DLP_PATH} -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "${outputPath}" "${url}"`;
     }
     
     console.log(`[Web Download API] Running: ${command}`);
