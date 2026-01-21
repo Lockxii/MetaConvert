@@ -22,22 +22,9 @@ import {
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { authClient } from "@/lib/auth-client";
+import { navItems } from "@/config/nav";
 
-const navItems = [
-  { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Mon Cloud", href: "/dashboard/cloud", icon: Cloud },
-  { name: "Image", href: "/dashboard/image", icon: ImageIcon },
-  { name: "PDF", href: "/dashboard/pdf", icon: FileText },
-  { name: "PDF Weaver", href: "/dashboard/pdf-weaver", icon: Layers },
-  { name: "Vidéo", href: "/dashboard/video", icon: Video },
-  { name: "Audio", href: "/dashboard/audio", icon: Music },
-  { name: "Web", href: "/dashboard/web", icon: Globe },
-  { name: "Archives", href: "/dashboard/archive", icon: Archive },
-  { name: "Demandes", href: "/dashboard/drop", icon: FolderUp },
-  { name: "Réglages", href: "/dashboard/settings", icon: Settings },
-];
-
-export function AppSidebar() {
+export function AppSidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { data: session } = authClient.useSession();
@@ -47,7 +34,10 @@ export function AppSidebar() {
     <motion.aside 
       initial={{ width: 250 }}
       animate={{ width: collapsed ? 80 : 250 }}
-      className="fixed left-0 top-0 bottom-0 z-40 bg-card border-r border-border flex flex-col transition-all duration-300 shadow-sm"
+      className={cn(
+        "fixed left-0 top-0 bottom-0 z-40 bg-card border-r border-border flex flex-col transition-all duration-300 shadow-sm",
+        className
+      )}
     >
       <div className="h-16 flex items-center justify-between px-4 border-b border-border">
         {!collapsed && (

@@ -3,8 +3,8 @@
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import { Search, User, LogOut, Loader2, FileCheck, Image as ImageIcon, Sun, Moon, LayoutGrid } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Search, User, LogOut, Loader2, FileCheck, Image as ImageIcon, Sun, Moon, LayoutGrid, Menu, X, Shield } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useTheme } from "next-themes"; // Import useTheme
+import { useTheme } from "next-themes";
+import { navItems } from "@/config/nav";
 
 export default function AppLayout({
   children,
@@ -20,13 +21,22 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session, isPending } = authClient.useSession();
   const { theme, setTheme, resolvedTheme } = useTheme(); 
   const [mounted, setMounted] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
+  const isAdmin = session?.user?.email === "contact.arthur.mouton@gmail.com";
 
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,9 +59,6 @@ export default function AppLayout({
             const res = await fetch("/api/settings/user");
             if (res.ok) {
                 const data = await res.json();
-                
-                // Only set if explicitly 'light' or 'dark' to respect user preference from DB
-                // 'system' is default, so if it's 'system' we let next-themes handle it or do nothing
                 if (data.theme && data.theme !== "system") {
                     setTheme(data.theme);
                 }
@@ -60,12 +67,11 @@ export default function AppLayout({
             console.error("Failed to fetch user theme:", e);
         }
     }
-    // Only run on mount or when session becomes available
     if (session?.user?.id && !mounted) {
          fetchAndApplyTheme();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]); // removed 'mounted' from dep array to avoid re-running, added check inside
+  }, [session]); 
 
 
   const handleSearch = async () => {
@@ -98,8 +104,6 @@ export default function AppLayout({
   const toggleTheme = () => {
     const newTheme = resolvedTheme === "dark" ? "light" : "dark";
     setTheme(newTheme);
-    
-    // Persist to DB (Fire and forget)
     fetch("/api/settings/user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -123,20 +127,90 @@ export default function AppLayout({
       className="min-h-screen bg-background text-foreground font-sans flex"
       suppressHydrationWarning
     >
-      <AppSidebar />
+      <AppSidebar className="hidden md:flex" />
+
+      {/* Mobile Drawer */}
+      <AnimatePresence>
+        {isMobileOpen && (
+            <>
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-40 bg-black/50 md:hidden backdrop-blur-sm"
+                    onClick={() => setIsMobileOpen(false)}
+                />
+                <motion.aside
+                    initial={{ x: "-100%" }}
+                    animate={{ x: 0 }}
+                    exit={{ x: "-100%" }}
+                    transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+                    className="fixed left-0 top-0 bottom-0 z-50 w-72 bg-card border-r border-border flex flex-col md:hidden shadow-2xl"
+                >
+                    <div className="h-16 flex items-center justify-between px-4 border-b border-border">
+                        <Link href="/dashboard" className="flex items-center gap-2">
+                            <div className="h-8 w-8">
+                                <img src="/logo.svg" alt="Logo" className="w-full h-full" />
+                            </div>
+                            <span className="font-semibold text-foreground tracking-tight">MetaConvert</span>
+                        </Link>
+                        <button onClick={() => setIsMobileOpen(false)} className="p-2 text-muted-foreground hover:text-foreground">
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
+                            return (
+                                <Link 
+                                    key={item.name} 
+                                    href={item.href}
+                                    className={cn(
+                                        "flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-all",
+                                        isActive 
+                                        ? "bg-primary/10 text-primary" 
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    )}
+                                    onClick={() => setIsMobileOpen(false)}
+                                >
+                                    <item.icon className="h-5 w-5" />
+                                    <span>{item.name}</span>
+                                </Link>
+                            );
+                        })}
+                        {isAdmin && (
+                           <Link 
+                              href="/admin"
+                              className="flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium transition-all text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/10"
+                              onClick={() => setIsMobileOpen(false)}
+                            >
+                              <Shield className="h-5 w-5" />
+                              <span>Administration</span>
+                            </Link>
+                        )}
+                    </div>
+                </motion.aside>
+            </>
+        )}
+      </AnimatePresence>
       
-      <div className="flex-1 flex flex-col ml-[80px] md:ml-[250px] transition-all duration-300 min-h-screen">
+      <div className="flex-1 flex flex-col ml-0 md:ml-[250px] transition-all duration-300 min-h-screen">
         {/* Topbar */}
-        <header className="h-16 border-b border-border bg-background sticky top-0 z-30 flex items-center justify-between px-6 shadow-sm">
+        <header className="h-16 border-b border-border bg-background sticky top-0 z-30 flex items-center justify-between px-4 md:px-6 shadow-sm gap-4">
+           {/* Mobile Menu Button */}
+           <Button variant="ghost" size="icon" className="md:hidden shrink-0" onClick={() => setIsMobileOpen(true)}>
+                <Menu size={20} />
+           </Button>
+
            {/* Global Search */}
-           <div className="relative">
+           <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input 
-                placeholder="Rechercher un outil, un fichier..."
+                placeholder="Rechercher..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
-                className="w-64 bg-muted/50 border border-input rounded-lg pl-10 pr-4 py-1.5 text-sm focus:border-primary transition-all"
+                className="w-full bg-muted/50 border border-input rounded-lg pl-10 pr-4 py-1.5 text-sm focus:border-primary transition-all"
               />
                <AnimatePresence>
                 {searchQuery && searchResults && (
@@ -182,10 +256,8 @@ export default function AppLayout({
                </AnimatePresence>
            </div>
 
-           <div className="flex items-center gap-4">
-              {/* Notifications removed */}
-              
-              <div className="h-6 w-[1px] bg-border" />
+           <div className="flex items-center gap-2 md:gap-4 shrink-0">
+              <div className="h-6 w-[1px] bg-border hidden md:block" />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -216,7 +288,7 @@ export default function AppLayout({
                 variant="ghost" 
                 size="icon" 
                 onClick={toggleTheme}
-                className="ml-2"
+                className="hidden md:flex"
                 aria-label="Toggle theme"
               >
                 {mounted && (resolvedTheme === "dark" ? <Moon size={20} /> : <Sun size={20} />)}
@@ -225,7 +297,7 @@ export default function AppLayout({
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-6 overflow-x-hidden bg-slate-50 dark:bg-background">
+        <main className="flex-1 p-4 md:p-6 overflow-x-hidden bg-slate-50 dark:bg-background">
           {children}
         </main>
       </div>
