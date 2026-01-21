@@ -9,7 +9,6 @@ export default function SitemapPage() {
       links: [
         { label: "Accueil", href: "/" },
         { label: "Fonctionnalités", href: "/#features" },
-        { label: "Tarifs", href: "/pricing" },
         { label: "Convertisseur (Dashboard)", href: "/dashboard" },
         { label: "Nouveautés", href: "/changelog" },
       ]
@@ -37,7 +36,7 @@ export default function SitemapPage() {
       title: "Entreprise",
       icon: Briefcase,
       links: [
-        { label: "À propos", href: "/about" },
+        { label: "À propos", href: "/#about" },
         { label: "Contact", href: "/contact" },
         { label: "Carrières", href: "/careers" },
       ]

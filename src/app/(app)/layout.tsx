@@ -49,6 +49,12 @@ export default function AppLayout({
             const res = await fetch("/api/settings/user");
             if (res.ok) {
                 const data = await res.json();
+                
+                if (data.banned) {
+                    router.push("/banned");
+                    return;
+                }
+
                 // Only set if explicitly 'light' or 'dark' to respect user preference from DB
                 // 'system' is default, so if it's 'system' we let next-themes handle it or do nothing
                 if (data.theme && data.theme !== "system") {
@@ -194,9 +200,6 @@ export default function AppLayout({
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                         <Link href="/dashboard/settings" className="cursor-pointer">Paramètres</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                        <Link href="/pricing" className="cursor-pointer">Mon Plan</Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">

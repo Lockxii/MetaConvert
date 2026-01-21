@@ -5,7 +5,8 @@ import {
   ArrowRight, Check, Zap, Layers, Globe, Shield, 
   Image as ImageIcon, FileText, Video, Music, 
   ArrowUpRight, Sparkles, Cpu, Clock, 
-  BarChart3, MoveRight, Play, Download
+  BarChart3, MoveRight, Play, Download,
+  Target, Users, Heart
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -74,11 +75,6 @@ export default function HomePage() {
               <Button size="lg" className="rounded-full px-10 h-14 text-base font-semibold shadow-xl shadow-blue-500/20 gap-2 w-full sm:w-auto" asChild>
                 <Link href="/sign-up">
                   Commencer l'expérience <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" className="rounded-full px-10 h-14 text-base font-semibold border-border hover:bg-muted w-full sm:w-auto" asChild>
-                <Link href="/pricing">
-                  Explorer les plans
                 </Link>
               </Button>
             </motion.div>
@@ -270,6 +266,56 @@ export default function HomePage() {
                   </div>
               </div>
           </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="py-24 bg-background relative overflow-hidden">
+        <div className="container px-4 mx-auto relative z-10">
+            <div className="text-center mb-16 max-w-3xl mx-auto">
+                <h2 className="text-base font-bold text-primary tracking-widest uppercase mb-4">À Propos</h2>
+                <h3 className="text-4xl md:text-5xl font-black text-foreground mb-6">Notre Mission</h3>
+                <p className="text-lg text-muted-foreground">
+                    Nous simplifions la gestion des fichiers numériques pour les créateurs et les entreprises du monde entier.
+                    Simplicité, Confidentialité et Performance sont au cœur de tout ce que nous construisons.
+                </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-20">
+                <div className="text-center p-8 rounded-3xl bg-muted/30 border border-border hover:border-primary/30 transition-all group">
+                    <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                        <Target size={28} />
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground mb-3">Notre Objectif</h3>
+                    <p className="text-muted-foreground leading-relaxed">Rendre la conversion et l'optimisation de fichiers accessibles, rapides et sécurisées pour tous.</p>
+                </div>
+                <div className="text-center p-8 rounded-3xl bg-muted/30 border border-border hover:border-primary/30 transition-all group">
+                    <div className="w-14 h-14 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                        <Users size={28} />
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground mb-3">Pour Qui ?</h3>
+                    <p className="text-muted-foreground leading-relaxed">Des freelances aux grandes entreprises, nous servons tous ceux qui ont besoin de gérer des assets numériques.</p>
+                </div>
+                <div className="text-center p-8 rounded-3xl bg-muted/30 border border-border hover:border-primary/30 transition-all group">
+                    <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                        <Heart size={28} />
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground mb-3">Nos Valeurs</h3>
+                    <p className="text-muted-foreground leading-relaxed">Nous croyons en un web ouvert, rapide et respectueux de la vie privée des utilisateurs.</p>
+                </div>
+            </div>
+
+            <div className="max-w-4xl mx-auto bg-card rounded-3xl p-8 md:p-12 border border-border text-center">
+                 <h3 className="text-2xl font-bold text-foreground mb-6">Notre Histoire</h3>
+                 <div className="prose prose-lg dark:prose-invert mx-auto text-muted-foreground">
+                    <p className="mb-4">
+                        MetaConvert est né d'une frustration simple : pourquoi est-il si difficile de convertir un fichier sans être bombardé de publicités ou craindre pour ses données ?
+                    </p>
+                    <p>
+                        Lancé en 2024, nous avons commencé comme un simple outil de conversion PDF. Aujourd'hui, nous traitons des milliers de fichiers chaque jour, incluant images, vidéos et audio, avec une infrastructure de pointe.
+                    </p>
+                </div>
+            </div>
+        </div>
       </section>
 
       {/* CTA Section */}

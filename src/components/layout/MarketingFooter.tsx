@@ -41,7 +41,6 @@ export function MarketingFooter() {
                 <h4 className="font-bold text-white mb-6">Produit</h4>
                 <ul className="space-y-4 text-sm">
                 <li><Link href="/#features" className="hover:text-blue-400 transition-colors">Fonctionnalités</Link></li>
-                <li><Link href="/pricing" className="hover:text-blue-400 transition-colors">Tarifs</Link></li>
                 <li><Link href="/dashboard" className="hover:text-blue-400 transition-colors">Convertisseur</Link></li>
                 </ul>
             </div>

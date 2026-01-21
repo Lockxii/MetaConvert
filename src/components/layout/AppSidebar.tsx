@@ -13,7 +13,6 @@ import {
   Settings, 
   ChevronLeft, 
   ChevronRight,
-  Zap,
   Cloud,
   Archive,
   Layers,
@@ -93,25 +92,6 @@ export function AppSidebar() {
             </Link>
           );
         })}
-      </div>
-
-      <div className="p-4 border-t border-border bg-muted/30">
-        {!collapsed ? (
-            <div className="rounded-lg bg-slate-900 p-4 relative overflow-hidden group dark:bg-card dark:border dark:border-border">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/20 rounded-full blur-xl -translate-y-10 translate-x-10" />
-                <h4 className="font-semibold text-white text-sm mb-1 flex items-center gap-2 dark:text-foreground">
-                    <Zap size={14} className="text-yellow-400 fill-yellow-400" /> Plan Pro
-                </h4>
-                <p className="text-xs text-slate-400 mb-3 dark:text-muted-foreground">Débloquez la 4K et le batch processing.</p>
-                <Link href="/pricing" className="w-full text-xs bg-white text-slate-900 font-medium py-1.5 rounded hover:bg-slate-100 transition-colors text-center block dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90">
-                    Mettre à niveau
-                </Link>
-            </div>
-        ) : (
-            <Link href="/pricing" className="flex justify-center">
-                <Zap size={20} className="text-primary fill-primary/20" />
-            </Link>
-        )}
       </div>
     </motion.aside>
   );

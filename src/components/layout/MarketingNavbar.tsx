@@ -38,10 +38,7 @@ export function MarketingNavbar() {
           <Link href="/#features" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
             Fonctionnalités
           </Link>
-          <Link href="/pricing" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
-            Tarifs
-          </Link>
-          <Link href="/about" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
+          <Link href="/#about" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
             À Propos
           </Link>
         </nav>
@@ -68,7 +65,6 @@ export function MarketingNavbar() {
       {mobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b border-border p-6 flex flex-col gap-6 shadow-2xl animate-in slide-in-from-top-4 duration-300">
            <Link href="/#features" className="text-base font-semibold text-foreground" onClick={() => setMobileMenuOpen(false)}>Fonctionnalités</Link>
-           <Link href="/pricing" className="text-base font-semibold text-foreground" onClick={() => setMobileMenuOpen(false)}>Tarifs</Link>
            <Link href="/sign-in" className="text-base font-semibold text-foreground" onClick={() => setMobileMenuOpen(false)}>Connexion</Link>
            <Button className="w-full rounded-full h-12 font-bold" asChild>
              <Link href="/sign-up">Commencer</Link>
