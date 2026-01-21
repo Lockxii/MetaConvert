@@ -3,7 +3,7 @@
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import { Search, User, LogOut, Loader2, FileCheck, Image as ImageIcon, Sun, Moon } from "lucide-react";
+import { Search, User, LogOut, Loader2, FileCheck, Image as ImageIcon, Sun, Moon, LayoutGrid } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -147,10 +147,19 @@ export default function AppLayout({
                         className="absolute left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-lg z-40 max-h-60 overflow-y-auto"
                     >
                         {searching && <div className="p-2 text-center text-sm text-muted-foreground">Recherche...</div>}
-                        {!searching && searchResults.conversions.length === 0 && searchResults.upscales.length === 0 && (
+                        {!searching && (!searchResults.conversions?.length && !searchResults.upscales?.length && !searchResults.tools?.length) && (
                             <div className="p-2 text-center text-sm text-muted-foreground">Aucun résultat trouvé.</div>
                         )}
-                        {searchResults.conversions.map((item: any) => (
+                        {searchResults.tools?.map((item: any) => (
+                            <Link href={item.href} key={item.name} className="flex items-center gap-3 p-2 hover:bg-muted border-b border-border last:border-b-0">
+                                <LayoutGrid size={16} className="text-blue-500" />
+                                <div className="text-sm">
+                                    <p className="font-medium">{item.name}</p>
+                                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                                </div>
+                            </Link>
+                        ))}
+                        {searchResults.conversions?.map((item: any) => (
                             <Link href={`/dashboard/image`} key={item.id} className="flex items-center gap-3 p-2 hover:bg-muted border-b border-border last:border-b-0">
                                 <FileCheck size={16} className="text-primary" />
                                 <div className="text-sm">

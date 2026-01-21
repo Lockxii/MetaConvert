@@ -21,6 +21,26 @@ export async function GET(req: NextRequest) {
 
         const searchTerm = `%${query.toLowerCase()}%`;
 
+        // Tools search
+        const tools = [
+            { name: "Vue d'ensemble", href: "/dashboard", icon: "LayoutDashboard", description: "Tableau de bord principal" },
+            { name: "Mon Cloud", href: "/dashboard/cloud", icon: "Cloud", description: "Gérer vos fichiers stockés" },
+            { name: "Image Converter", href: "/dashboard/image", icon: "Image", description: "Convertir et optimiser des images" },
+            { name: "PDF Tools", href: "/dashboard/pdf", icon: "FileText", description: "Outils PDF (Fusion, conversion)" },
+            { name: "PDF Weaver", href: "/dashboard/pdf-weaver", icon: "Layers", description: "Assemblage avancé de PDF" },
+            { name: "Vidéo Converter", href: "/dashboard/video", icon: "Video", description: "Conversion et compression vidéo" },
+            { name: "Audio Converter", href: "/dashboard/audio", icon: "Music", description: "Outils audio et extraction" },
+            { name: "Web Capture", href: "/dashboard/web", icon: "Globe", description: "Capturer des sites web" },
+            { name: "Archives", href: "/dashboard/archive", icon: "Archive", description: "Créer et extraire des archives (ZIP)" },
+            { name: "File Drop", href: "/dashboard/drop", icon: "FolderUp", description: "Demander des fichiers via lien" },
+            { name: "Réglages", href: "/dashboard/settings", icon: "Settings", description: "Préférences et compte" },
+        ];
+
+        const foundTools = tools.filter(tool => 
+            tool.name.toLowerCase().includes(query.toLowerCase()) || 
+            tool.description.toLowerCase().includes(query.toLowerCase())
+        );
+
         const foundConversions = await db.query.conversions.findMany({
             where: and(
                 eq(conversions.userId, userId),
@@ -31,7 +51,7 @@ export async function GET(req: NextRequest) {
                 )
             ),
             orderBy: desc(conversions.createdAt),
-            limit: 10,
+            limit: 5,
         });
 
         const foundUpscales = await db.query.upscales.findMany({
@@ -40,10 +60,11 @@ export async function GET(req: NextRequest) {
                 ilike(upscales.fileName, searchTerm)
             ),
             orderBy: desc(upscales.createdAt),
-            limit: 10,
+            limit: 5,
         });
 
         return NextResponse.json({
+            tools: foundTools,
             conversions: foundConversions,
             upscales: foundUpscales,
         });
