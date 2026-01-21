@@ -1,7 +1,16 @@
 "use server";
 
 import { db } from "@/db";
-import { user } from "@/db/schema";
+import { 
+    user, 
+    conversions, 
+    upscales, 
+    session, 
+    account, 
+    userSettings, 
+    sharedLinks, 
+    dropLinks 
+} from "@/db/schema";
 import { eq, like, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
@@ -42,8 +51,23 @@ export async function updateUser(userId: string, data: Partial<typeof user.$infe
 
 export async function deleteUser(userId: string) {
     try {
-        // Warning: This should probably cascade delete related data (conversions, upscales, etc.)
-        // For now, assuming Drizzle or DB foreign keys handle cascade or we just delete user.
+        // Manual Cascade Delete
+        // Order matters slightly for some FKs, but usually deleting dependents first is safest.
+        
+        // 1. Delete User Settings
+        await db.delete(userSettings).where(eq(userSettings.userId, userId));
+        
+        // 2. Delete Auth Sessions & Accounts
+        await db.delete(session).where(eq(session.userId, userId));
+        await db.delete(account).where(eq(account.userId, userId));
+
+        // 3. Delete App Data (Conversions, Upscales, Links)
+        await db.delete(conversions).where(eq(conversions.userId, userId));
+        await db.delete(upscales).where(eq(upscales.userId, userId));
+        await db.delete(sharedLinks).where(eq(sharedLinks.userId, userId));
+        await db.delete(dropLinks).where(eq(dropLinks.userId, userId));
+
+        // 4. Finally Delete User
         await db.delete(user).where(eq(user.id, userId));
         
         revalidatePath("/admin/users");
