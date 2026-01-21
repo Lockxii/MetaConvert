@@ -12,19 +12,20 @@ export async function POST(req: NextRequest) {
 
     if (!url) return NextResponse.json({ error: "URL requise" }, { status: 400 });
 
-    // Use co.wuk.sh (Cobalt v7 instance) which is reliable and bypasses Vercel IP blocks
-    const cobaltResponse = await fetch("https://co.wuk.sh/api/json", {
+    // Use cobalt.lacus.dev (Another Cobalt instance)
+    const cobaltResponse = await fetch("https://cobalt.lacus.dev/", {
         method: "POST",
         headers: {
             "Accept": "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": "MetaConvert/1.0"
         },
         body: JSON.stringify({
             url: url,
-            vQuality: "720",
+            videoQuality: "720",
             filenamePattern: "basic",
-            isAudioOnly: format === "mp3",
-            aFormat: format === "mp3" ? "mp3" : undefined,
+            downloadMode: format === "mp3" ? "audio" : "auto", 
+            audioFormat: format === "mp3" ? "mp3" : undefined,
         })
     });
 
