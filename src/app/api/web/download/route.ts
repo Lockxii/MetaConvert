@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
             if (tikData.code === 0 && tikData.data?.play) {
                 const videoUrl = tikData.data.play;
                 const fileRes = await fetch(videoUrl);
-                const arrayBuffer = await fileRes.arrayBuffer();
-                return sendFile(Buffer.from(arrayBuffer), `tiktok-${tikData.data.id || Date.now()}.mp4`, "video/mp4", userId, type);
+                if (!fileRes.body) throw new Error("No body");
+                return sendStream(fileRes.body, `tiktok-${tikData.data.id || Date.now()}.mp4`, "video/mp4", userId, type);
             }
         } catch (e) {
             console.error("TikWM failed", e);
@@ -53,7 +53,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. YOUTUBE SPECIAL (Piped API)
-    // Cobalt is often blocked for YouTube on Vercel IPs, Piped is more resilient
     if (url.includes("youtube.com") || url.includes("youtu.be")) {
         const videoId = getYouTubeId(url);
         if (videoId) {
@@ -70,15 +69,13 @@ export async function POST(req: NextRequest) {
                     let ext = "";
 
                     if (format === "mp3") {
-                        // Piped gives m4a usually. We prefer audio only.
                         const audioStream = data.audioStreams.find((s: any) => s.mimeType.includes("mp4") || s.mimeType.includes("m4a"));
                         if (audioStream) {
                             streamUrl = audioStream.url;
-                            mimeType = "audio/mp4"; // Close enough, browser will handle
+                            mimeType = "audio/mp4";
                             ext = "m4a";
                         }
                     } else {
-                        // Video: Prefer mp4 1080p or 720p
                         const videoStream = data.videoStreams.find((s: any) => s.mimeType.includes("mp4") && s.quality === "1080p") 
                                          || data.videoStreams.find((s: any) => s.mimeType.includes("mp4") && s.quality === "720p")
                                          || data.videoStreams.find((s: any) => s.mimeType.includes("mp4"));
@@ -92,9 +89,8 @@ export async function POST(req: NextRequest) {
 
                     if (streamUrl) {
                         const fileRes = await fetch(streamUrl);
-                        if (!fileRes.ok) throw new Error("Stream download failed");
-                        const arrayBuffer = await fileRes.arrayBuffer();
-                        return sendFile(Buffer.from(arrayBuffer), `${data.title || 'video'}.${ext}`, mimeType, userId, type);
+                        if (!fileRes.ok || !fileRes.body) throw new Error("Stream download failed");
+                        return sendStream(fileRes.body, `${(data.title || 'video').replace(/[^a-z0-9]/gi, '_')}.${ext}`, mimeType, userId, type);
                     }
                 } catch (e) {
                     console.error(`Piped instance ${instance} failed:`, e);
@@ -104,13 +100,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. GENERIC FALLBACK (Cobalt)
-    // ... (Keep existing Cobalt logic)
     let lastError: any = null;
     
     for (const instance of COBALT_INSTANCES) {
         try {
             console.log(`[Web Download] Trying Cobalt instance: ${instance}`);
-            // ... (rest of Cobalt logic same as before)
             const res = await fetch(`${instance}/`, {
                 method: "POST",
                 headers: {
@@ -140,16 +134,15 @@ export async function POST(req: NextRequest) {
 
             if (downloadUrl) {
                  const fileRes = await fetch(downloadUrl);
-                 if (!fileRes.ok) throw new Error("File download failed");
-                 const arrayBuffer = await fileRes.arrayBuffer();
+                 if (!fileRes.ok || !fileRes.body) throw new Error("File download failed");
                  const filename = data.filename || `download-${Date.now()}.${format}`;
-                 return sendFile(Buffer.from(arrayBuffer), filename, format === "mp3" ? "audio/mpeg" : "video/mp4", userId, type);
+                 return sendStream(fileRes.body, filename, format === "mp3" ? "audio/mpeg" : "video/mp4", userId, type);
             }
 
         } catch (e) {
             console.error(`Failed with ${instance}:`, e);
             lastError = e;
-            continue; // Try next instance
+            continue; 
         }
     }
 
@@ -161,19 +154,21 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function sendFile(buffer: Buffer, fileName: string, mimeType: string, userId: string | null, type: string) {
+function sendStream(stream: ReadableStream, fileName: string, mimeType: string, userId: string | null, type: string) {
+    // Note: We cannot log fileBuffer size here since it's a stream.
+    // We log metadata only.
     logOperation({
       userId: userId || "anonymous",
       type: "conversion",
       fileName,
       originalSize: 0,
-      convertedSize: buffer.length,
+      convertedSize: 0, // Unknown
       targetType: mimeType.split('/')[1],
       status: "completed",
-      fileBuffer: buffer, 
+      // fileBuffer: null // Cannot save stream easily to DB without collecting it
     }).catch(console.error);
 
-    return new NextResponse(buffer as any, {
+    return new NextResponse(stream as any, {
       headers: {
         "Content-Type": mimeType,
         "Content-Disposition": `attachment; filename="${fileName}"`,
