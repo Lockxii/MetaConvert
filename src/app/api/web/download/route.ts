@@ -8,20 +8,6 @@ const COBALT_INSTANCES = [
     "https://api.timeless-nesses.me",
 ];
 
-// Rotating Piped instances (for YouTube fallback)
-const PIPED_INSTANCES = [
-    "https://pipedapi.kavin.rocks",
-    "https://api.piped.privacy.com.de",
-    "https://pipedapi.adminforge.de",
-    "https://api.piped.projects.hq.c.emkc.org"
-];
-
-function getYouTubeId(url: string) {
-    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[7].length == 11) ? match[7] : null;
-}
-
 export async function POST(req: NextRequest) {
   let userId: string | null = null;
   
@@ -52,54 +38,7 @@ export async function POST(req: NextRequest) {
         }
     }
 
-    // 2. YOUTUBE SPECIAL (Piped API)
-    if (url.includes("youtube.com") || url.includes("youtu.be")) {
-        const videoId = getYouTubeId(url);
-        if (videoId) {
-            for (const instance of PIPED_INSTANCES) {
-                try {
-                    console.log(`[Web Download] Trying Piped instance: ${instance}`);
-                    const res = await fetch(`${instance}/streams/${videoId}`);
-                    if (!res.ok) continue;
-                    
-                    const data = await res.json();
-                    
-                    let streamUrl = null;
-                    let mimeType = "";
-                    let ext = "";
-
-                    if (format === "mp3") {
-                        const audioStream = data.audioStreams.find((s: any) => s.mimeType.includes("mp4") || s.mimeType.includes("m4a"));
-                        if (audioStream) {
-                            streamUrl = audioStream.url;
-                            mimeType = "audio/mp4";
-                            ext = "m4a";
-                        }
-                    } else {
-                        const videoStream = data.videoStreams.find((s: any) => s.mimeType.includes("mp4") && s.quality === "1080p") 
-                                         || data.videoStreams.find((s: any) => s.mimeType.includes("mp4") && s.quality === "720p")
-                                         || data.videoStreams.find((s: any) => s.mimeType.includes("mp4"));
-                        
-                        if (videoStream) {
-                            streamUrl = videoStream.url;
-                            mimeType = "video/mp4";
-                            ext = "mp4";
-                        }
-                    }
-
-                    if (streamUrl) {
-                        const fileRes = await fetch(streamUrl);
-                        if (!fileRes.ok || !fileRes.body) throw new Error("Stream download failed");
-                        return sendStream(fileRes.body, `${(data.title || 'video').replace(/[^a-z0-9]/gi, '_')}.${ext}`, mimeType, userId, type);
-                    }
-                } catch (e) {
-                    console.error(`Piped instance ${instance} failed:`, e);
-                }
-            }
-        }
-    }
-
-    // 3. GENERIC FALLBACK (Cobalt)
+    // 2. GENERIC FALLBACK (Cobalt)
     let lastError: any = null;
     
     for (const instance of COBALT_INSTANCES) {
