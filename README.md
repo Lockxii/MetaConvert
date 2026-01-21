@@ -1,139 +1,105 @@
-# MetaConvert 🚀
+# ⚡ MetaConvert
 
-**La plateforme tout-en-un pour convertir, compresser et optimiser vos fichiers numériques.**
+**La plateforme ultime de conversion et d'édition de fichiers, boostée par le Cloud.**
 
-MetaConvert est une application web moderne construite avec **Next.js**, **Tailwind CSS**, et **Node.js**, conçue pour offrir des outils puissants de traitement de fichiers (PDF, Images, Vidéo, Audio) avec une expérience utilisateur fluide et sécurisée.
+![MetaConvert Banner](public/logo.png)
+
+MetaConvert est une suite d'outils web tout-en-un conçue pour simplifier la gestion de vos assets numériques. Convertissez, éditez, sécurisez et partagez vos fichiers sans limite, le tout dans une interface moderne et fluide.
 
 ---
 
-## ✨ Fonctionnalités Principales
+## 🚀 Fonctionnalités Clés
 
-### 📄 Outils PDF
-- **Fusionner** : Combinez plusieurs PDF en un seul fichier.
-- **Diviser** : Extrayez des pages spécifiques d'un document.
-- **Convertir** : Transformez vos PDF en Word (.txt) ou en Images (.png/.zip).
-- **Compresser** : Réduisez la taille de vos documents.
+### 🎨 Traitement d'Image
+- **Conversion Universelle** : Support de +20 formats (PNG, WEBP, AVIF, HEIC, PSD, RAW...).
+- **Édition Visuelle** : Recadrage, rotation et redimensionnement directement dans le navigateur.
+- **Upscaling** : Agrandissement intelligent (2x, 4x) sans perte de qualité.
+- **Nettoyage** : Suppression des métadonnées (EXIF/GPS) pour la confidentialité.
 
-### 🖼️ Outils Image
-- **Conversion** : Supporte plus de 20 formats (PNG, JPG, WEBP, AVIF, TIFF, HEIC, etc.).
-- **Compression** : Optimisez le poids de vos images sans perte de qualité visible.
-- **Upscaling IA** : Améliorez la résolution de vos images (2x, 4x).
-- **Rognage & Redimensionnement** : Ajustez vos visuels en quelques clics.
+### 📄 PDF Weaver & Outils
+- **PDF Weaver** : Éditeur visuel en glisser-déposer pour fusionner, diviser et réorganiser vos pages PDF.
+- **Conversion** : PDF vers Images (PNG, JPG, WebP) ou Texte.
+- **Optimisation** : Compression et sécurisation.
 
-### 🎥 Outils Vidéo
-- **Conversion** : Changez de format (MP4, AVI, MKV, WEBM, MOV).
-- **Extraction Audio** : Récupérez la piste sonore (MP3) de vos vidéos.
-- **Compression** : Réduisez la taille pour un partage facile.
+### 🎥 Vidéo & Audio
+- **Spectrogramme** : Transformez vos audios en vidéos avec ondes sonores animées.
+- **Web Downloader** : Téléchargez vidéos et audios depuis YouTube, TikTok, Vimeo (MP4/MP3).
+- **Conversion & Extraction** : Changez de format ou extrayez la piste son d'une vidéo.
+- **GIF Maker** : Créez des GIFs fluides à partir de vos vidéos.
 
-### 🎵 Outils Audio
-- **Conversion** : Convertissez entre MP3, WAV, AAC, OGG, FLAC.
-- **Compression** : Optimisez vos fichiers audio.
-
-### 🛠️ Dashboard & Utilisateur
-- **Espace Personnel** : Suivi des conversions récentes.
-- **Thème Sombre/Clair** : Interface adaptative selon vos préférences.
-- **Authentification** : Gestion de compte sécurisée via Email/Mot de passe.
+### ☁️ Cloud & Partage (MetaVault)
+- **Stockage Personnel** : Historique complet de vos conversions avec prévisualisation.
+- **MetaVault** : Créez des archives ZIP chiffrées (AES-256) pour vos données sensibles.
+- **Liens de Dépôt** : Créez des liens publics sécurisés pour recevoir des fichiers de vos contacts.
+- **Partage Éphémère** : Générez des liens de téléchargement temporaires avec QR Code intégré.
 
 ---
 
 ## 🛠️ Stack Technique
 
-- **Frontend** : Next.js 14 (App Router), React, TypeScript.
-- **Styling** : Tailwind CSS, Shadcn/UI (Radix UI), Lucide Icons, Framer Motion.
-- **Backend** : Next.js API Routes (Serverless functions).
-- **Processing** :
-  - `sharp` (Images)
-  - `ffmpeg-static` & `fluent-ffmpeg` (Vidéo/Audio)
-  - `pdf-lib`, `pdf-parse`, `pdf-img-convert` (PDF)
-- **Database** : PostgreSQL (NeonDB) avec Drizzle ORM.
-- **Auth** : Better-Auth.
-- **Deployment** : Vercel (Recommandé).
+- **Framework** : [Next.js 15](https://nextjs.org/) (App Router)
+- **Langage** : TypeScript
+- **Style** : [Tailwind CSS](https://tailwindcss.com/) + [Shadcn/ui](https://ui.shadcn.com/)
+- **Base de Données** : PostgreSQL (via [Neon](https://neon.tech/)) + [Drizzle ORM](https://orm.drizzle.team/)
+- **Auth** : [Better Auth](https://www.better-auth.com/)
+- **Traitement** : 
+  - `ffmpeg` (Vidéo/Audio)
+  - `sharp` (Image)
+  - `pdf-lib` & `pdfjs-dist` (PDF)
+  - `puppeteer` (Capture Web)
+  - `yt-dlp` (Téléchargement Web)
 
 ---
 
-## 🚀 Installation & Démarrage
+## 📦 Installation Locale
 
-### Prérequis
-- Node.js 18+
-- npm ou yarn
-- Une base de données PostgreSQL (ex: NeonDB)
+1. **Cloner le projet**
+   ```bash
+   git clone https://github.com/Lockxii/MetaConvert.git
+   cd MetaConvert
+   ```
 
-### 1. Cloner le projet
-```bash
-git clone https://github.com/votre-username/metaconvert.git
-cd metaconvert
-```
+2. **Installer les dépendances**
+   ```bash
+   npm install
+   ```
 
-### 2. Installer les dépendances
-```bash
-npm install
-```
+3. **Configurer l'environnement**
+   Créez un fichier `.env.local` à la racine :
+   ```env
+   DATABASE_URL="votre_url_postgres_neon"
+   BETTER_AUTH_SECRET="votre_secret_genere"
+   # Optionnel en dev
+   # BETTER_AUTH_URL="http://localhost:3000" 
+   ```
 
-### 3. Configurer l'environnement
-Créez un fichier `.env.local` à la racine du projet et ajoutez les variables suivantes :
+4. **Lancer la base de données**
+   ```bash
+   npm run db:push
+   ```
 
-```env
-# Base de données (NeonDB ou autre Postgres)
-DATABASE_URL="postgres://user:password@host/dbname?sslmode=require"
-
-# Authentification (Better Auth)
-BETTER_AUTH_SECRET="votre_secret_super_securise"
-BETTER_AUTH_URL="http://localhost:3000"
-
-# (Optionnel) Configuration de stockage ou autres services
-```
-
-### 4. Initialiser la base de données
-```bash
-npm run db:generate
-npm run db:migrate
-```
-
-### 5. Lancer le serveur de développement
-```bash
-npm run dev
-```
-Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
+5. **Démarrer le serveur**
+   ```bash
+   npm run dev
+   ```
 
 ---
 
-## 📂 Structure du Projet
+## 🚀 Déploiement (Vercel)
 
-```
-src/
-├── app/                 # Pages et Routes API (App Router)
-│   ├── (app)/           # Routes protégées (Dashboard)
-│   ├── (auth)/          # Routes d'authentification (Login/Signup)
-│   ├── (marketing)/     # Pages publiques (Landing, Pricing...)
-│   └── api/             # Endpoints API (Traitement fichiers, etc.)
-├── components/          # Composants UI réutilisables
-│   ├── ui/              # Composants Shadcn/UI (Button, Input...)
-│   ├── layout/          # Sidebar, Navbar, Footer
-│   └── dashboard/       # Composants spécifiques au dashboard
-├── db/                  # Schéma de base de données (Drizzle)
-├── lib/                 # Utilitaires et configuration (Auth, Utils)
-└── hooks/               # Custom React Hooks
-```
+Ce projet est optimisé pour un déploiement sur [Vercel](https://vercel.com/).
+
+1. Connectez votre repo GitHub à Vercel.
+2. Ajoutez les variables d'environnement (`DATABASE_URL`, `BETTER_AUTH_SECRET`).
+3. **Important** : Ne définissez PAS `BETTER_AUTH_URL` ou `NEXT_PUBLIC_APP_URL` sur Vercel, l'application détecte automatiquement son domaine.
+4. Déployez !
 
 ---
 
-## 🤝 Contribuer
-
-Les contributions sont les bienvenues !
-1.  Forkez le projet.
-2.  Créez votre branche de fonctionnalité (`git checkout -b feature/AmazingFeature`).
-3.  Commitez vos changements (`git commit -m 'Add some AmazingFeature'`).
-4.  Poussez vers la branche (`git push origin feature/AmazingFeature`).
-5.  Ouvrez une Pull Request.
-
----
-
-## 📄 Licence
+## 🛡️ Licence
 
 Distribué sous la licence MIT. Voir `LICENSE` pour plus d'informations.
 
 ---
 
-## 📞 Contact
-
-Lien du projet : [https://github.com/votre-username/metaconvert](https://github.com/votre-username/metaconvert)
+*Développé avec ❤️ par Arthur.*
