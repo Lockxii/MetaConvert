@@ -16,10 +16,12 @@ import {
   Cloud,
   Archive,
   Layers,
-  FolderUp
+  FolderUp,
+  Shield
 } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { authClient } from "@/lib/auth-client";
 
 const navItems = [
   { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard },
@@ -38,6 +40,8 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { data: session } = authClient.useSession();
+  const isAdmin = session?.user?.email === "contact.arthur.mouton@gmail.com";
 
   return (
     <motion.aside 
@@ -92,6 +96,27 @@ export function AppSidebar() {
             </Link>
           );
         })}
+
+        {isAdmin && (
+           <Link 
+              href="/admin"
+              className={cn(
+                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 group relative text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/10"
+              )}
+            >
+              <Shield className="h-4 w-4" />
+              
+              {!collapsed && (
+                <motion.span 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  Administration
+                </motion.span>
+              )}
+            </Link>
+        )}
       </div>
     </motion.aside>
   );
