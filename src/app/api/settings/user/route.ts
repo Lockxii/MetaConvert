@@ -16,14 +16,6 @@ export async function GET(req: NextRequest) {
             where: eq(userSettings.userId, userId),
         });
 
-        const userInfo = await db.query.user.findFirst({
-            where: eq(usersTable.id, userId),
-            columns: {
-                role: true,
-                banned: true
-            }
-        });
-
         const finalSettings = settings || {
             userId: userId,
             theme: "system",
@@ -33,10 +25,10 @@ export async function GET(req: NextRequest) {
 
         if (!settings) {
             // Create default settings if none exist
-             await db.insert(userSettings).values(finalSettings as any); // Type cast if needed or reuse logic
+             await db.insert(userSettings).values(finalSettings as any);
         }
 
-        return NextResponse.json({ ...finalSettings, ...userInfo });
+        return NextResponse.json(finalSettings);
     } catch (error) {
         console.error("GET user settings error:", error);
         return NextResponse.json({ error: "Failed to fetch user settings" }, { status: 500 });

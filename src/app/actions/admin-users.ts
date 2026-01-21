@@ -29,8 +29,6 @@ export async function updateUser(userId: string, data: Partial<typeof user.$infe
         await db.update(user).set({
             name: data.name,
             email: data.email,
-            role: data.role,
-            banned: data.banned,
             updatedAt: new Date()
         }).where(eq(user.id, userId));
         

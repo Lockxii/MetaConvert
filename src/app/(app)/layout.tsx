@@ -50,11 +50,6 @@ export default function AppLayout({
             if (res.ok) {
                 const data = await res.json();
                 
-                if (data.banned) {
-                    router.push("/banned");
-                    return;
-                }
-
                 // Only set if explicitly 'light' or 'dark' to respect user preference from DB
                 // 'system' is default, so if it's 'system' we let next-themes handle it or do nothing
                 if (data.theme && data.theme !== "system") {
