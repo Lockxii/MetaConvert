@@ -7,32 +7,44 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@radix-ui/react-label";
 import { useFileProcessor } from "@/hooks/useFileProcessor";
 import { cn } from "@/lib/utils";
-import { Download, Layers, Maximize2, RotateCw, Wand2, ArrowRight, Crop, Minimize2, FlipHorizontal, FlipVertical, Sparkles, ImageOff, Type, Check } from "lucide-react";
+import { Download, Layers, Maximize2, RotateCw, Wand2, ArrowRight, Crop, Minimize2, FlipHorizontal, FlipVertical, Sparkles, ImageOff, Type, Check, Shield } from "lucide-react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import ReactCrop, { centerCrop, makeAspectCrop, Crop as ReactCropType, PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css'; 
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToolButton } from "@/components/dashboard/ToolButton"; 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ShareDialog } from "@/components/dashboard/ShareDialog";
 
 const tools = [
   { id: "convert", label: "Convertir", icon: Type, color: "text-blue-500", bg: "bg-blue-500/10", description: "Changez le format de votre image (PNG, JPG, WEBP)." },
   { id: "crop", label: "Rogner", icon: Crop, color: "text-green-500", bg: "bg-green-500/10", description: "Recadrez votre image aux dimensions souhaitées." },
   { id: "transform", label: "Transformer", icon: RotateCw, color: "text-purple-500", bg: "bg-purple-500/10", description: "Pivotez ou retournez votre image." },
-  { id: "upscale", label: "Améliorer (Upscale)", icon: Sparkles, color: "text-orange-500", bg: "bg-orange-500/10", description: "Augmentez la résolution de votre image." },
+  { id: "upscale", label: "Upscale", icon: Maximize2, color: "text-orange-500", bg: "bg-orange-500/10", description: "Augmentez la résolution de votre image (2x, 4x)." },
+  { id: "enhance", label: "Sublimer", icon: Wand2, color: "text-pink-500", bg: "bg-pink-500/10", description: "Améliorez le contraste et la netteté." },
 ];
 
 export default function ImageToolsPage() {
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imageSrc, setImageSrc] = useState("");
   
+  // Share state
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [lastProcessedBlob, setLastProcessedBlob] = useState<Blob | null>(null);
+  const [lastProcessedFileName, setLastProcessedFileName] = useState("");
+
   // Processing state
-  const { processFile, loading: processing, progress } = useFileProcessor({
+  const { processFiles, loading: processing, progress, batchProgress } = useFileProcessor({
     apiEndpoint: "/api/image/process", 
     onSuccess: (blob, fileName) => {
-      toast.success(`Traitement terminé : ${fileName}`);
-      // Don't auto-clear for images, user might want to re-edit
+      setLastProcessedBlob(blob);
+      setLastProcessedFileName(fileName);
+      // We only show share dialog for the last file or single files
+      if (batchProgress.current === batchProgress.total || batchProgress.total === 1) {
+          setShowShareDialog(true);
+      }
     },
     onError: (error) => {
       toast.error(`Erreur : ${error}`);
@@ -53,34 +65,33 @@ export default function ImageToolsPage() {
   const [scaleY, setScaleY] = useState(1);
   const [aspect, setAspect] = useState<number | undefined>(undefined);
   const [scale, setScale] = useState(1); // Zoom for crop view
-  const [croppedImage, setCroppedImage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!selectedFile) {
+    if (selectedFiles.length === 0) {
         setImageSrc("");
         return;
     }
+    // Only preview the FIRST file for crop/transform
     const reader = new FileReader();
     reader.addEventListener("load", () => setImageSrc(reader.result?.toString() || ""));
-    reader.readAsDataURL(selectedFile);
-  }, [selectedFile]);
+    reader.readAsDataURL(selectedFiles[0]);
+  }, [selectedFiles]);
 
   const activeTool = tools.find(t => t.id === activeToolId);
 
+  const isBatchTool = activeToolId === "convert" || activeToolId === "upscale" || activeToolId === "enhance";
+
   // Handlers
   const handleProcess = async () => {
-    if (!selectedFile || !activeToolId) return;
+    if (selectedFiles.length === 0 || !activeToolId) return;
 
     if (activeToolId === "convert") {
-        await processFile(selectedFile, { tool: "convert", format: targetFormat });
+        await processFiles(selectedFiles, { tool: "convert", format: targetFormat });
     } else if (activeToolId === "upscale") {
-        await processFile(selectedFile, { tool: "upscale", factor: upscaleFactor });
+        await processFiles(selectedFiles, { tool: "upscale", factor: upscaleFactor });
+    } else if (activeToolId === "enhance") {
+        await processFiles(selectedFiles, { tool: "enhance", sharpen: "true", contrast: "true" });
     } else if (activeToolId === "crop" || activeToolId === "transform") {
-        // For crop/transform, we use the canvas logic locally then maybe upload?
-        // Or we just download the result locally.
-        // The original logic seemed to imply backend processing for convert/upscale, 
-        // but frontend canvas for crop/transform.
-        // I will implement "Download Result" for Crop/Transform using canvas.
         onDownloadCropClick(); 
     }
   };
@@ -118,15 +129,35 @@ export default function ImageToolsPage() {
 
     const blob = await new Promise<Blob | null>((resolve) => previewCanvas.toBlob(resolve, 'image/png'));
     if (blob) {
+        const fileName = `edited_${selectedFiles[0]?.name || 'image'}.png`;
+        
+        // 1. Local Download
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `edited_${selectedFile?.name || 'image'}.png`;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        toast.success("Image traitée téléchargée !");
+
+        // 2. Upload to Cloud
+        const formData = new FormData();
+        formData.append("file", new File([blob], fileName, { type: "image/png" }));
+        formData.append("tool", activeToolId || "edit");
+        
+        try {
+            await fetch("/api/dashboard/cloud/save", { method: "POST", body: formData });
+            toast.success("Image traitée et sauvegardée sur le Cloud !");
+        } catch (e) {
+            console.error("Cloud save error:", e);
+            toast.error("Image téléchargée mais erreur lors de la sauvegarde Cloud.");
+        }
+        
+        // Trigger share dialog
+        setLastProcessedBlob(blob);
+        setLastProcessedFileName(fileName);
+        setShowShareDialog(true);
     }
   };
 
@@ -145,8 +176,7 @@ export default function ImageToolsPage() {
                 key={tool.id}
                 onClick={() => {
                     setActiveToolId(tool.id);
-                    setSelectedFile(null); 
-                    setCroppedImage(null);
+                    setSelectedFiles([]); 
                     setRotation(0);
                     setScaleX(1);
                     setScaleY(1);
@@ -184,10 +214,18 @@ export default function ImageToolsPage() {
              <div className="grid lg:grid-cols-2 gap-8">
                  <div className="space-y-4">
                     <FileUploader 
-                        onFileChange={(files) => setSelectedFile(files[0])}
-                        acceptedFileTypes={{'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif']}}
-                        label={`Déposez votre image pour ${activeTool.label.toLowerCase()}`}
+                        onFileChange={setSelectedFiles}
+                        acceptedFileTypes={{'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif', '.heic', '.heif', '.tiff', '.bmp', '.ico', '.tga', '.jp2', '.pcx', '.xpm', '.sgi', '.dpx', '.ppm', '.eps', '.psd', '.raw']}}
+                        label={`Déposez vos images pour ${activeTool.label.toLowerCase()}`}
+                        multiple={isBatchTool}
                     />
+                    
+                    {selectedFiles.length > 0 && (
+                        <div className="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-lg border border-primary/20 animate-in fade-in">
+                            <Check size={16} />
+                            <span className="text-sm font-medium">{selectedFiles.length} fichier(s) prêt(s)</span>
+                        </div>
+                    )}
                     
                     {/* Preview Area for Crop/Transform */}
                     {(activeToolId === "crop" || activeToolId === "transform") && imageSrc && (
@@ -222,25 +260,28 @@ export default function ImageToolsPage() {
                                     <SelectTrigger className="bg-card border-border">
                                         <SelectValue placeholder="Sélectionner format" />
                                     </SelectTrigger>
-                                    <SelectContent className="max-h-[300px]">
-                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Standards Web</div>
+                                    <SelectContent className="max-h-[350px]">
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-widest">Standards Web</div>
+                                        <SelectItem value="webp">WEBP (Plus performant)</SelectItem>
                                         <SelectItem value="png">PNG (Transparence)</SelectItem>
                                         <SelectItem value="jpeg">JPEG (Photo)</SelectItem>
-                                        <SelectItem value="webp">WEBP (Optimisé)</SelectItem>
                                         <SelectItem value="gif">GIF (Animé)</SelectItem>
                                         
-                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2">Pro & Print</div>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2 uppercase tracking-widest">Pro & Print</div>
                                         <SelectItem value="avif">AVIF (Ultra-compression)</SelectItem>
+                                        <SelectItem value="heic">HEIC (Apple iPhone)</SelectItem>
                                         <SelectItem value="tiff">TIFF (Impression)</SelectItem>
                                         <SelectItem value="pdf">PDF (Document)</SelectItem>
+                                        <SelectItem value="eps">EPS (Vectoriel/Print)</SelectItem>
+                                        <SelectItem value="psd">PSD (Photoshop)</SelectItem>
                                         
-                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2">Software & Legacy</div>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2 uppercase tracking-widest">Software & Legacy</div>
                                         <SelectItem value="bmp">BMP (Bitmap)</SelectItem>
                                         <SelectItem value="ico">ICO (Favicon)</SelectItem>
                                         <SelectItem value="tga">TGA (Targa)</SelectItem>
-                                        
-                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2">Spécialisés</div>
                                         <SelectItem value="jp2">JP2 (JPEG 2000)</SelectItem>
+                                        
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2 uppercase tracking-widest">Spécialisés</div>
                                         <SelectItem value="pcx">PCX (Paintbrush)</SelectItem>
                                         <SelectItem value="xpm">XPM (X11 Pixmap)</SelectItem>
                                         <SelectItem value="sgi">SGI (Silicon Graphics)</SelectItem>
@@ -310,10 +351,14 @@ export default function ImageToolsPage() {
                      <Button 
                         size="lg" 
                         onClick={handleProcess} 
-                        disabled={!selectedFile || processing}
+                        disabled={selectedFiles.length === 0 || processing}
                         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
-                        {processing ? "Traitement..." : (activeToolId === "crop" || activeToolId === "transform" ? "Appliquer & Télécharger" : "Lancer le traitement")} 
+                        {processing 
+                            ? (batchProgress.total > 1 
+                                ? `Traitement ${batchProgress.current}/${batchProgress.total}...` 
+                                : "Traitement...") 
+                            : (activeToolId === "crop" || activeToolId === "transform" ? "Appliquer & Télécharger" : "Lancer le traitement")} 
                         {!processing && <ArrowRight size={18} className="ml-2" />}
                     </Button>
                  </div>
@@ -328,6 +373,19 @@ export default function ImageToolsPage() {
               />
          </div>
        )}
+
+       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Partager le fichier</DialogTitle>
+            </DialogHeader>
+            <ShareDialog 
+              file={lastProcessedBlob} 
+              fileName={lastProcessedFileName} 
+              onClose={() => setShowShareDialog(false)} 
+            />
+          </DialogContent>
+       </Dialog>
     </div>
   );
 }

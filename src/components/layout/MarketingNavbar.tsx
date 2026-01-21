@@ -19,59 +19,58 @@ export function MarketingNavbar() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-200 border-b",
-        scrolled ? "bg-white/80 backdrop-blur-md border-slate-200 py-3" : "bg-white border-transparent py-4"
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
+        scrolled 
+          ? "bg-background/80 backdrop-blur-md border-border py-3 shadow-sm" 
+          : "bg-transparent border-transparent py-5"
       )}
     >
       <div className="container mx-auto px-6 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm">
-            <span className="font-bold text-white text-lg">M</span>
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="h-10 w-10 group-hover:scale-110 transition-transform duration-300">
+            <img src="/logo.svg" alt="MetaConvert Logo" className="w-full h-full" />
           </div>
-          <span className="font-bold text-xl tracking-tight text-slate-900">MetaConvert</span>
+          <span className="font-bold text-xl tracking-tight text-foreground">MetaConvert</span>
         </Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
-          <Link href="/#features" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+          <Link href="/#features" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
             Fonctionnalités
           </Link>
-          <Link href="/#pricing" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
+          <Link href="/pricing" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
             Tarifs
           </Link>
-          <Link href="/api-docs" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
-            API
-          </Link>
-          <Link href="/support" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
-            Support
+          <Link href="/about" className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
+            À Propos
           </Link>
         </nav>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-4">
-          <Link href="/sign-in" className="text-sm font-medium text-slate-700 hover:text-blue-600 transition-colors">
+        <div className="hidden md:flex items-center gap-5">
+          <Link href="/sign-in" className="text-sm font-semibold text-foreground hover:text-primary transition-colors">
             Connexion
           </Link>
-          <Button className="bg-blue-600 text-white hover:bg-blue-700 rounded-lg px-5 shadow-sm transition-all" asChild>
+          <Button className="rounded-full px-6 font-bold shadow-xl shadow-primary/10 transition-all hover:scale-105" asChild>
             <Link href="/sign-up">
-              Commencer
+              Essai Gratuit
             </Link>
           </Button>
         </div>
 
         {/* Mobile Toggle */}
-        <button className="md:hidden text-slate-700" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          {mobileMenuOpen ? <X /> : <Menu />}
+        <button className="md:hidden text-foreground p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-slate-200 p-4 flex flex-col gap-4 shadow-lg animate-in slide-in-from-top-2">
-           <Link href="/#features" className="text-sm font-medium p-2 text-slate-700">Fonctionnalités</Link>
-           <Link href="/#pricing" className="text-sm font-medium p-2 text-slate-700">Tarifs</Link>
-           <Link href="/sign-in" className="text-sm font-medium p-2 text-slate-700">Connexion</Link>
-           <Button className="w-full bg-blue-600 hover:bg-blue-700" asChild>
+        <div className="md:hidden absolute top-full left-0 right-0 bg-background border-b border-border p-6 flex flex-col gap-6 shadow-2xl animate-in slide-in-from-top-4 duration-300">
+           <Link href="/#features" className="text-base font-semibold text-foreground" onClick={() => setMobileMenuOpen(false)}>Fonctionnalités</Link>
+           <Link href="/pricing" className="text-base font-semibold text-foreground" onClick={() => setMobileMenuOpen(false)}>Tarifs</Link>
+           <Link href="/sign-in" className="text-base font-semibold text-foreground" onClick={() => setMobileMenuOpen(false)}>Connexion</Link>
+           <Button className="w-full rounded-full h-12 font-bold" asChild>
              <Link href="/sign-up">Commencer</Link>
            </Button>
         </div>

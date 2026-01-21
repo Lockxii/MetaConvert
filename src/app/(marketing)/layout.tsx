@@ -7,7 +7,10 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col font-sans">
+    <div 
+      className="flex min-h-screen flex-col font-sans"
+      suppressHydrationWarning
+    >
       <MarketingNavbar />
       <main className="flex-1 pt-20">
         {children}

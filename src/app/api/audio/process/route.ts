@@ -80,7 +80,21 @@ export async function POST(req: NextRequest) {
         case "convert":
           const format = params.format as string; // e.g., 'mp3', 'wav', 'ogg'
           outputFilePath = join(tempDir, `${outputFileName}.${format}`);
-          outputMimeType = `audio/${format}`; // Simplified
+          
+          // Map correct MIME types
+          const audioMimeMap: Record<string, string> = {
+            mp3: 'audio/mpeg',
+            aac: 'audio/aac',
+            m4a: 'audio/mp4',
+            wav: 'audio/wav',
+            flac: 'audio/flac',
+            aiff: 'audio/aiff',
+            ogg: 'audio/ogg',
+            opus: 'audio/opus',
+            wma: 'audio/x-ms-wma'
+          };
+          outputMimeType = audioMimeMap[format] || `audio/${format}`;
+          
           command.toFormat(format).on('end', () => resolve()).on('error', reject).save(outputFilePath);
           break;
         case "trim":
@@ -136,6 +150,7 @@ export async function POST(req: NextRequest) {
       convertedSize: convertedSize,
       targetType: outputMimeType.split('/')[1] || 'unknown',
       status: 'completed',
+      fileBuffer: outputBuffer, // Added for Cloud storage
     });
 
     // Clean up temporary files

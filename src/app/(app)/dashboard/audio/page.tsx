@@ -20,7 +20,7 @@ const tools = [
 
 export default function AudioToolsPage() {
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   // Tool specific parameters
   const [targetFormat, setTargetFormat] = useState("mp3"); // Convert
@@ -28,19 +28,16 @@ export default function AudioToolsPage() {
   const [trimDuration, setTrimDuration] = useState("00:00:10"); // Trim (HH:mm:ss)
   const [speedFactor, setSpeedFactor] = useState("1.0"); // Speed
 
-  const { processFile, loading, progress } = useFileProcessor({
+  const { processFiles, loading, progress, batchProgress } = useFileProcessor({
     apiEndpoint: "/api/audio/process",
     onSuccess: () => {
-        setSelectedFile(null);
-        setTrimStart("00:00:00");
-        setTrimDuration("00:00:10");
-        setSpeedFactor("1.0");
+        // Reset only after full batch is done if desired, or keep as is
     }
   });
 
   const handleProcess = () => {
-    if (!selectedFile) {
-        toast.error("Veuillez sélectionner un fichier audio.");
+    if (selectedFiles.length === 0) {
+        toast.error("Veuillez sélectionner au moins un fichier audio.");
         return;
     }
     if (!activeToolId) {
@@ -74,7 +71,7 @@ export default function AudioToolsPage() {
             break;
     }
     
-    processFile(selectedFile, toolParams);
+    processFiles(selectedFiles, toolParams);
   };
 
   const activeTool = tools.find(t => t.id === activeToolId);
@@ -93,7 +90,7 @@ export default function AudioToolsPage() {
                 key={tool.id}
                 onClick={() => {
                     setActiveToolId(tool.id);
-                    setSelectedFile(null); // Clear file on tool change
+                    setSelectedFiles([]); // Clear files on tool change
                 }}
                 className={cn(
                    "p-4 rounded-xl border transition-all flex flex-col items-center gap-3 hover:shadow-md relative overflow-hidden",
@@ -125,18 +122,21 @@ export default function AudioToolsPage() {
              </div>
 
              <div className="grid lg:grid-cols-2 gap-8">
-                 <FileUploader 
-                    key={activeToolId}
-                    onFileChange={(files) => setSelectedFile(files[0])}
-                    acceptedFileTypes={{'audio/*': ['.mp3', '.wav', '.ogg', '.m4a']}}
-                    label={`Déposez votre audio pour ${activeTool.label.toLowerCase()}`}
-                 />
-                 {selectedFile && (
-                    <div className="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-lg border border-primary/20 animate-in fade-in">
-                        <Check size={16} />
-                        <span className="text-sm font-medium">Fichier prêt : {selectedFile.name}</span>
-                    </div>
-                 )}
+                 <div className="space-y-4">
+                    <FileUploader 
+                        key={activeToolId}
+                        onFileChange={setSelectedFiles}
+                        acceptedFileTypes={{'audio/*': ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.aiff', '.wma', '.opus']}}
+                        label={`Déposez votre audio pour ${activeTool.label.toLowerCase()}`}
+                        multiple={true}
+                    />
+                    {selectedFiles.length > 0 && (
+                        <div className="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-lg border border-primary/20 animate-in fade-in">
+                            <Check size={16} />
+                            <span className="text-sm font-medium">{selectedFiles.length} fichier(s) prêt(s)</span>
+                        </div>
+                    )}
+                 </div>
 
                  <div className="flex flex-col gap-4 p-6 bg-muted/30 rounded-xl border border-border">
                      <div className="space-y-2">
@@ -149,9 +149,20 @@ export default function AudioToolsPage() {
                                         <SelectValue placeholder="Sélectionner format" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="mp3">MP3</SelectItem>
-                                        <SelectItem value="wav">WAV</SelectItem>
-                                        <SelectItem value="ogg">OGG</SelectItem>
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Standards</div>
+                                        <SelectItem value="mp3">MP3 (Universel)</SelectItem>
+                                        <SelectItem value="aac">AAC (Qualité/Web)</SelectItem>
+                                        <SelectItem value="m4a">M4A (Apple)</SelectItem>
+                                        
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2 uppercase tracking-wider">Sans Perte</div>
+                                        <SelectItem value="wav">WAV (Haute Fidélité)</SelectItem>
+                                        <SelectItem value="flac">FLAC (Lossless)</SelectItem>
+                                        <SelectItem value="aiff">AIFF (Pro Audio)</SelectItem>
+                                        
+                                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2 uppercase tracking-wider">Web & Streaming</div>
+                                        <SelectItem value="ogg">OGG (Libre)</SelectItem>
+                                        <SelectItem value="opus">OPUS (Ultra-compressé)</SelectItem>
+                                        <SelectItem value="wma">WMA (Windows)</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -197,10 +208,12 @@ export default function AudioToolsPage() {
                      <Button 
                         size="lg" 
                         onClick={handleProcess} 
-                        disabled={!selectedFile || loading}
+                        disabled={selectedFiles.length === 0 || loading}
                         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                     >
-                        {loading ? `Traitement (${Math.round(progress)}%)` : `Lancer ${activeTool.label.split(' ')[0]} `} <ArrowRight size={18} className="ml-2" />
+                        {loading 
+                            ? (batchProgress.total > 1 ? `Traitement ${batchProgress.current}/${batchProgress.total}...` : `Traitement...`) 
+                            : `Lancer ${activeTool.label.split(' ')[0]} `} <ArrowRight size={18} className="ml-2" />
                     </Button>
                  </div>
              </div>

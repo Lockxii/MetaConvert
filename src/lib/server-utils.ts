@@ -13,6 +13,8 @@ interface LogOperationParams {
     targetType?: string; // For conversions
     factor?: number; // For upscales
     status: 'completed' | 'failed' | 'pending';
+    fileBuffer?: Buffer; // New: to save the file
+    dropLinkId?: string; // New: to track origin drop link
 }
 
 export async function getUserSession(req: NextRequest) {
@@ -20,10 +22,31 @@ export async function getUserSession(req: NextRequest) {
     return session;
 }
 
+import fs from 'fs';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+
 export async function logOperation(params: LogOperationParams) {
     if (!process.env.DATABASE_URL) {
         console.warn("Skipping DB logging: DATABASE_URL is not set.");
         return;
+    }
+
+    let filePath: string | null = null;
+    if (params.fileBuffer && params.status === 'completed') {
+        try {
+            const storageDir = params.type === 'conversion' ? 'conversions' : 'upscales';
+            const fileId = uuidv4();
+            // Use targetType for extension if available, otherwise fallback to original extension
+            const extension = params.targetType || params.fileName.split('.').pop() || 'bin';
+            const storageFileName = `${fileId}.${extension}`;
+            const fullPath = path.join(process.cwd(), 'public', 'storage', storageDir, storageFileName);
+            
+            fs.writeFileSync(fullPath, params.fileBuffer);
+            filePath = `/storage/${storageDir}/${storageFileName}`;
+        } catch (e) {
+            console.error("Error saving file to storage:", e);
+        }
     }
 
     try {
@@ -36,6 +59,8 @@ export async function logOperation(params: LogOperationParams) {
                 status: params.status,
                 originalSize: params.originalSize,
                 convertedSize: params.convertedSize,
+                filePath: filePath,
+                dropLinkId: params.dropLinkId,
                 createdAt: new Date(),
             };
             await db.insert(conversions).values(conversionData);
@@ -44,8 +69,10 @@ export async function logOperation(params: LogOperationParams) {
                 userId: params.userId,
                 fileName: params.fileName,
                 originalSize: params.originalSize,
-                upscaledSize: params.convertedSize, // Converted size is upscaled size here
+                upscaledSize: params.convertedSize, 
                 factor: params.factor,
+                filePath: filePath,
+                dropLinkId: params.dropLinkId,
                 createdAt: new Date(),
             };
             await db.insert(upscales).values(upscaleData);

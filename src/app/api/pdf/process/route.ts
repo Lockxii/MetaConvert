@@ -182,7 +182,8 @@ export async function POST(req: NextRequest) {
             const pdfBase64 = Buffer.from(inputPdfBytes).toString('base64');
 
             // Render pages in the browser context
-            const pageImages = await page.evaluate(async (data) => {
+            const outputImageFormat = params.format || 'png';
+            const pageImages = await page.evaluate(async (data, fmt) => {
                 // @ts-ignore
                 const pdf = await window.pdfjsLib.getDocument({ data: atob(data) }).promise;
                 const images: string[] = [];
@@ -197,23 +198,23 @@ export async function POST(req: NextRequest) {
                     
                     if (context) {
                         await page.render({ canvasContext: context, viewport: viewport }).promise;
-                        images.push(canvas.toDataURL('image/png'));
+                        images.push(canvas.toDataURL(`image/${fmt === 'jpg' ? 'jpeg' : fmt}`));
                     }
                 }
                 return images;
-            }, pdfBase64);
+            }, pdfBase64, outputImageFormat);
 
             const images = pageImages.map((img: string) => Buffer.from(img.split(',')[1], 'base64'));
             
             if (images.length === 1) {
                 // Return single image
                 outputPdfBytes = images[0];
-                outputFileName = `${originalFileName.split('.')[0]}.png`;
-                outputContentType = "image/png";
+                outputFileName = `${originalFileName.split('.')[0]}.${outputImageFormat}`;
+                outputContentType = `image/${outputImageFormat === 'jpg' ? 'jpeg' : outputImageFormat}`;
             } else {
                 // Zip multiple images
                 const zip = new JSZip();
-                images.forEach((img, i) => zip.file(`page_${i+1}.png`, img));
+                images.forEach((img, i) => zip.file(`page_${i+1}.${outputImageFormat}`, img));
                 outputPdfBytes = await zip.generateAsync({ type: "uint8array" });
                 outputFileName = `${originalFileName.split('.')[0]}_images.zip`;
                 outputContentType = "application/zip";
@@ -236,6 +237,7 @@ export async function POST(req: NextRequest) {
       convertedSize: outputPdfBytes.length,
       targetType: tool === "to-word" ? "txt" : (tool === "to-images" ? "image/zip" : "pdf"),
       status: 'completed',
+      fileBuffer: Buffer.from(outputPdfBytes), // Added for Cloud storage
     });
 
     const asciiFilename = outputFileName.replace(/[^\x00-\x7F]/g, "_");

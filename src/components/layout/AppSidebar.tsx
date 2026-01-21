@@ -13,18 +13,26 @@ import {
   Settings, 
   ChevronLeft, 
   ChevronRight,
-  Zap
+  Zap,
+  Cloud,
+  Archive,
+  Layers,
+  FolderUp
 } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 
 const navItems = [
   { name: "Vue d'ensemble", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Mon Cloud", href: "/dashboard/cloud", icon: Cloud },
   { name: "Image", href: "/dashboard/image", icon: ImageIcon },
   { name: "PDF", href: "/dashboard/pdf", icon: FileText },
+  { name: "PDF Weaver", href: "/dashboard/pdf-weaver", icon: Layers },
   { name: "Vidéo", href: "/dashboard/video", icon: Video },
   { name: "Audio", href: "/dashboard/audio", icon: Music },
   { name: "Web", href: "/dashboard/web", icon: Globe },
+  { name: "Archives", href: "/dashboard/archive", icon: Archive },
+  { name: "Demandes", href: "/dashboard/drop", icon: FolderUp },
   { name: "Réglages", href: "/dashboard/settings", icon: Settings },
 ];
 
@@ -41,8 +49,8 @@ export function AppSidebar() {
       <div className="h-16 flex items-center justify-between px-4 border-b border-border">
         {!collapsed && (
             <Link href="/dashboard" className="flex items-center gap-2">
-               <div className="h-6 w-6 rounded bg-primary flex items-center justify-center">
-                 <span className="text-primary-foreground font-bold text-xs">M</span>
+               <div className="h-8 w-8">
+                 <img src="/logo.svg" alt="Logo" className="w-full h-full" />
                </div>
                <span className="font-semibold text-foreground tracking-tight">
                  MetaConvert

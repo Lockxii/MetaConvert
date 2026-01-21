@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
       convertedSize: outputBuffer.length,
       targetType: outputFileType,
       status: 'completed',
+      fileBuffer: outputBuffer, // Added for Cloud storage
     });
 
     return new NextResponse(outputBuffer as any, {

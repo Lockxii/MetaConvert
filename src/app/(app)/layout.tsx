@@ -108,14 +108,20 @@ export default function AppLayout({
 
   if (isPending || !session) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div 
+        className="flex min-h-screen items-center justify-center bg-background"
+        suppressHydrationWarning
+      >
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans flex">
+    <div 
+      className="min-h-screen bg-background text-foreground font-sans flex"
+      suppressHydrationWarning
+    >
       <AppSidebar />
       
       <div className="flex-1 flex flex-col ml-[80px] md:ml-[250px] transition-all duration-300 min-h-screen">

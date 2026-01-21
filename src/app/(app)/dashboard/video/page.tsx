@@ -3,7 +3,7 @@
 import { FileUploader } from "@/components/dashboard/FileUploader";
 import { Button } from "@/components/ui/button";
 import { useFileProcessor } from "@/hooks/useFileProcessor";
-import { Video, Film, Volume2, ArrowRight, Scissors, RotateCcw, Clock, Check, Minimize2, FileVideo, X, Play, Download } from "lucide-react";
+import { Video, Film, Volume2, ArrowRight, Scissors, RotateCcw, Clock, Check, Minimize2, FileVideo, X, Play, Download, Music, Layers, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -15,13 +15,14 @@ const tools = [
   { id: "convert", label: "Convertir", icon: Film, color: "text-blue-500", bg: "bg-blue-500/10", description: "Convertissez la vidéo vers un autre format." },
   { id: "compress", label: "Compresser", icon: Minimize2, color: "text-purple-500", bg: "bg-purple-500/10", description: "Réduisez la taille de votre vidéo sans perte visible." },
   { id: "extract-audio", label: "Extraire Audio", icon: Volume2, color: "text-orange-500", bg: "bg-orange-500/10", description: "Récupérez la piste audio de votre vidéo." },
+  { id: "generate-spectrogram", label: "Spectrogramme", icon: Music, color: "text-blue-600", bg: "bg-blue-600/10", description: "Créez une vidéo avec onde sonore à partir d'un audio." },
   { id: "to-gif", label: "Vidéo vers GIF", icon: RotateCcw, color: "text-red-500", bg: "bg-red-500/10", description: "Créez un GIF animé à partir de votre vidéo." },
   { id: "trim", label: "Découper", icon: Scissors, color: "text-green-500", bg: "bg-green-500/10", description: "Découpez une partie spécifique de la vidéo." },
 ];
 
 export default function VideoToolsPage() {
   const [activeToolId, setActiveToolId] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [isVideoSupported, setIsVideoSupported] = useState(false);
   const [processingResult, setProcessingResult] = useState<{ blob: Blob, fileName: string } | null>(null);
@@ -36,10 +37,9 @@ export default function VideoToolsPage() {
   const [audioFormat, setAudioFormat] = useState("mp3");
   const [gifFps, setGifFps] = useState(10);
 
-  const { processFile, loading, progress } = useFileProcessor({
+  const { processFiles, loading, progress, batchProgress } = useFileProcessor({
     apiEndpoint: "/api/video/process",
     onSuccess: (blob, fileName) => {
-        toast.success("Traitement terminé avec succès !");
         setProcessingResult({ blob, fileName });
     },
     onError: (err) => {
@@ -49,17 +49,15 @@ export default function VideoToolsPage() {
 
   // Handle File Selection
   const handleFileChange = (files: File[]) => {
+      setSelectedFiles(files);
+      setProcessingResult(null);
+      
       if (files && files[0]) {
           const file = files[0];
-          setSelectedFile(file);
-          setProcessingResult(null); // Clear previous result
-          
-          // Determine if browser can likely play it
           const supportedTypes = ['video/mp4', 'video/webm', 'video/ogg'];
           const isSupported = supportedTypes.includes(file.type);
           setIsVideoSupported(isSupported);
 
-          // Create URL for preview if supported
           if (isSupported) {
               const url = URL.createObjectURL(file);
               setVideoSrc(url);
@@ -74,34 +72,14 @@ export default function VideoToolsPage() {
           URL.revokeObjectURL(videoSrc);
       }
       setVideoSrc(null);
-      setSelectedFile(null);
+      setSelectedFiles([]);
       setIsVideoSupported(false);
       setProcessingResult(null);
   };
 
-  // Cleanup on unmount
-  useEffect(() => {
-      return () => {
-          if (videoSrc) URL.revokeObjectURL(videoSrc);
-      };
-  }, [videoSrc]);
-
-  const handleDownloadResult = () => {
-    if (!processingResult) return;
-    const url = URL.createObjectURL(processingResult.blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = processingResult.fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-
   const handleProcess = () => {
-    if (!selectedFile) {
-        toast.error("Veuillez sélectionner un fichier vidéo.");
+    if (selectedFiles.length === 0) {
+        toast.error("Veuillez sélectionner au moins un fichier vidéo.");
         return;
     }
     if (!activeToolId) {
@@ -109,7 +87,7 @@ export default function VideoToolsPage() {
         return;
     }
     
-    setProcessingResult(null); // Clear previous result before starting
+    setProcessingResult(null);
 
     let toolParams: Record<string, any> = { tool: activeToolId };
 
@@ -138,7 +116,19 @@ export default function VideoToolsPage() {
             break;
     }
     
-    processFile(selectedFile, toolParams);
+    processFiles(selectedFiles, toolParams);
+  };
+
+  const handleDownloadResult = () => {
+    if (!processingResult) return;
+    const url = URL.createObjectURL(processingResult.blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = processingResult.fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const activeTool = tools.find(t => t.id === activeToolId);
@@ -204,14 +194,21 @@ export default function VideoToolsPage() {
              <div className="grid lg:grid-cols-12 gap-8">
                  {/* Left Column: File Upload or Preview */}
                  <div className="lg:col-span-7 space-y-4">
-                    {!selectedFile ? (
+                    {selectedFiles.length === 0 ? (
                         <FileUploader 
                             key={activeToolId}
                             onFileChange={handleFileChange}
-                            acceptedFileTypes={{'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm']}}
-                            label={`Déposez votre vidéo pour ${activeTool.label.toLowerCase()}`}
+                            acceptedFileTypes={activeToolId === "generate-spectrogram" 
+                                ? {'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm'], 'audio/*': ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac']}
+                                : {'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.flv', '.wmv', '.mpeg']}
+                            }
+                            label={activeToolId === "generate-spectrogram" 
+                                ? "Déposez un fichier audio ou vidéo" 
+                                : `Déposez votre vidéo pour ${activeTool.label.toLowerCase()}`
+                            }
                             className="h-full min-h-[350px]"
                             maxSize={2 * 1024 * 1024 * 1024} // 2GB
+                            multiple={activeToolId !== 'trim'}
                         />
                     ) : (
                         <div className="w-full h-full min-h-[350px] bg-muted/30 rounded-xl border-2 border-border flex flex-col overflow-hidden relative group">
@@ -242,12 +239,12 @@ export default function VideoToolsPage() {
                                             <FileVideo size={48} />
                                         </div>
                                         <h3 className="text-xl font-bold text-foreground mb-2 max-w-md break-words">
-                                            {selectedFile.name}
+                                            {selectedFiles[0]?.name}
                                         </h3>
                                         <div className="flex items-center gap-4 text-sm text-muted-foreground bg-card px-4 py-2 rounded-full border border-border shadow-sm">
-                                            <span className="font-mono font-medium">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span>
+                                            <span className="font-mono font-medium">{(selectedFiles[0]?.size / (1024 * 1024)).toFixed(2)} MB</span>
                                             <div className="h-4 w-px bg-border" />
-                                            <span className="uppercase">{selectedFile.name.split('.').pop()}</span>
+                                            <span className="uppercase">{selectedFiles[0]?.name.split('.').pop()}</span>
                                         </div>
                                         <div className="mt-8 flex gap-2">
                                              <Button variant="outline" onClick={clearFile}>
@@ -277,16 +274,24 @@ export default function VideoToolsPage() {
                                 <div className="space-y-4">
                                     <div className="space-y-2">
                                         <Label className="text-sm font-medium text-foreground">Format de sortie</Label>
-                                        <Select onValueChange={setTargetFormat} value={targetFormat}>
+                                <Select onValueChange={setTargetFormat} value={targetFormat}>
                                             <SelectTrigger className="bg-card w-full border-border">
                                                 <SelectValue placeholder="Sélectionner format" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="mp4">MP4 (Standard)</SelectItem>
-                                                <SelectItem value="webm">WebM (Web)</SelectItem>
-                                                <SelectItem value="mov">MOV (Apple)</SelectItem>
-                                                <SelectItem value="avi">AVI (Legacy)</SelectItem>
-                                                <SelectItem value="mkv">MKV (Haute qualité)</SelectItem>
+                                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Web & Mobile</div>
+                                                <SelectItem value="mp4">MP4 (Standard H.264)</SelectItem>
+                                                <SelectItem value="webm">WebM (Optimisé Web)</SelectItem>
+                                                
+                                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2 uppercase tracking-wider">Post-Production</div>
+                                                <SelectItem value="mov">MOV (QuickTime/Apple)</SelectItem>
+                                                <SelectItem value="mkv">MKV (Multi-flux)</SelectItem>
+                                                
+                                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-2 uppercase tracking-wider">Legacy & Autres</div>
+                                                <SelectItem value="avi">AVI (Windows)</SelectItem>
+                                                <SelectItem value="flv">FLV (Flash Video)</SelectItem>
+                                                <SelectItem value="wmv">WMV (Windows Media)</SelectItem>
+                                                <SelectItem value="mpeg">MPEG (VCD/DVD)</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <p className="text-xs text-muted-foreground">Le format MP4 est recommandé pour la compatibilité.</p>
@@ -294,7 +299,7 @@ export default function VideoToolsPage() {
                                     <Button 
                                         size="lg" 
                                         onClick={handleProcess} 
-                                        disabled={!selectedFile || loading}
+                                        disabled={selectedFiles.length === 0 || loading}
                                         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-4"
                                     >
                                         {loading ? "Traitement..." : "Convertir & Télécharger"}
@@ -327,7 +332,7 @@ export default function VideoToolsPage() {
                                     <Button 
                                         size="lg" 
                                         onClick={handleProcess} 
-                                        disabled={!selectedFile || loading}
+                                        disabled={selectedFiles.length === 0 || loading}
                                         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-4"
                                     >
                                         {loading ? "Traitement..." : "Découper & Télécharger"}
@@ -348,10 +353,10 @@ export default function VideoToolsPage() {
                                                 key={opt.id}
                                                 onClick={() => {
                                                     setCompressionPreset(opt.id);
-                                                    if (selectedFile) processFile(selectedFile, { tool: 'compress', preset: opt.id });
-                                                    else toast.error("Veuillez sélectionner un fichier d'abord.");
+                                                    if (selectedFiles.length > 0) processFiles(selectedFiles, { tool: 'compress', preset: opt.id });
+                                                    else toast.error("Veuillez sélectionner au moins un fichier d'abord.");
                                                 }}
-                                                disabled={loading || !selectedFile}
+                                                disabled={loading || selectedFiles.length === 0}
                                                 className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-muted transition-all text-left group"
                                             >
                                                 <div className="p-2 bg-purple-500/10 text-purple-600 rounded-lg group-hover:bg-purple-500/20">
@@ -371,30 +376,38 @@ export default function VideoToolsPage() {
                             {activeToolId === "extract-audio" && (
                                 <div className="space-y-3">
                                     <Label className="text-sm font-medium text-foreground mb-2 block">Format d'extraction :</Label>
-                                    <div className="grid grid-cols-1 gap-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {[
                                             { id: 'mp3', label: 'MP3', desc: 'Standard universel', icon: Volume2 },
-                                            { id: 'wav', label: 'WAV', desc: 'Non compressé, haute qualité', icon: Volume2 },
-                                            { id: 'aac', label: 'AAC', desc: 'Moderne et efficace', icon: Volume2 },
+                                            { id: 'wav', label: 'WAV', desc: 'Haute Fidélité', icon: Volume2 },
+                                            { id: 'aac', label: 'AAC', desc: 'Apple/Web', icon: Volume2 },
+                                            { id: 'flac', label: 'FLAC', desc: 'Lossless', icon: Volume2 },
+                                            { id: 'm4a', label: 'M4A', desc: 'Compressé HD', icon: Volume2 },
+                                            { id: 'ogg', label: 'OGG', desc: 'Open Source', icon: Volume2 },
                                         ].map((opt) => (
                                             <button
                                                 key={opt.id}
                                                 onClick={() => {
                                                     setAudioFormat(opt.id);
-                                                    if (selectedFile) processFile(selectedFile, { tool: 'extract-audio', audioFormat: opt.id });
-                                                    else toast.error("Veuillez sélectionner un fichier d'abord.");
+                                                    if (selectedFiles.length > 0) processFiles(selectedFiles, { tool: 'extract-audio', audioFormat: opt.id });
+                                                    else toast.error("Veuillez sélectionner au moins un fichier d'abord.");
                                                 }}
-                                                disabled={loading || !selectedFile}
+                                                disabled={loading || selectedFiles.length === 0}
                                                 className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-muted transition-all text-left group"
                                             >
                                                 <div className="p-2 bg-orange-500/10 text-orange-600 rounded-lg group-hover:bg-orange-500/20">
                                                     <opt.icon size={20} />
                                                 </div>
-                                                <div>
-                                                    <span className="block font-semibold text-foreground">{opt.label}</span>
-                                                    <span className="block text-xs text-muted-foreground">{opt.desc}</span>
+                                                <div className="min-w-0">
+                                                    <span className="block font-semibold text-foreground truncate">{opt.label}</span>
+                                                    <span className="block text-[10px] text-muted-foreground truncate">{opt.desc}</span>
                                                 </div>
-                                                {loading && audioFormat === opt.id && <RotateCcw className="animate-spin ml-auto text-orange-500" />}
+                                                {loading && audioFormat === opt.id && (
+                                                     <div className="ml-auto flex flex-col items-end">
+                                                        <RotateCcw className="animate-spin text-orange-500" />
+                                                        {batchProgress.total > 1 && <span className="text-[10px] font-bold mt-1">{batchProgress.current}/{batchProgress.total}</span>}
+                                                    </div>
+                                                )}
                                             </button>
                                         ))}
                                     </div>
@@ -415,18 +428,42 @@ export default function VideoToolsPage() {
                                                 key={opt.id}
                                                 onClick={() => {
                                                     setGifFps(opt.id);
-                                                    if (selectedFile) processFile(selectedFile, { tool: 'to-gif', fps: opt.id });
-                                                    else toast.error("Veuillez sélectionner un fichier d'abord.");
+                                                    if (selectedFiles.length > 0) processFiles(selectedFiles, { tool: 'to-gif', fps: opt.id });
+                                                    else toast.error("Veuillez sélectionner au moins un fichier d'abord.");
                                                 }}
-                                                disabled={loading || !selectedFile}
+                                                disabled={loading || selectedFiles.length === 0}
                                                 className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-muted transition-all text-center group"
                                             >
                                                 <span className="font-bold text-lg text-foreground">{opt.label}</span>
                                                 <span className="text-xs text-muted-foreground">{opt.desc}</span>
-                                                {loading && gifFps === opt.id && <RotateCcw className="animate-spin mt-1 text-red-500" />}
+                                                {loading && gifFps === opt.id && (
+                                                     <div className="mt-1 flex flex-col items-center">
+                                                        <RotateCcw className="animate-spin text-red-500" size={16} />
+                                                        {batchProgress.total > 1 && <span className="text-[10px] font-bold mt-1">{batchProgress.current}/{batchProgress.total}</span>}
+                                                    </div>
+                                                )}
                                             </button>
                                         ))}
                                     </div>
+                                </div>
+                            )}
+
+                            {activeToolId === "generate-spectrogram" && (
+                                <div className="space-y-4">
+                                    <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
+                                        <p className="text-sm text-muted-foreground leading-relaxed">
+                                            Cet outil va analyser votre fichier audio et générer une vidéo MP4 avec une onde sonore animée.
+                                        </p>
+                                    </div>
+                                    <Button 
+                                        size="lg" 
+                                        onClick={handleProcess} 
+                                        disabled={selectedFiles.length === 0 || loading}
+                                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-14 rounded-2xl shadow-lg shadow-primary/20"
+                                    >
+                                        {loading ? <Loader2 className="animate-spin mr-2" /> : <Music className="mr-2" />}
+                                        {loading ? "Génération en cours..." : "Générer la vidéo"}
+                                    </Button>
                                 </div>
                             )}
                         </div>

@@ -10,6 +10,10 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata: Metadata = {
   title: "MetaConvert - Modern File Conversion & Upscaling",
   description: "Convert files and upscale images with ease.",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/logo.png",
+  }
 };
 
 export default function RootLayout({
@@ -19,7 +23,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn("min-h-screen font-sans antialiased", inter.variable)}>
+      <body
+        className={cn("min-h-screen font-sans antialiased", inter.variable)}
+        suppressHydrationWarning
+      >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
         </ThemeProvider>

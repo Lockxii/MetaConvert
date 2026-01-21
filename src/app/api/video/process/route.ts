@@ -90,18 +90,30 @@ export async function POST(req: NextRequest) {
 
       switch (tool) {
         case "convert":
-          const format = params.format as string; // e.g., 'mp4', 'webm'
+          const format = params.format as string; 
           outputFilePath = join(tempDir, `${outputFileName}.${format}`);
-          outputMimeType = `video/${format}`;
+          
+          const videoMimeMap: Record<string, string> = {
+            mp4: 'video/mp4',
+            webm: 'video/webm',
+            mov: 'video/quicktime',
+            avi: 'video/x-msvideo',
+            mkv: 'video/x-matroska',
+            flv: 'video/x-flv',
+            wmv: 'video/x-ms-wmv',
+            mpeg: 'video/mpeg'
+          };
+          outputMimeType = videoMimeMap[format] || `video/${format}`;
+          
           command.toFormat(format).on('end', () => resolve()).on('error', reject).save(outputFilePath);
           break;
         case "compress":
-          const compressionPreset = params.preset || 'balanced'; // quality, balanced, size
+          const compressionPreset = params.preset || 'balanced'; 
           let crf = '28';
           if (compressionPreset === 'quality') crf = '23';
           if (compressionPreset === 'size') crf = '35';
 
-          outputFilePath = join(tempDir, `${outputFileName}.mp4`); // Assume MP4 output for compression
+          outputFilePath = join(tempDir, `${outputFileName}.mp4`); 
           outputMimeType = 'video/mp4';
           command
             .addOption('-crf', crf) 
@@ -114,16 +126,21 @@ export async function POST(req: NextRequest) {
           const audioFormat = params.audioFormat || 'mp3';
           outputFilePath = join(tempDir, `${outputFileName}.${audioFormat}`);
           
-          if (audioFormat === 'wav') {
-             outputMimeType = 'audio/wav';
-             // ffmpeg auto-detects wav codec usually, or use pcm_s16le
-          } else if (audioFormat === 'aac') {
-             outputMimeType = 'audio/aac';
-             command.audioCodec('aac');
-          } else {
-             outputMimeType = 'audio/mpeg';
-             command.audioCodec('libmp3lame');
-          }
+          const extractMimeMap: Record<string, string> = {
+            mp3: 'audio/mpeg',
+            wav: 'audio/wav',
+            aac: 'audio/aac',
+            flac: 'audio/flac',
+            m4a: 'audio/mp4',
+            ogg: 'audio/ogg'
+          };
+          outputMimeType = extractMimeMap[audioFormat] || `audio/${audioFormat}`;
+
+          // Set specific codecs for better compatibility
+          if (audioFormat === 'mp3') command.audioCodec('libmp3lame');
+          else if (audioFormat === 'aac' || audioFormat === 'm4a') command.audioCodec('aac');
+          else if (audioFormat === 'ogg') command.audioCodec('libvorbis');
+          else if (audioFormat === 'flac') command.audioCodec('flac');
 
           command
             .noVideo()
@@ -156,6 +173,28 @@ export async function POST(req: NextRequest) {
             .on('error', reject)
             .save(outputFilePath);
           break;
+        case "generate-spectrogram":
+          const waveColor = params.color || '0x2563eb'; // MetaConvert Blue
+          
+          outputFilePath = join(tempDir, `${outputFileName}.mp4`);
+          outputMimeType = 'video/mp4';
+          
+          command
+            .complexFilter([
+                `showwaves=s=1280x720:mode=line:colors=${waveColor}:draw=full[v]`
+            ], 'v')
+            .outputOptions([
+                '-c:v libx264',
+                '-c:a copy', // Keep original audio
+                '-preset fast',
+                '-crf 23',
+                '-pix_fmt yuv420p',
+                '-shortest'
+            ])
+            .on('end', () => resolve())
+            .on('error', reject)
+            .save(outputFilePath);
+          break;
         default:
           return reject(new Error("Unknown video tool"));
       }
@@ -163,6 +202,7 @@ export async function POST(req: NextRequest) {
 
     const fileStats = await fs.stat(outputFilePath);
     const convertedSize = fileStats.size;
+    const outputBuffer = await fs.readFile(outputFilePath);
 
     await logOperation({
       userId: userId,
@@ -172,6 +212,7 @@ export async function POST(req: NextRequest) {
       convertedSize: convertedSize,
       targetType: outputMimeType.split('/')[1] || 'unknown',
       status: 'completed',
+      fileBuffer: outputBuffer,
     });
 
     // Stream the response back

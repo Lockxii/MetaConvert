@@ -8,10 +8,12 @@ export const conversions = pgTable('conversions', {
   fileType: text('file_type').notNull(),
   targetType: text('target_type').notNull(),
   status: text('status').notNull(),
+  filePath: text('file_path'), // Added for Cloud storage
   createdAt: timestamp('created_at').defaultNow(),
   originalSize: integer('original_size'),
   convertedSize: integer('converted_size'),
-  userId: text('user_id').references(() => user.id)
+  userId: text('user_id').references(() => user.id),
+  dropLinkId: text('drop_link_id').references(() => dropLinks.id)
 });
 
 export const upscales = pgTable('upscales', {
@@ -20,8 +22,10 @@ export const upscales = pgTable('upscales', {
   originalSize: integer('original_size'),
   upscaledSize: integer('upscaled_size'),
   factor: integer('factor').default(2),
+  filePath: text('file_path'), // Added for Cloud storage
   createdAt: timestamp('created_at').defaultNow(),
-  userId: text('user_id').references(() => user.id)
+  userId: text('user_id').references(() => user.id),
+  dropLinkId: text('drop_link_id').references(() => dropLinks.id)
 });
 
 // --- Better Auth Tables ---
@@ -76,4 +80,26 @@ export const userSettings = pgTable("user_settings", {
     // Add other settings here as needed
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sharedLinks = pgTable('shared_links', {
+  id: text('id').primaryKey(), // UUID unique pour le lien
+  fileName: text('file_name').notNull(),
+  filePath: text('file_path').notNull(), // Chemin local ou URL
+  password: text('password'), // Optionnel
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  downloadCount: integer('download_count').default(0),
+  userId: text('user_id').references(() => user.id)
+});
+
+export const dropLinks = pgTable('drop_links', {
+  id: text('id').primaryKey(), // UUID
+  title: text('title').notNull(),
+  description: text('description'),
+  password: text('password'),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  userId: text('user_id').notNull().references(() => user.id),
+  isActive: boolean('active').default(true)
 });
