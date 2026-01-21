@@ -1,73 +1,103 @@
 import { NextRequest, NextResponse } from "next/server";
+import { exec } from "child_process";
+import { promisify } from "util";
+import path from "path";
+import os from "os";
+import fs from "fs";
 import { getUserSession, logOperation } from "@/lib/server-utils";
+
+const execAsync = promisify(exec);
+
+const YT_DLP_URL = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux";
+const YT_DLP_PATH = path.join(os.tmpdir(), "yt-dlp");
+
+async function ensureYtDlp() {
+  if (fs.existsSync(YT_DLP_PATH)) return YT_DLP_PATH;
+
+  console.log("[Web Download API] Downloading yt-dlp...");
+  try {
+    const res = await fetch(YT_DLP_URL);
+    if (!res.ok) throw new Error(`Failed to download yt-dlp: ${res.statusText}`);
+    
+    const buffer = Buffer.from(await res.arrayBuffer());
+    fs.writeFileSync(YT_DLP_PATH, buffer);
+    fs.chmodSync(YT_DLP_PATH, "755");
+    
+    console.log("[Web Download API] yt-dlp downloaded successfully.");
+    return YT_DLP_PATH;
+  } catch (error) {
+    console.error("[Web Download API] Download failed:", error);
+    throw error;
+  }
+}
 
 export async function POST(req: NextRequest) {
   let userId: string | null = null;
+  const tempDir = os.tmpdir();
+  const timestamp = Date.now();
   
   try {
     const session = await getUserSession(req);
     userId = session?.user?.id || null;
+    
+    await ensureYtDlp();
 
-    const { url, format, type } = await req.json(); // format: 'mp3' | 'mp4'
+    const { url, format, type } = await req.json();
 
     if (!url) return NextResponse.json({ error: "URL requise" }, { status: 400 });
 
-    // Use Cobalt API (v10) - POST /
-    const cobaltResponse = await fetch("https://api.cobalt.tools/", {
-        method: "POST",
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "User-Agent": "MetaConvert/1.0"
-        },
-        body: JSON.stringify({
-            url: url,
-            videoQuality: "1080", // Changed from vQuality
-            filenamePattern: "basic",
-            downloadMode: format === "mp3" ? "audio" : "auto", // Changed logic
-            audioFormat: format === "mp3" ? "mp3" : undefined, // Changed from aFormat
-            // disableMetadata: true 
-        })
-    });
-
-    const data = await cobaltResponse.json();
-
-    if (!cobaltResponse.ok || data.status === "error") {
-        throw new Error(data.text || "Erreur lors de la récupération via Cobalt");
-    }
-
-    // Cobalt returns a direct download URL (usually)
-    // We need to fetch this file and stream it to the user to mask the source and save to DB/Logs if needed
-    // Or we can just redirect. But to log operation and count stats, we better proxy it.
+    const outputId = `${type}-${format}-${timestamp}`;
+    const outputPath = path.join(tempDir, `${outputId}.${format}`);
     
-    if (data.url) {
-        const fileRes = await fetch(data.url);
-        if (!fileRes.ok) throw new Error("Impossible de télécharger le fichier source");
-        
-        const arrayBuffer = await fileRes.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        
-        // Infer filename
-        const filename = data.filename || `download-${Date.now()}.${format}`;
+    // Anti-bot flags
+    // spoofing Android client often bypasses the login requirement for Shorts
+    const flags = [
+        `--no-playlist`,
+        `--no-check-certificates`,
+        `--extractor-args "youtube:player_client=android"`, 
+        `--user-agent "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"`,
+        `--force-ipv4` // Vercel IPv6 sometimes flagged
+    ].join(" ");
 
-        return sendFile(buffer, filename, format === "mp3" ? "audio/mpeg" : "video/mp4", userId, type);
-    } else if (data.pickerType === 'various') {
-         // Cobalt sometimes returns multiple options, take the first one
-         const first = data.picker[0];
-         if (first && first.url) {
-             const fileRes = await fetch(first.url);
-             const arrayBuffer = await fileRes.arrayBuffer();
-             const buffer = Buffer.from(arrayBuffer);
-             return sendFile(buffer, `download-${Date.now()}.${format}`, format === "mp3" ? "audio/mpeg" : "video/mp4", userId, type);
-         }
-         throw new Error("Format complexe non supporté automatiquement");
+    let command = "";
+    
+    if (format === "mp3") {
+        command = `${YT_DLP_PATH} ${flags} --extract-audio --audio-format mp3 --audio-quality 0 -o "${path.join(tempDir, `${outputId}.%(ext)s`)}" "${url}"`;
     } else {
-        throw new Error("Aucune URL de téléchargement retournée");
+        // Use generic 'best' to avoid format merging issues if ffmpeg is missing
+        // Vercel doesn't have ffmpeg by default! This is another issue for merging video+audio.
+        // We must select a format that has both or use 'best' (which might be 720p).
+        // Format 'b' usually gets the best single file (video+audio).
+        command = `${YT_DLP_PATH} ${flags} -f "b/best" -o "${outputPath}" "${url}"`;
     }
+    
+    console.log(`[Web Download API] Running: ${command}`);
+    
+    // We need to set the PATH to include node for JS interpretation if needed, though with android client it might skip JS checks.
+    await execAsync(command, { env: { ...process.env } });
+
+    // Check for file (yt-dlp might add extension)
+    let finalPath = outputPath;
+    if (!fs.existsSync(outputPath)) {
+         const files = fs.readdirSync(tempDir);
+         const found = files.find(f => f.startsWith(outputId));
+         if (found) {
+             finalPath = path.join(tempDir, found);
+         } else {
+             throw new Error("Fichier non généré par yt-dlp");
+         }
+    }
+
+    const fileBuffer = fs.readFileSync(finalPath);
+    // Cleanup
+    try { fs.unlinkSync(finalPath); } catch(e) {}
+
+    return sendFile(fileBuffer, path.basename(finalPath), format === "mp3" ? "audio/mpeg" : "video/mp4", userId, type);
 
   } catch (error: any) {
     console.error("[Web Download API] Error:", error);
-    return NextResponse.json({ error: "Échec : " + (error.message || "Erreur inconnue") }, { status: 500 });
+    const msg = error.stderr || error.message;
+    return NextResponse.json({ error: "Échec : " + msg }, { status: 500 });
   }
 }
 
