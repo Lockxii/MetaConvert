@@ -8,7 +8,7 @@ import { getUserSession, logOperation } from "@/lib/server-utils";
 
 const execAsync = promisify(exec);
 
-const YT_DLP_URL = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp";
+const YT_DLP_URL = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux";
 const YT_DLP_PATH = path.join(os.tmpdir(), "yt-dlp");
 
 async function ensureYtDlp() {
