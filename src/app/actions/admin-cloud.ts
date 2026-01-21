@@ -40,8 +40,8 @@ export async function getAllFiles() {
 
         // Normalize
         const combined = [
-            ...conversionFiles.map(f => ({ ...f, category: 'conversion', typeLabel: f.type })),
-            ...upscaleFiles.map(f => ({ ...f, category: 'upscale', typeLabel: `Upscale x${f.type}` }))
+            ...conversionFiles.map((f: typeof conversionFiles[number]) => ({ ...f, category: 'conversion', typeLabel: f.type })),
+            ...upscaleFiles.map((f: typeof upscaleFiles[number]) => ({ ...f, category: 'upscale', typeLabel: `Upscale x${f.type}` }))
         ].sort((a, b) => {
             return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
         });
