@@ -12,20 +12,21 @@ export async function POST(req: NextRequest) {
 
     if (!url) return NextResponse.json({ error: "URL requise" }, { status: 400 });
 
-    // Use Cobalt API for reliable extraction (bypasses YouTube/Vercel IP blocks)
-    const cobaltResponse = await fetch("https://api.cobalt.tools/api/json", {
+    // Use Cobalt API (v10) - POST /
+    const cobaltResponse = await fetch("https://api.cobalt.tools/", {
         method: "POST",
         headers: {
             "Accept": "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "User-Agent": "MetaConvert/1.0"
         },
         body: JSON.stringify({
             url: url,
-            vQuality: "1080",
+            videoQuality: "1080", // Changed from vQuality
             filenamePattern: "basic",
-            isAudioOnly: format === "mp3",
-            aFormat: format === "mp3" ? "mp3" : undefined,
-            // disableMetadata: true // Clean file
+            downloadMode: format === "mp3" ? "audio" : "auto", // Changed logic
+            audioFormat: format === "mp3" ? "mp3" : undefined, // Changed from aFormat
+            // disableMetadata: true 
         })
     });
 
