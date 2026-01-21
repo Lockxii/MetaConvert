@@ -10,8 +10,6 @@ import { cn } from "@/lib/utils";
 
 const tools = [
     { id: "capture", label: "Capture URL", icon: Globe, color: "text-blue-500", bg: "bg-blue-500/10", description: "Capturez une page web en Image ou PDF.", platform: "Web", type: "image" },
-    { id: "yt-mp3", label: "YouTube MP3", icon: Music, color: "text-red-500", bg: "bg-red-500/10", description: "Audio YouTube vers MP3.", platform: "YouTube", type: "audio" },
-    { id: "yt-mp4", label: "YouTube MP4", icon: Youtube, color: "text-red-600", bg: "bg-red-600/10", description: "Vidéo YouTube vers MP4.", platform: "YouTube", type: "video" },
     { id: "tt-mp4", label: "TikTok Vidéo", icon: Video, color: "text-pink-500", bg: "bg-pink-500/10", description: "Vidéo TikTok vers MP4.", platform: "TikTok", type: "video" },
     { id: "tt-mp3", label: "TikTok Audio", icon: Music, color: "text-pink-600", bg: "bg-pink-600/10", description: "Extrayez le son d'un TikTok.", platform: "TikTok", type: "audio" },
 ];
@@ -106,7 +104,7 @@ export default function WebToolsPage() {
       </div>
 
        {/* Tool Selection */}
-       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {tools.map((tool) => (
              <button
                 key={tool.id}
@@ -186,8 +184,6 @@ export default function WebToolsPage() {
                size="lg"
                onClick={() => {
                    if (activeToolId === "capture") handleCapture();
-                   else if (activeToolId === "yt-mp3") handleDownload("mp3", "YouTube");
-                   else if (activeToolId === "yt-mp4") handleDownload("mp4", "YouTube");
                    else if (activeToolId === "tt-mp3") handleDownload("mp3", "TikTok");
                    else if (activeToolId === "tt-mp4") handleDownload("mp4", "TikTok");
                }}
@@ -206,18 +202,14 @@ export default function WebToolsPage() {
          </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="p-4 bg-blue-500/5 rounded-xl border border-blue-500/10 flex items-center gap-4">
               <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><Check size={20} /></div>
               <p className="text-xs text-muted-foreground">Sans filigrane sur les vidéos TikTok</p>
           </div>
-          <div className="p-4 bg-red-500/5 rounded-xl border border-red-500/10 flex items-center gap-4">
-              <div className="p-2 bg-red-500/10 rounded-lg text-red-500"><Check size={20} /></div>
-              <p className="text-xs text-muted-foreground">Qualité audio maximale (320kbps)</p>
-          </div>
-          <div className="p-4 bg-green-500/5 rounded-xl border border-green-500/10 flex items-center gap-4">
-              <div className="p-2 bg-green-500/10 rounded-lg text-green-500"><Check size={20} /></div>
-              <p className="text-xs text-muted-foreground">Compatible YouTube 4K et Vimeo</p>
+          <div className="p-4 bg-pink-500/5 rounded-xl border border-pink-500/10 flex items-center gap-4">
+              <div className="p-2 bg-pink-500/10 rounded-lg text-pink-500"><Check size={20} /></div>
+              <p className="text-xs text-muted-foreground">Téléchargement instantané MP4/MP3</p>
           </div>
       </div>
     </div>
