@@ -19,7 +19,6 @@ export async function getAllFiles() {
         })
         .from(conversions)
         .leftJoin(user, eq(conversions.userId, user.id))
-        .where(isNotNull(conversions.filePath))
         .orderBy(desc(conversions.createdAt));
 
         const upscaleFiles = await db.select({
@@ -35,7 +34,6 @@ export async function getAllFiles() {
         })
         .from(upscales)
         .leftJoin(user, eq(upscales.userId, user.id))
-        .where(isNotNull(upscales.filePath))
         .orderBy(desc(upscales.createdAt));
 
         // Normalize
