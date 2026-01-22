@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 
 interface DashboardStats {
     totalConversions: number;
@@ -37,6 +38,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
+  const { data: session } = authClient.useSession();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -68,7 +70,7 @@ export default function DashboardPage() {
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
          <div className="space-y-1">
-            <h1 className="text-3xl font-black tracking-tight text-foreground">Bonjour, Arthur 👋</h1>
+            <h1 className="text-3xl font-black tracking-tight text-foreground">Bonjour, {session?.user?.name?.split(' ')[0] || "utilisateur"} 👋</h1>
             <p className="text-muted-foreground font-medium italic">Voici l'activité de vos outils MetaConvert.</p>
          </div>
          <div className="flex items-center gap-3">
