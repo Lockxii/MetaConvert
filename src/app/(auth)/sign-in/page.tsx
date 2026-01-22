@@ -26,19 +26,25 @@ export default function SignIn() {
 
   const handleSignIn = async () => {
     setLoading(true);
-    await authClient.signIn.email({
-      email,
-      password,
-    }, {
-      onSuccess: () => {
-        toast.success("Connexion réussie !");
-        router.push("/dashboard");
-      },
-      onError: (ctx) => {
-        toast.error(ctx.error.message || "Erreur lors de la connexion.");
-        setLoading(false);
-      },
-    });
+    try {
+      await authClient.signIn.email({
+        email,
+        password,
+      }, {
+        onSuccess: () => {
+            toast.success("Connexion réussie !");
+            router.push("/dashboard");
+        },
+        onError: (ctx) => {
+            toast.error(ctx.error.message || "Erreur lors de la connexion.");
+            setLoading(false);
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("Une erreur inattendue est survenue.");
+      setLoading(false);
+    }
   };
 
   return (

@@ -27,20 +27,26 @@ export default function SignUp() {
 
   const handleSignUp = async () => {
     setLoading(true);
-    await authClient.signUp.email({
-      email,
-      password,
-      name,
-    }, {
-      onSuccess: () => {
-        toast.success("Compte créé avec succès !");
-        router.push("/dashboard");
-      },
-      onError: (ctx) => {
-        toast.error(ctx.error.message || "Erreur lors de l'inscription.");
-        setLoading(false);
-      },
-    });
+    try {
+      const { data, error } = await authClient.signUp.email({
+        email,
+        password,
+        name,
+      }, {
+        onSuccess: () => {
+            toast.success("Compte créé avec succès !");
+            router.push("/dashboard");
+        },
+        onError: (ctx) => {
+            toast.error(ctx.error.message || "Erreur lors de l'inscription.");
+            setLoading(false);
+        },
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("Une erreur inattendue est survenue.");
+      setLoading(false);
+    }
   };
 
   return (
