@@ -1,8 +1,22 @@
 import { pgTable, serial, text, timestamp, integer, boolean, customType } from 'drizzle-orm/pg-core';
 
-const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+const bytea = customType<{ data: Buffer; driverData: string }>({
   dataType() {
     return 'bytea';
+  },
+  toDriver(value: Buffer) {
+    return value.toString('hex');
+  },
+  fromDriver(value: unknown) {
+    if (Buffer.isBuffer(value)) return value;
+    if (value instanceof Uint8Array) return Buffer.from(value);
+    if (typeof value === 'string') {
+      if (value.startsWith('\\x')) {
+        return Buffer.from(value.slice(2), 'hex');
+      }
+      return Buffer.from(value, 'hex');
+    }
+    return Buffer.from(value as any);
   },
 });
 

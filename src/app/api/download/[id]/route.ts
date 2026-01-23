@@ -45,25 +45,63 @@ export async function GET(
         return NextResponse.json({ error: "Fichier introuvable" }, { status: 404 });
     }
 
-    const buffer = fileRecord[0].content;
+    let rawContent = fileRecord[0].content;
+    let buffer: Buffer;
+
+    if (Buffer.isBuffer(rawContent)) {
+        buffer = rawContent;
+    } else if (rawContent instanceof Uint8Array) {
+        buffer = Buffer.from(rawContent);
+    } else if (typeof rawContent === 'string') {
+        // Handle hex string if not converted by driver
+        if (rawContent.startsWith('\\x')) {
+            buffer = Buffer.from(rawContent.slice(2), 'hex');
+        } else {
+            buffer = Buffer.from(rawContent, 'hex');
+        }
+    } else if (rawContent && typeof rawContent === 'object' && 'type' in rawContent && (rawContent as any).type === 'Buffer' && Array.isArray((rawContent as any).data)) {
+        // Handle JSON-serialized Buffer: { type: 'Buffer', data: [...] }
+        buffer = Buffer.from((rawContent as any).data);
+    } else {
+        console.error("Invalid content type in DB for ID:", id, typeof rawContent);
+        return NextResponse.json({ error: "Contenu du fichier corrompu" }, { status: 500 });
+    }
+
     const dbPath = `db://${id}`;
 
     // 2. Chercher les métadonnées (Nom de fichier, Type)
     // On cherche dans 'conversions' OU 'upscales' qui ont ce filePath
     let fileName = `file-${id}.bin`;
+    let targetType = "";
     
     const convSearch = await db.select().from(conversions).where(eq(conversions.filePath, dbPath)).limit(1);
     if (convSearch.length > 0) {
         fileName = convSearch[0].fileName;
+        targetType = convSearch[0].targetType;
+        
+        // Ensure fileName has correct extension if targetType is known
+        const currentExt = fileName.split('.').pop()?.toLowerCase();
+        if (targetType && targetType !== currentExt && !['unknown', 'manual'].includes(targetType)) {
+            fileName = `${fileName.split('.')[0]}.${targetType}`;
+        }
     } else {
         const upSearch = await db.select().from(upscales).where(eq(upscales.filePath, dbPath)).limit(1);
         if (upSearch.length > 0) {
             fileName = upSearch[0].fileName;
+            // Upscales are always the same type as original or usually images
+            targetType = fileName.split('.').pop()?.toLowerCase() || "image";
         }
     }
 
     // 3. Déterminer les headers
-    const mimeType = getMimeType(fileName);
+    let mimeType = getMimeType(fileName);
+    if (targetType && (mimeType === 'application/octet-stream' || !fileName.endsWith(targetType))) {
+        // Fallback to targetType if filename doesn't help
+        const mappedMime = getMimeType(`file.${targetType}`);
+        if (mappedMime !== 'application/octet-stream') {
+            mimeType = mappedMime;
+        }
+    }
     const dispositionType = isDownload ? 'attachment' : 'inline';
     
     // Encode filename for headers

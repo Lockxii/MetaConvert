@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { conversions, upscales } from "@/db/schema";
+import { conversions, upscales, fileStorage } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getUserSession } from "@/lib/server-utils";
 import fs from 'fs';
@@ -32,11 +32,24 @@ export async function DELETE(req: NextRequest) {
             }
         }
 
-        // Delete physical file if exists
+        // Delete from DB storage or Physical file
         if (filePathToDelele) {
-            const fullPath = path.join(process.cwd(), 'public', filePathToDelele);
-            if (fs.existsSync(fullPath)) {
-                fs.unlinkSync(fullPath);
+            if (filePathToDelele.startsWith('db://')) {
+                const storageId = filePathToDelele.replace('db://', '');
+                try {
+                    await db.delete(fileStorage).where(eq(fileStorage.id, storageId));
+                } catch (e) {
+                    console.error("Error deleting from fileStorage:", e);
+                }
+            } else {
+                try {
+                    const fullPath = path.join(process.cwd(), 'public', filePathToDelele);
+                    if (fs.existsSync(fullPath)) {
+                        fs.unlinkSync(fullPath);
+                    }
+                } catch (e) {
+                    console.error("Error deleting physical file:", e);
+                }
             }
         }
 

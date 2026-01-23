@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
-import { db } from "@/db";
-import { upscales } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { getUserSession, logOperation } from "@/lib/server-utils";
 
 export async function POST(req: NextRequest) {
+  let originalFileName = "unknown";
+  let originalFileSize = 0;
+  let userId: string | null = null;
+
   try {
-    const session = await auth.api.getSession({ headers: req.headers });
+    const session = await getUserSession(req);
+    userId = session?.user?.id || null;
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -20,7 +23,9 @@ export async function POST(req: NextRequest) {
          return NextResponse.json({ error: "Only images can be upscaled" }, { status: 400 });
     }
 
+    originalFileName = file.name;
     const buffer = Buffer.from(await file.arrayBuffer());
+    originalFileSize = buffer.length;
     
     // Get metadata to know current dimensions
     const metadata = await sharp(buffer).metadata();
@@ -38,22 +43,25 @@ export async function POST(req: NextRequest) {
         })
         .toBuffer();
 
-    // DB Logging
-    if (process.env.DATABASE_URL) {
+    // DB Logging & Cloud Storage
+    if (userId) {
         try {
-            await db.insert(upscales).values({
-                fileName: file.name,
-                originalSize: metadata.size || 0,
-                upscaledSize: outputBuffer.length,
+            await logOperation({
+                userId: userId,
+                type: "upscale",
+                fileName: originalFileName,
+                originalSize: originalFileSize,
+                convertedSize: outputBuffer.length,
                 factor: factor,
-                userId: session?.user?.id || null
+                status: 'completed',
+                fileBuffer: outputBuffer,
             });
         } catch (e) {
             console.error("DB Error:", e);
         }
     }
 
-    const filename = `upscaled-${factor}x-${file.name}`;
+    const filename = `upscaled-${factor}x-${originalFileName}`;
     const asciiFilename = filename.replace(/[^\x00-\x7F]/g, "_");
 
     return new NextResponse(outputBuffer as any, {
@@ -63,8 +71,8 @@ export async function POST(req: NextRequest) {
         }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Upscale Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
 }

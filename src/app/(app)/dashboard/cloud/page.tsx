@@ -165,8 +165,14 @@ export default function CloudPage() {
         
         for (let i = 0; i < filesToDownload.length; i++) {
             const file = filesToDownload[i];
+            let downloadUrl = file.filePath!;
+            if (downloadUrl.startsWith('db://')) {
+                const fileId = downloadUrl.replace('db://', '');
+                downloadUrl = `/api/download/${fileId}?download=true`;
+            }
+
             const a = document.createElement("a");
-            a.href = file.filePath!;
+            a.href = downloadUrl;
             a.download = file.fileName;
             document.body.appendChild(a);
             a.click();
