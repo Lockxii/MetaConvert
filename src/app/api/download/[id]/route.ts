@@ -105,15 +105,16 @@ export async function GET(
     }
     const dispositionType = isDownload ? 'attachment' : 'inline';
     
-    // Encode filename for headers
+    // Clean filename for basic header compatibility
+    const safeFileName = fileName.replace(/[^\x20-\x7E]/g, '_');
     const encodedFileName = encodeURIComponent(fileName);
 
-    return new NextResponse(buffer as any, {
+    return new Response(buffer, {
         headers: {
             "Content-Type": mimeType,
-            "Content-Disposition": `${dispositionType}; filename="${fileName}"; filename*=UTF-8''${encodedFileName}`,
+            "Content-Disposition": `${dispositionType}; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`,
             "Content-Length": buffer.length.toString(),
-            "Cache-Control": "public, max-age=31536000, immutable", // Cache for performance
+            "Cache-Control": "public, max-age=31536000, immutable",
         }
     });
 
