@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
-import { db } from "@/db";
-import { conversions } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { logOperation } from "@/lib/server-utils";
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,22 +43,17 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Only image conversion is supported in this demo." }, { status: 400 });
     }
 
-    // DB Logging
-    if (process.env.DATABASE_URL) {
-        try {
-            await db.insert(conversions).values({
-                fileName: file.name,
-                fileType: file.type,
-                targetType: format,
-                status: 'completed',
-                originalSize: originalSize,
-                convertedSize: outputBuffer.length,
-                userId: session?.user?.id || null 
-            });
-        } catch (e) {
-            console.error("DB Error:", e);
-        }
-    }
+    // Save to DB via Helper
+    await logOperation({
+        userId: session?.user?.id || "anonymous",
+        type: "conversion",
+        fileName: file.name.replace(/\.[^/.]+$/, "") + "." + format,
+        originalSize: originalSize,
+        convertedSize: outputBuffer.length,
+        targetType: format,
+        status: "completed",
+        fileBuffer: outputBuffer // Saves to DB
+    });
 
     // Return the file
     return new NextResponse(outputBuffer as any, {

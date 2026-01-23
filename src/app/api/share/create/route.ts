@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { sharedLinks } from "@/db/schema";
+import { sharedLinks, fileStorage } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import fs from "fs";
-import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import { sql } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,11 +20,24 @@ export async function POST(req: NextRequest) {
 
     const fileId = uuidv4();
     const fileName = file.name;
-    const filePath = path.join(process.cwd(), "public", "shared", `${fileId}-${fileName}`);
-    
-    // Sauvegarde physique du fichier
     const buffer = Buffer.from(await file.arrayBuffer());
-    fs.writeFileSync(filePath, buffer);
+
+    // Auto-repair DB if needed
+    try {
+        await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS "file_storage" (
+                "id" text PRIMARY KEY NOT NULL,
+                "content" bytea NOT NULL,
+                "created_at" timestamp DEFAULT now()
+            );
+        `);
+    } catch (e) {}
+
+    // Store content in DB
+    await db.insert(fileStorage).values({
+        id: fileId,
+        content: buffer
+    });
 
     // Calcul de l'expiration
     const expiresAt = new Date();
@@ -35,8 +47,8 @@ export async function POST(req: NextRequest) {
     await db.insert(sharedLinks).values({
       id: fileId,
       fileName: fileName,
-      filePath: `/shared/${fileId}-${fileName}`,
-      password: password, // Idéalement haché, mais ici en texte pour la simplicité
+      filePath: `db://${fileId}`, // Point to DB storage
+      password: password, 
       expiresAt: expiresAt,
       userId: session?.user?.id || null
     });

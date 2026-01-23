@@ -1,4 +1,16 @@
-import { pgTable, serial, text, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, integer, boolean, customType } from 'drizzle-orm/pg-core';
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return 'bytea';
+  },
+});
+
+export const fileStorage = pgTable('file_storage', {
+    id: text('id').primaryKey(),
+    content: bytea('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+});
 
 // --- Application Specific Tables ---
 

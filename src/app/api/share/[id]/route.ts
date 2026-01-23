@@ -61,7 +61,15 @@ export async function POST(
             return NextResponse.json({ error: "Mot de passe incorrect" }, { status: 401 });
         }
 
-        return NextResponse.json({ downloadUrl: link.filePath });
+        let downloadUrl = link.filePath;
+        
+        // If stored in DB, use proxy
+        if (link.filePath.startsWith('db://')) {
+            const fileId = link.filePath.replace('db://', '');
+            downloadUrl = `${new URL(req.url).origin}/api/download/${fileId}`;
+        }
+
+        return NextResponse.json({ downloadUrl });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

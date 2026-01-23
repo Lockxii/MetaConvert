@@ -1,8 +1,8 @@
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { conversions, upscales, user as usersTable } from "@/db/schema";
+import { conversions, upscales, user as usersTable, fileStorage } from "@/db/schema";
 import { NextRequest } from "next/server";
-import { InferInsertModel } from "drizzle-orm";
+import { InferInsertModel, sql } from "drizzle-orm";
 
 interface LogOperationParams {
     userId: string;
@@ -32,20 +32,33 @@ export async function logOperation(params: LogOperationParams) {
         return;
     }
 
+    // Auto-repair: Ensure table exists
+    try {
+        await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS "file_storage" (
+                "id" text PRIMARY KEY NOT NULL,
+                "content" bytea NOT NULL,
+                "created_at" timestamp DEFAULT now()
+            );
+        `);
+    } catch (e) {
+        // Ignore error if table exists or permission issues, try to proceed
+    }
+
     let filePath: string | null = null;
     if (params.fileBuffer && params.status === 'completed') {
         try {
-            const storageDir = params.type === 'conversion' ? 'conversions' : 'upscales';
             const fileId = uuidv4();
-            // Use targetType for extension if available, otherwise fallback to original extension
-            const extension = params.targetType || params.fileName.split('.').pop() || 'bin';
-            const storageFileName = `${fileId}.${extension}`;
-            const fullPath = path.join(process.cwd(), 'public', 'storage', storageDir, storageFileName);
             
-            fs.writeFileSync(fullPath, params.fileBuffer);
-            filePath = `/storage/${storageDir}/${storageFileName}`;
+            // Store in DB
+            await db.insert(fileStorage).values({
+                id: fileId,
+                content: params.fileBuffer
+            });
+            
+            filePath = `db://${fileId}`;
         } catch (e) {
-            console.error("Error saving file to storage:", e);
+            console.error("Error saving file to DB storage:", e);
         }
     }
 
