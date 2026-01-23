@@ -5,30 +5,28 @@ const bytea = customType<{ data: Buffer }>({
     return 'bytea';
   },
   toDriver(value: Buffer) {
-    return value; // Le driver Neon HTTP devrait accepter le Buffer ou Uint8Array
+    return value;
   },
   fromDriver(value: unknown) {
     if (Buffer.isBuffer(value)) return value;
     if (value instanceof Uint8Array) return Buffer.from(value);
     if (typeof value === 'string') {
-      // 1. Format Postgres Hex (\x...)
       if (value.startsWith('\\x')) {
         return Buffer.from(value.slice(2), 'hex');
       }
-      // 2. Format Hex pur
+      // Si c'est du hex pur
       if (/^[0-9a-fA-F]+$/.test(value)) {
         return Buffer.from(value, 'hex');
       }
-      // 3. Format Base64
-      if (/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)) {
-        return Buffer.from(value, 'base64');
-      }
-      // 4. Fallback UTF-8 (cas désespéré)
-      return Buffer.from(value, 'binary');
     }
-    if (value && typeof value === 'object' && ((value as any).type === 'Buffer' || (value as any).data)) {
-      const data = (value as any).data || value;
-      return Buffer.from(Array.isArray(data) ? data : (data as any).data);
+    if (value && typeof value === 'object') {
+      const obj = value as any;
+      if (obj.type === 'Buffer' && Array.isArray(obj.data)) {
+        return Buffer.from(obj.data);
+      }
+      if (Array.isArray(obj.data)) {
+        return Buffer.from(obj.data);
+      }
     }
     return Buffer.from(value as any);
   },

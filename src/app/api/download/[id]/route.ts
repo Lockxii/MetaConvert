@@ -109,7 +109,7 @@ export async function GET(
     const safeFileName = fileName.replace(/[^\x20-\x7E]/g, '_');
     const encodedFileName = encodeURIComponent(fileName);
 
-    return new Response(buffer, {
+    return new Response(new Uint8Array(buffer), {
         headers: {
             "Content-Type": mimeType,
             "Content-Disposition": `${dispositionType}; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`,
