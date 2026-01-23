@@ -1,32 +1,23 @@
 import { pgTable, serial, text, timestamp, integer, boolean, customType } from 'drizzle-orm/pg-core';
 
-const bytea = customType<{ data: Buffer }>({
+const bytea = customType<{ data: Buffer; driverData: string }>({
   dataType() {
     return 'bytea';
   },
-  toDriver(value: Buffer) {
-    return value;
+  toDriver(value: Buffer): string {
+    return `\\x${value.toString('hex')}`;
   },
-  fromDriver(value: unknown) {
-    if (Buffer.isBuffer(value)) return value;
-    if (value instanceof Uint8Array) return Buffer.from(value);
+  fromDriver(value: unknown): Buffer {
     if (typeof value === 'string') {
-      if (value.startsWith('\\x')) {
-        return Buffer.from(value.slice(2), 'hex');
-      }
-      // Si c'est du hex pur
-      if (/^[0-9a-fA-F]+$/.test(value)) {
-        return Buffer.from(value, 'hex');
-      }
+      const hex = value.startsWith('\\x') ? value.slice(2) : value;
+      return Buffer.from(hex, 'hex');
     }
+    if (value instanceof Uint8Array) return Buffer.from(value);
+    if (Buffer.isBuffer(value)) return value;
     if (value && typeof value === 'object') {
       const obj = value as any;
-      if (obj.type === 'Buffer' && Array.isArray(obj.data)) {
-        return Buffer.from(obj.data);
-      }
-      if (Array.isArray(obj.data)) {
-        return Buffer.from(obj.data);
-      }
+      const data = obj.data || obj;
+      if (Array.isArray(data)) return Buffer.from(data);
     }
     return Buffer.from(value as any);
   },

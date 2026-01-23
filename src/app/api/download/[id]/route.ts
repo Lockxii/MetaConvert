@@ -114,7 +114,9 @@ export async function GET(
             "Content-Type": mimeType,
             "Content-Disposition": `${dispositionType}; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`,
             "Content-Length": buffer.length.toString(),
-            "Cache-Control": "public, max-age=31536000, immutable",
+            "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
         }
     });
 

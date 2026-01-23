@@ -168,7 +168,7 @@ export default function CloudPage() {
             let downloadUrl = file.filePath!;
             if (downloadUrl.startsWith('db://')) {
                 const fileId = downloadUrl.replace('db://', '');
-                downloadUrl = `/api/download/${fileId}?download=true`;
+                downloadUrl = `/api/download/${fileId}?download=true&t=${Date.now()}`;
             }
 
             const a = document.createElement("a");
@@ -252,7 +252,7 @@ export default function CloudPage() {
         let src = file.filePath;
         if (src?.startsWith('db://')) {
             const id = src.replace('db://', '');
-            src = `/api/download/${id}`;
+            src = `/api/download/${id}?t=${Date.now()}`;
         }
         
         if (src) {
@@ -288,7 +288,7 @@ export default function CloudPage() {
         let downloadUrl = file.filePath;
         if (file.filePath.startsWith('db://')) {
             const fileId = file.filePath.replace('db://', '');
-            downloadUrl = `/api/download/${fileId}?download=true`;
+            downloadUrl = `/api/download/${fileId}?download=true&t=${Date.now()}`;
         }
 
         const a = document.createElement("a");
@@ -565,7 +565,7 @@ export default function CloudPage() {
                             let src = previewFile.filePath;
                             if (src?.startsWith('db://')) {
                                 const id = src.replace('db://', '');
-                                src = `/api/download/${id}`;
+                                src = `/api/download/${id}?t=${Date.now()}`;
                             }
 
                             return (
