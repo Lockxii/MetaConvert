@@ -59,9 +59,10 @@ export async function GET(
         } else {
             buffer = Buffer.from(rawContent, 'hex');
         }
-    } else if (rawContent && typeof rawContent === 'object' && 'type' in rawContent && (rawContent as any).type === 'Buffer' && Array.isArray((rawContent as any).data)) {
-        // Handle JSON-serialized Buffer: { type: 'Buffer', data: [...] }
-        buffer = Buffer.from((rawContent as any).data);
+    } else if (rawContent && typeof rawContent === 'object' && ((rawContent as any).type === 'Buffer' || (rawContent as any).data)) {
+        // Handle JSON-serialized Buffer: { type: 'Buffer', data: [...] } or just { data: [...] }
+        const data = (rawContent as any).data || rawContent;
+        buffer = Buffer.from(Array.isArray(data) ? data : (data as any).data);
     } else {
         console.error("Invalid content type in DB for ID:", id, typeof rawContent);
         return NextResponse.json({ error: "Contenu du fichier corrompu" }, { status: 500 });
