@@ -282,7 +282,7 @@ export default function CloudPage() {
         let downloadUrl = file.filePath;
         if (file.filePath.startsWith('db://')) {
             const fileId = file.filePath.replace('db://', '');
-            downloadUrl = `/api/download/${fileId}`;
+            downloadUrl = `/api/download/${fileId}?download=true`;
         }
 
         const a = document.createElement("a");
