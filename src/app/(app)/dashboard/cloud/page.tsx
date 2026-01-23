@@ -243,12 +243,18 @@ export default function CloudPage() {
         const type = (file.targetType || "").toLowerCase();
         const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(type);
         
-        if (file.filePath && !file.filePath.startsWith('db://')) {
+        let src = file.filePath;
+        if (src?.startsWith('db://')) {
+            const id = src.replace('db://', '');
+            src = `/api/download/${id}`;
+        }
+        
+        if (src) {
             if (isImage) {
                 return (
                     <div className="relative w-full h-full rounded-md overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                         <img 
-                            src={file.filePath} 
+                            src={src} 
                             alt={file.fileName} 
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -273,20 +279,14 @@ export default function CloudPage() {
             return;
         }
 
+        let downloadUrl = file.filePath;
         if (file.filePath.startsWith('db://')) {
             const fileId = file.filePath.replace('db://', '');
-            const url = `/api/download/${fileId}`;
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = file.fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            return;
+            downloadUrl = `/api/download/${fileId}`;
         }
 
         const a = document.createElement("a");
-        a.href = file.filePath;
+        a.href = downloadUrl;
         a.download = file.fileName;
         document.body.appendChild(a);
         a.click();
@@ -555,37 +555,33 @@ export default function CloudPage() {
                         </DialogTitle>
                     </DialogHeader>
                     <div className="flex-1 overflow-auto p-6 bg-slate-900/5 dark:bg-black/20 flex items-center justify-center min-h-[300px]">
-                        {previewFile?.filePath ? (
-                            <div className="w-full h-full flex items-center justify-center">
-                                {previewFile.filePath.startsWith('db://') ? (
-                                    <div className="text-center space-y-4 p-8 bg-card border border-border rounded-2xl shadow-xl">
-                                        <div className="p-4 bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 text-primary">
-                                            <Lock size={32} />
-                                        </div>
-                                        <p className="text-muted-foreground">Fichier sécurisé en base de données.<br/>Aperçu non disponible.</p>
-                                        <Button onClick={() => handleDownload(previewFile)}>Télécharger pour voir</Button>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes((previewFile.targetType || "").toLowerCase()) ? (
-                                            <img src={previewFile.filePath} alt="Preview" className="max-w-full max-h-[60vh] object-contain shadow-2xl rounded-lg" />
-                                        ) : ['mp4', 'webm', 'ogg', 'mov'].includes((previewFile.targetType || "").toLowerCase()) ? (
-                                            <video src={previewFile.filePath} controls className="max-w-full max-h-[60vh] rounded-lg shadow-2xl" />
-                                        ) : ['mp3', 'wav', 'ogg', 'm4a', 'mpeg'].includes((previewFile.targetType || "").toLowerCase()) ? (
-                                            <audio src={previewFile.filePath} controls className="w-full max-w-md" />
-                                        ) : (
-                                            <div className="text-center space-y-4 p-12 bg-card border border-border rounded-2xl shadow-xl">
-                                                <div className="p-4 bg-muted rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                                                    <FileText size={32} />
-                                                </div>
-                                                <p className="text-muted-foreground">L'aperçu n'est pas disponible pour ce type de fichier ({previewFile.targetType}).</p>
-                                                <Button onClick={() => handleDownload(previewFile)}>Télécharger pour voir</Button>
+                        {previewFile?.filePath ? (() => {
+                            let src = previewFile.filePath;
+                            if (src?.startsWith('db://')) {
+                                const id = src.replace('db://', '');
+                                src = `/api/download/${id}`;
+                            }
+
+                            return (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    {['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes((previewFile.targetType || "").toLowerCase()) ? (
+                                        <img src={src} alt="Preview" className="max-w-full max-h-[60vh] object-contain shadow-2xl rounded-lg" />
+                                    ) : ['mp4', 'webm', 'ogg', 'mov'].includes((previewFile.targetType || "").toLowerCase()) ? (
+                                        <video src={src} controls className="max-w-full max-h-[60vh] rounded-lg shadow-2xl" />
+                                    ) : ['mp3', 'wav', 'ogg', 'm4a', 'mpeg'].includes((previewFile.targetType || "").toLowerCase()) ? (
+                                        <audio src={src} controls className="w-full max-w-md" />
+                                    ) : (
+                                        <div className="text-center space-y-4 p-12 bg-card border border-border rounded-2xl shadow-xl">
+                                            <div className="p-4 bg-muted rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                                                <FileText size={32} />
                                             </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                        ) : (
+                                            <p className="text-muted-foreground">L'aperçu n'est pas disponible pour ce type de fichier ({previewFile.targetType}).</p>
+                                            <Button onClick={() => handleDownload(previewFile)}>Télécharger pour voir</Button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })() : (
                             <div className="text-center text-muted-foreground">Fichier non disponible.</div>
                         )}
                     </div>
