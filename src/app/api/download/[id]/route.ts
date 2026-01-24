@@ -79,6 +79,13 @@ export async function GET(
             fileName = upSearch[0].fileName;
             // Upscales are always the same type as original or usually images
             targetType = fileName.split('.').pop()?.toLowerCase() || "image";
+        } else {
+            // Check in sharedLinks (for MetaTransfer)
+            const linkSearch = await db.select().from(sharedLinks).where(eq(sharedLinks.filePath, dbPath)).limit(1);
+            if (linkSearch.length > 0) {
+                fileName = linkSearch[0].fileName;
+                targetType = fileName.split('.').pop()?.toLowerCase() || "";
+            }
         }
     }
 
