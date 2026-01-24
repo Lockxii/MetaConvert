@@ -14,8 +14,11 @@ import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 import Image from "next/image";
+import { authClient } from "@/lib/auth-client";
 
 export default function HomePage() {
+  const { data: session } = authClient.useSession();
+
   return (
     <div className="overflow-hidden bg-background">
       {/* Background Orbs */}
@@ -67,8 +70,8 @@ export default function HomePage() {
               className="flex flex-col sm:flex-row items-center justify-center gap-5 mb-24 w-full sm:w-auto"
             >
               <Button size="lg" className="rounded-full px-10 h-14 text-base font-semibold shadow-xl shadow-blue-500/20 gap-2 w-full sm:w-auto" asChild>
-                <Link href="/sign-up">
-                  Commencer l'expérience <ArrowRight className="w-4 h-4" />
+                <Link href={session ? "/dashboard" : "/sign-up"}>
+                  {session ? "Accéder au Tableau de Bord" : "Commencer l'expérience"} <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
             </motion.div>

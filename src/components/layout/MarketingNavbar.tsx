@@ -8,10 +8,12 @@ import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
 
 import Image from "next/image";
+import { authClient } from "@/lib/auth-client";
 
 export function MarketingNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session, isPending } = authClient.useSession();
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -47,14 +49,28 @@ export function MarketingNavbar() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-5">
-          <Link href="/sign-in" className="text-sm font-semibold text-foreground hover:text-primary transition-colors">
-            Connexion
-          </Link>
-          <Button className="rounded-full px-6 font-bold shadow-xl shadow-primary/10 transition-all hover:scale-105" asChild>
-            <Link href="/sign-up">
-              Essai Gratuit
-            </Link>
-          </Button>
+          {!isPending && (
+            <>
+              {session ? (
+                <Button className="rounded-full px-6 font-bold shadow-xl shadow-primary/10 transition-all hover:scale-105" asChild>
+                  <Link href="/dashboard">
+                    Tableau de Bord
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Link href="/sign-in" className="text-sm font-semibold text-foreground hover:text-primary transition-colors">
+                    Connexion
+                  </Link>
+                  <Button className="rounded-full px-6 font-bold shadow-xl shadow-primary/10 transition-all hover:scale-105" asChild>
+                    <Link href="/sign-up">
+                      Essai Gratuit
+                    </Link>
+                  </Button>
+                </>
+              )}
+            </>
+          )}
         </div>
 
         {/* Mobile Toggle */}
