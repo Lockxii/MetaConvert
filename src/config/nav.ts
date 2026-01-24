@@ -1,15 +1,16 @@
-import { 
-  LayoutDashboard, 
-  Image as ImageIcon, 
-  FileText, 
-  Video, 
-  Music, 
-  Globe, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Image as ImageIcon,
+  FileText,
+  Video,
+  Music,
+  Globe,
+  Settings,
   Cloud,
   Archive,
   Layers,
-  FolderUp
+  FolderUp,
+  Send
 } from "lucide-react";
 
 export const navItems = [
@@ -22,6 +23,8 @@ export const navItems = [
   { name: "Audio", href: "/dashboard/audio", icon: Music },
   { name: "Web", href: "/dashboard/web", icon: Globe },
   { name: "Archives", href: "/dashboard/archive", icon: Archive },
+  { name: "Transfert", href: "/dashboard/transfer", icon: Send },
   { name: "Demandes", href: "/dashboard/drop", icon: FolderUp },
   { name: "Réglages", href: "/dashboard/settings", icon: Settings },
 ];
+
