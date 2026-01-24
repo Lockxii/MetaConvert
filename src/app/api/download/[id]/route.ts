@@ -45,27 +45,15 @@ export async function GET(
         return NextResponse.json({ error: "Fichier introuvable" }, { status: 404 });
     }
 
-    let rawContent = fileRecord[0].content;
+    // Le contenu est maintenant stocké en Base64 dans une colonne TEXT
+    const base64Content = fileRecord[0].content;
     let buffer: Buffer;
 
-    if (Buffer.isBuffer(rawContent)) {
-        buffer = rawContent;
-    } else if (rawContent instanceof Uint8Array) {
-        buffer = Buffer.from(rawContent);
-    } else if (typeof rawContent === 'string') {
-        // Handle hex string if not converted by driver
-        if (rawContent.startsWith('\\x')) {
-            buffer = Buffer.from(rawContent.slice(2), 'hex');
-        } else {
-            buffer = Buffer.from(rawContent, 'hex');
-        }
-    } else if (rawContent && typeof rawContent === 'object' && ((rawContent as any).type === 'Buffer' || (rawContent as any).data)) {
-        // Handle JSON-serialized Buffer: { type: 'Buffer', data: [...] } or just { data: [...] }
-        const data = (rawContent as any).data || rawContent;
-        buffer = Buffer.from(Array.isArray(data) ? data : (data as any).data);
-    } else {
-        console.error("Invalid content type in DB for ID:", id, typeof rawContent);
-        return NextResponse.json({ error: "Contenu du fichier corrompu" }, { status: 500 });
+    try {
+        buffer = Buffer.from(base64Content, 'base64');
+    } catch (e) {
+        console.error("Failed to decode base64 for ID:", id);
+        return NextResponse.json({ error: "Erreur de décodage du fichier" }, { status: 500 });
     }
 
     const dbPath = `db://${id}`;

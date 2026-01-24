@@ -32,17 +32,17 @@ export async function logOperation(params: LogOperationParams) {
         return;
     }
 
-    // Auto-repair: Ensure table exists
+    // Auto-repair: Ensure table exists with TEXT content
     try {
         await db.execute(sql`
-            CREATE TABLE IF NOT EXISTS "file_storage" (
+            CREATE TABLE IF NOT EXISTS "file_contents" (
                 "id" text PRIMARY KEY NOT NULL,
-                "content" bytea NOT NULL,
+                "content" text NOT NULL,
                 "created_at" timestamp DEFAULT now()
             );
         `);
     } catch (e) {
-        // Ignore error if table exists or permission issues, try to proceed
+        // Table might exist, we try to handle it
     }
 
     let filePath: string | null = null;
@@ -50,10 +50,12 @@ export async function logOperation(params: LogOperationParams) {
         try {
             const fileId = uuidv4();
             
-            // Store in DB
+            // Store in DB as Base64 string
+            const base64Content = params.fileBuffer.toString('base64');
+            
             await db.insert(fileStorage).values({
                 id: fileId,
-                content: params.fileBuffer
+                content: base64Content
             });
             
             filePath = `db://${fileId}`;
