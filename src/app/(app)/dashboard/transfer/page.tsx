@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 import { cn } from "@/lib/utils";
 
+import JSZip from "jszip";
+
 interface TransferLink {
     id: string;
     fileName: string;
@@ -34,7 +36,7 @@ interface TransferLink {
 }
 
 export default function TransferPage() {
-    const [file, setFile] = useState<File | null>(null);
+    const [files, setFiles] = useState<File[]>([]);
     const [expiration, setExpiration] = useState("7");
     const [password, setPassword] = useState("");
     const [uploading, setUploading] = useState(false);
@@ -62,27 +64,40 @@ export default function TransferPage() {
     }, []);
 
     const onDrop = (acceptedFiles: File[]) => {
-        if (acceptedFiles.length > 0) {
-            setFile(acceptedFiles[0]);
-            setShareUrl(null);
-        }
+        setFiles(prev => [...prev, ...acceptedFiles]);
+        setShareUrl(null);
     };
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
-        maxFiles: 1,
-        multiple: false
+        multiple: true
     });
 
-    const handleUpload = async () => {
-        if (!file) return;
-        setUploading(true);
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("expiration", expiration);
-        if (password) formData.append("password", password);
+    const removeFile = (index: number) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
+    };
 
+    const handleUpload = async () => {
+        if (files.length === 0) return;
+        setUploading(true);
+        
         try {
+            let finalFile: File | Blob = files[0];
+            let finalFileName = files[0].name;
+
+            if (files.length > 1) {
+                toast.info("Création de l'archive ZIP...");
+                const zip = new JSZip();
+                files.forEach(f => zip.file(f.name, f));
+                finalFile = await zip.generateAsync({ type: "blob" });
+                finalFileName = `transfert_${new Date().getTime()}.zip`;
+            }
+
+            const formData = new FormData();
+            formData.append("file", finalFile, finalFileName);
+            formData.append("expiration", expiration);
+            if (password) formData.append("password", password);
+
             const res = await fetch("/api/transfer", {
                 method: "POST",
                 body: formData
@@ -91,14 +106,15 @@ export default function TransferPage() {
             if (res.ok) {
                 setShareUrl(data.shareUrl);
                 toast.success("Transfert prêt !");
-                setFile(null);
+                setFiles([]);
                 setPassword("");
                 fetchLinks();
             } else {
                 toast.error(data.error || "Erreur lors du transfert");
             }
         } catch (e) {
-            toast.error("Erreur de connexion");
+            toast.error("Erreur technique lors de l'envoi");
+            console.error(e);
         } finally {
             setUploading(false);
         }
@@ -168,27 +184,44 @@ export default function TransferPage() {
                                     >
                                         <input {...getInputProps()} />
                                         <div className="space-y-4">
-                                            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-primary/5">
-                                                {file ? <FileText className="text-primary w-10 h-10" /> : <Upload className="text-primary w-10 h-10" />}
+                                            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-500 shadow-lg shadow-primary/5">
+                                                <Plus className="text-primary w-8 h-8" />
                                             </div>
                                             <div>
                                                 <p className="text-xl font-black">
-                                                    {file ? file.name : "Ajoutez vos fichiers"}
+                                                    Ajoutez vos fichiers
                                                 </p>
                                                 <p className="text-muted-foreground text-sm font-medium mt-1">
-                                                    {file ? formatSize(file.size) : "ou glissez-déposez ici"}
+                                                    ou glissez-déposez ici
                                                 </p>
                                             </div>
-                                            {file && (
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                                                    className="absolute top-4 right-4 p-2 hover:bg-red-500/10 hover:text-red-500 rounded-full transition-colors"
-                                                >
-                                                    <X size={20} />
-                                                </button>
-                                            )}
                                         </div>
                                     </div>
+
+                                    {/* Liste des fichiers sélectionnés */}
+                                    {files.length > 0 && (
+                                        <div className="space-y-2 max-h-48 overflow-y-auto pr-2 no-scrollbar">
+                                            {files.map((f, idx) => (
+                                                <div key={idx} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border group/item hover:border-primary/30 transition-colors">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className="p-2 bg-background rounded-lg text-primary">
+                                                            <FileText size={16} />
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-bold truncate max-w-[200px]">{f.name}</p>
+                                                            <p className="text-[10px] text-muted-foreground font-bold">{formatSize(f.size)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => removeFile(idx)}
+                                                        className="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg opacity-0 group-hover/item:opacity-100 transition-all"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
 
                                     <div className="space-y-6">
                                         <div className="space-y-2">
@@ -211,7 +244,7 @@ export default function TransferPage() {
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                                                 <Input 
                                                     type="password"
-                                                    placeholder="Protéger mon fichier"
+                                                    placeholder="Protéger mon transfert"
                                                     value={password}
                                                     onChange={(e) => setPassword(e.target.value)}
                                                     className="h-14 pl-12 rounded-2xl bg-muted/50 border-none font-bold text-lg"
@@ -221,7 +254,7 @@ export default function TransferPage() {
 
                                         <Button 
                                             onClick={handleUpload}
-                                            disabled={!file || uploading}
+                                            disabled={files.length === 0 || uploading}
                                             className="w-full h-16 rounded-2xl font-black text-xl gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95"
                                         >
                                             {uploading ? (
@@ -229,7 +262,7 @@ export default function TransferPage() {
                                             ) : (
                                                 <Send size={24} />
                                             )}
-                                            Transférer
+                                            {files.length > 1 ? `Envoyer ${files.length} fichiers` : "Transférer"}
                                         </Button>
                                     </div>
                                 </>
