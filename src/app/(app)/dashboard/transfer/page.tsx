@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { 
     Send, 
     Upload, 
+    Plus,
     Link as LinkIcon, 
     Trash2, 
     Clock, 
