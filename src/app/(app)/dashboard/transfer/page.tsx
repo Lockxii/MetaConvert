@@ -25,8 +25,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
 import { cn } from "@/lib/utils";
-
 import JSZip from "jszip";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface TransferLink {
     id: string;
@@ -46,6 +47,11 @@ export default function TransferPage() {
     const [loading, setLoading] = useState(true);
     const [shareUrl, setShareUrl] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    // Selection state
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isBatchDeletingOpen, setIsBatchDeletingOpen] = useState(false);
+    const [isProcessingDelete, setIsProcessingDelete] = useState(false);
 
     const fetchLinks = async () => {
         try {
@@ -100,7 +106,6 @@ export default function TransferPage() {
             formData.append("expiration", expiration);
             if (password) formData.append("password", password);
 
-            // Utilisation de XMLHttpRequest pour suivre la progression
             const xhr = new XMLHttpRequest();
             
             xhr.upload.onprogress = (event) => {
@@ -143,6 +148,7 @@ export default function TransferPage() {
             const res = await fetch(`/api/transfer/${id}`, { method: "DELETE" });
             if (res.ok) {
                 setLinks(prev => prev.filter(l => l.id !== id));
+                setSelectedIds(prev => prev.filter(i => i !== id));
                 toast.success("Transfert supprimé", { id: toastId });
             } else {
                 toast.error("Erreur", { id: toastId });
@@ -150,6 +156,41 @@ export default function TransferPage() {
         } catch (e) {
             toast.error("Erreur", { id: toastId });
         }
+    };
+
+    const handleBatchDelete = async () => {
+        setIsProcessingDelete(true);
+        const toastId = toast.loading(`Suppression de ${selectedIds.length} transferts...`);
+        let successCount = 0;
+
+        for (const id of selectedIds) {
+            try {
+                const res = await fetch(`/api/transfer/${id}`, { method: "DELETE" });
+                if (res.ok) successCount++;
+            } catch (e) {
+                console.error("Delete error:", e);
+            }
+        }
+
+        setLinks(prev => prev.filter(l => !selectedIds.includes(l.id)));
+        setSelectedIds([]);
+        setIsBatchDeletingOpen(false);
+        setIsProcessingDelete(false);
+        toast.success(`${successCount} transferts supprimés.`, { id: toastId });
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === links.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(links.map(l => l.id));
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => 
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
     };
 
     const copyToClipboard = (url: string, id: string) => {
@@ -185,7 +226,7 @@ export default function TransferPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Left: Upload Card (WeTransfer Style) */}
+                {/* Left: Upload Card */}
                 <div className="lg:col-span-5 space-y-6">
                     <Card className="rounded-[2.5rem] border-none shadow-2xl overflow-hidden bg-card/50 backdrop-blur-xl border border-white/10">
                         <CardContent className="p-8 space-y-8">
@@ -215,7 +256,7 @@ export default function TransferPage() {
                                         </div>
                                     </div>
 
-                                    {/* Liste des fichiers sélectionnés */}
+                                    {/* Selected Files List */}
                                     {files.length > 0 && (
                                         <div className="space-y-2 max-h-48 overflow-y-auto pr-2 no-scrollbar">
                                             {files.map((f, idx) => (
@@ -340,7 +381,21 @@ export default function TransferPage() {
                 {/* Right: Active Transfers List */}
                 <div className="lg:col-span-7 space-y-6">
                     <div className="flex items-center justify-between ml-2">
-                        <h2 className="text-2xl font-black">Mes transferts actifs</h2>
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-2xl font-black">Mes transferts actifs</h2>
+                            {links.length > 0 && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/30 rounded-full border border-border">
+                                    <Checkbox 
+                                        id="select-all" 
+                                        checked={selectedIds.length === links.length && links.length > 0}
+                                        onCheckedChange={toggleSelectAll}
+                                    />
+                                    <label htmlFor="select-all" className="text-[10px] font-black uppercase tracking-widest cursor-pointer select-none">
+                                        Tout sélectionner
+                                    </label>
+                                </div>
+                            )}
+                        </div>
                         <span className="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border border-primary/10">
                             {links.length} En ligne
                         </span>
@@ -358,57 +413,137 @@ export default function TransferPage() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {links.map((link) => (
-                                <Card key={link.id} className="rounded-3xl border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all group overflow-hidden shadow-sm hover:shadow-md">
-                                    <CardContent className="p-6">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                            <div className="flex items-center gap-4">
-                                                <div className="h-12 w-12 bg-muted rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors">
-                                                    <FileText size={24} />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <p className="font-black text-lg group-hover:text-primary transition-colors">{link.fileName}</p>
-                                                    <div className="flex items-center gap-3 text-xs text-muted-foreground font-bold uppercase tracking-widest">
-                                                        <span className="flex items-center gap-1">
-                                                            <Calendar size={12} /> {new Date(link.createdAt).toLocaleDateString()}
-                                                        </span>
-                                                        <span className="flex items-center gap-1 text-amber-500">
-                                                            <Clock size={12} /> {new Date(link.expiresAt).toLocaleDateString()}
-                                                        </span>
-                                                        <span className="flex items-center gap-1 text-primary">
-                                                            <Download size={12} /> {link.downloadCount}
-                                                        </span>
+                            {links.map((link) => {
+                                const isSelected = selectedIds.includes(link.id);
+                                return (
+                                    <Card 
+                                        key={link.id} 
+                                        className={cn(
+                                            "rounded-3xl border-border bg-card/50 transition-all group overflow-hidden shadow-sm relative",
+                                            isSelected ? "ring-2 ring-primary border-primary/50 bg-primary/5" : "hover:bg-card hover:border-primary/30 hover:shadow-md"
+                                        )}
+                                    >
+                                        <div className="absolute top-4 left-4 z-10 opacity-0 group-hover:opacity-100 data-[state=checked]:opacity-100 transition-opacity">
+                                            <Checkbox 
+                                                checked={isSelected}
+                                                onCheckedChange={() => toggleSelect(link.id)}
+                                                className="bg-background shadow-lg"
+                                            />
+                                        </div>
+                                        <CardContent className="p-6">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                <div className="flex items-center gap-4 pl-0 sm:pl-4 transition-all">
+                                                    <div className="h-12 w-12 bg-muted rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors">
+                                                        <FileText size={24} />
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        <p className="font-black text-lg group-hover:text-primary transition-colors">{link.fileName}</p>
+                                                        <div className="flex items-center gap-3 text-xs text-muted-foreground font-bold uppercase tracking-widest">
+                                                            <span className="flex items-center gap-1">
+                                                                <Calendar size={12} /> {new Date(link.createdAt).toLocaleDateString()}
+                                                            </span>
+                                                            <span className="flex items-center gap-1 text-amber-500">
+                                                                <Clock size={12} /> {new Date(link.expiresAt).toLocaleDateString()}
+                                                            </span>
+                                                            <span className="flex items-center gap-1 text-primary">
+                                                                <Download size={12} /> {link.downloadCount}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                                {!isSelected && (
+                                                    <div className="flex items-center gap-2 self-end sm:self-center">
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-10 w-10 rounded-xl"
+                                                            onClick={() => copyToClipboard(`${window.location.origin}/share/${link.id}`, link.id)}
+                                                            title="Copier le lien"
+                                                        >
+                                                            {copiedId === link.id ? <Check size={18} className="text-emerald-500" /> : <Copy size={18} />}
+                                                        </Button>
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-xl"
+                                                            onClick={() => handleDelete(link.id)}
+                                                            title="Supprimer"
+                                                        >
+                                                            <Trash2 size={18} />
+                                                        </Button>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="flex items-center gap-2 self-end sm:self-center">
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    className="h-10 w-10 rounded-xl"
-                                                    onClick={() => copyToClipboard(`${window.location.origin}/share/${link.id}`, link.id)}
-                                                    title="Copier le lien"
-                                                >
-                                                    {copiedId === link.id ? <Check size={18} className="text-emerald-500" /> : <Copy size={18} />}
-                                                </Button>
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    className="h-10 w-10 text-destructive hover:bg-destructive/10 rounded-xl"
-                                                    onClick={() => handleDelete(link.id)}
-                                                    title="Supprimer"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Selection Bar */}
+            {selectedIds.length > 0 && (
+                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-2xl">
+                    <div className="bg-slate-950/90 dark:bg-card/90 backdrop-blur-xl text-white dark:text-foreground px-6 py-4 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 dark:border-border flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-10 duration-500 ease-out">
+                        <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 bg-primary rounded-2xl flex items-center justify-center font-black text-primary-foreground shadow-lg shadow-primary/20 rotate-3 group-hover:rotate-0 transition-transform">
+                                {selectedIds.length}
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-bold tracking-tight">Transferts sélectionnés</span>
+                                <span className="text-[10px] text-white/50 dark:text-muted-foreground uppercase tracking-widest font-medium">Actions groupées</span>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="rounded-xl gap-2 font-black h-10 px-6 hover:scale-105 transition-all active:scale-95 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white border-none" 
+                                onClick={() => setIsBatchDeletingOpen(true)}
+                            >
+                                <Trash2 size={16} />
+                                <span className="hidden sm:inline">Tout supprimer</span>
+                            </Button>
+
+                            <div className="w-[1px] h-8 bg-white/10 dark:bg-border mx-2" />
+
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="rounded-xl h-10 w-10 text-white/40 hover:text-white hover:bg-white/10 dark:text-muted-foreground" 
+                                onClick={() => setSelectedIds([])}
+                                title="Annuler la sélection"
+                            >
+                                <X size={20} />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Batch Delete Dialog */}
+            <Dialog open={isBatchDeletingOpen} onOpenChange={setIsBatchDeletingOpen}>
+                <DialogContent className="max-w-md p-8 rounded-[2.5rem] border-none shadow-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-black mb-2 text-destructive">Supprimer la sélection</DialogTitle>
+                        <DialogDescription className="text-lg">
+                            Êtes-vous sûr de vouloir supprimer les {selectedIds.length} transferts sélectionnés ? Cette action est irréversible.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-6 gap-3">
+                        <Button variant="ghost" onClick={() => setIsBatchDeletingOpen(false)} disabled={isProcessingDelete} className="rounded-xl font-bold h-12">
+                            Annuler
+                        </Button>
+                        <Button variant="destructive" onClick={handleBatchDelete} disabled={isProcessingDelete} className="rounded-xl font-black h-12 px-6">
+                            {isProcessingDelete ? <Loader2 className="animate-spin mr-2" /> : <Trash2 size={18} className="mr-2" />}
+                            Confirmer la suppression
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
