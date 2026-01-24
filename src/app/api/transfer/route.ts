@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { fileStorage, sharedLinks } from "@/db/schema";
 import { getUserSession } from "@/lib/server-utils";
 import { v4 as uuidv4 } from "uuid";
+import { eq } from "drizzle-orm";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file") as unknown as File;
     const expirationDays = parseInt(formData.get("expiration") as string || "7");
     const password = formData.get("password") as string || null;
 
@@ -77,6 +78,3 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
-
-import { eq } from "drizzle-orm";
-import { File } from "buffer";
