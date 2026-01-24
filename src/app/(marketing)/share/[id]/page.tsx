@@ -20,6 +20,8 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
+import Image from "next/image";
+
 export default function SharePage() {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -109,8 +111,8 @@ export default function SharePage() {
 
         {/* Logo/Brand Header */}
         <div className="mb-12 flex flex-col items-center relative z-10">
-            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl rotate-3 mb-4">
-                <img src="/logo.svg" alt="MetaConvert" className="w-10 h-10" />
+            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-2xl rotate-3 mb-4 overflow-hidden relative">
+                <Image src="/logo.svg" alt="MetaConvert" fill className="p-3" priority />
             </div>
             <h2 className="text-white font-black text-2xl tracking-tighter">MetaConvert <span className="text-primary">Transfer</span></h2>
         </div>

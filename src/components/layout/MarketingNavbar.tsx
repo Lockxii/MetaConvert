@@ -7,6 +7,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
 
+import Image from "next/image";
+
 export function MarketingNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,8 +29,8 @@ export function MarketingNavbar() {
     >
       <div className="container mx-auto px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="h-10 w-10 group-hover:scale-110 transition-transform duration-300">
-            <img src="/logo.svg" alt="MetaConvert Logo" className="w-full h-full" />
+          <div className="h-10 w-10 group-hover:scale-110 transition-transform duration-300 relative">
+            <Image src="/logo.svg" alt="MetaConvert Logo" fill className="w-full h-full" priority />
           </div>
           <span className="font-bold text-xl tracking-tight text-foreground">MetaConvert</span>
         </Link>

@@ -41,6 +41,7 @@ export default function TransferPage() {
     const [expiration, setExpiration] = useState("7");
     const [password, setPassword] = useState("");
     const [uploading, setUploading] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [links, setLinks] = useState<TransferLink[]>([]);
     const [loading, setLoading] = useState(true);
     const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -81,13 +82,13 @@ export default function TransferPage() {
     const handleUpload = async () => {
         if (files.length === 0) return;
         setUploading(true);
+        setProgress(0);
         
         try {
             let finalFile: File | Blob = files[0];
             let finalFileName = files[0].name;
 
             if (files.length > 1) {
-                toast.info("Création de l'archive ZIP...");
                 const zip = new JSZip();
                 files.forEach(f => zip.file(f.name, f));
                 finalFile = await zip.generateAsync({ type: "blob" });
@@ -99,25 +100,40 @@ export default function TransferPage() {
             formData.append("expiration", expiration);
             if (password) formData.append("password", password);
 
-            const res = await fetch("/api/transfer", {
-                method: "POST",
-                body: formData
+            // Utilisation de XMLHttpRequest pour suivre la progression
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    setProgress(percentComplete);
+                }
+            };
+
+            const response = await new Promise<any>((resolve, reject) => {
+                xhr.open("POST", "/api/transfer");
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(JSON.parse(xhr.responseText));
+                    } else {
+                        reject(new Error(xhr.responseText));
+                    }
+                };
+                xhr.onerror = () => reject(new Error("Erreur réseau"));
+                xhr.send(formData);
             });
-            const data = await res.json();
-            if (res.ok) {
-                setShareUrl(data.shareUrl);
-                toast.success("Transfert prêt !");
-                setFiles([]);
-                setPassword("");
-                fetchLinks();
-            } else {
-                toast.error(data.error || "Erreur lors du transfert");
-            }
+
+            setShareUrl(response.shareUrl);
+            toast.success("Transfert prêt !");
+            setFiles([]);
+            setPassword("");
+            fetchLinks();
         } catch (e) {
             toast.error("Erreur technique lors de l'envoi");
             console.error(e);
         } finally {
             setUploading(false);
+            setProgress(0);
         }
     };
 
@@ -256,14 +272,26 @@ export default function TransferPage() {
                                         <Button 
                                             onClick={handleUpload}
                                             disabled={files.length === 0 || uploading}
-                                            className="w-full h-16 rounded-2xl font-black text-xl gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95"
+                                            className="w-full h-16 rounded-2xl font-black text-xl gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95 relative overflow-hidden"
                                         >
                                             {uploading ? (
-                                                <Loader2 className="animate-spin w-6 h-6" />
+                                                <>
+                                                    <div className="absolute inset-0 bg-primary/20 animate-pulse" />
+                                                    <div 
+                                                        className="absolute inset-y-0 left-0 bg-primary transition-all duration-300" 
+                                                        style={{ width: `${progress}%` }}
+                                                    />
+                                                    <span className="relative z-10 flex items-center gap-2">
+                                                        <Loader2 className="animate-spin w-6 h-6" />
+                                                        {progress}%
+                                                    </span>
+                                                </>
                                             ) : (
-                                                <Send size={24} />
+                                                <>
+                                                    <Send size={24} />
+                                                    {files.length > 1 ? `Envoyer ${files.length} fichiers` : "Transférer"}
+                                                </>
                                             )}
-                                            {files.length > 1 ? `Envoyer ${files.length} fichiers` : "Transférer"}
                                         </Button>
                                     </div>
                                 </>
