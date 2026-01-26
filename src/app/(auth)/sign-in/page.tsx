@@ -171,14 +171,26 @@ export default function SignIn() {
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <p className="text-center text-slate-400 font-bold">
-          Nouveau sur MetaConvert ?{" "}
-          <Link href="/sign-up" className="text-primary hover:text-primary/80 hover:underline underline-offset-4 transition-colors">
-            Créer un compte gratuit
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
-}
+                {/* Footer */}
+
+                <p className="text-center text-white/60 font-bold mb-4">
+
+                  Nouveau sur MetaConvert ?{" "}
+
+                  <Link href="/sign-up" className="text-primary hover:text-primary/80 hover:underline underline-offset-4 transition-all">
+
+                    Créer un compte gratuit
+
+                  </Link>
+
+                </p>
+
+              </div>
+
+            </div>
+
+          );
+
+        }
+
+        

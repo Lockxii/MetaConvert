@@ -185,14 +185,26 @@ export default function SignUp() {
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <p className="text-center text-slate-400 font-bold">
-          Déjà un compte ?{" "}
-          <Link href="/sign-in" className="text-primary hover:text-primary/80 hover:underline underline-offset-4 transition-colors">
-            Se connecter ici
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
-}
+                {/* Footer */}
+
+                <p className="text-center text-white/60 font-bold mb-4">
+
+                  Déjà un compte ?{" "}
+
+                  <Link href="/sign-in" className="text-primary hover:text-primary/80 hover:underline underline-offset-4 transition-all">
+
+                    Se connecter ici
+
+                  </Link>
+
+                </p>
+
+              </div>
+
+            </div>
+
+          );
+
+        }
+
+        
