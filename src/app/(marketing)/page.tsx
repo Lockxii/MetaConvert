@@ -7,7 +7,7 @@ import {
   Send, Cloud, ArrowUpRight, ShieldCheck, 
   ZapIcon, Share2, Archive, Download, 
   Search, Lock, Scissors, ChevronRight,
-  HardDrive, Cpu, Smartphone, Zap as FastIcon
+  Clock, HardDrive, Cpu, Smartphone, Zap as FastIcon
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
