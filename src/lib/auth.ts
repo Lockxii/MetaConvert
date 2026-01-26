@@ -5,11 +5,12 @@ import * as schema from "@/db/schema";
 
 export const auth = betterAuth({
     database: drizzleAdapter(db, {
-        provider: "pg", // or "mysql", "sqlite"
+        provider: "pg",
         schema: {
              ...schema
         }
     }),
+    baseURL: process.env.BETTER_AUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
     trustedOrigins: [
         "http://localhost:3000", 
         "https://*.vercel.app",
@@ -20,8 +21,8 @@ export const auth = betterAuth({
     },
     socialProviders: {
         google: {
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+            clientId: process.env.GOOGLE_CLIENT_ID || "",
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
         },
     },
 });
