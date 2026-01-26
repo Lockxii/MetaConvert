@@ -20,35 +20,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-100 selection:text-blue-700">
-      {/* Navbar Minimalist */}
-      <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="MetaConvert" width={28} height={30} />
-            <span className="font-black text-lg tracking-tighter uppercase">MetaConvert</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-8 text-sm font-bold text-slate-500 uppercase tracking-widest">
-            <Link href="#tools" className="hover:text-blue-600 transition-colors">Outils</Link>
-            <Link href="#transfer" className="hover:text-blue-600 transition-colors">Transfert</Link>
-            <Link href="#security" className="hover:text-blue-600 transition-colors">Sécurité</Link>
-          </div>
-          <div className="flex items-center gap-4">
-            {session ? (
-              <Button size="sm" className="rounded-full px-5 font-black uppercase text-[10px] tracking-widest" asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            ) : (
-              <>
-                <Link href="/sign-in" className="text-xs font-black uppercase tracking-widest text-slate-500">Connexion</Link>
-                <Button size="sm" className="rounded-full px-5 font-black uppercase text-[10px] tracking-widest" asChild>
-                  <Link href="/sign-up">S'inscrire</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section - Refined */}
       <section className="relative pt-24 pb-20 lg:pt-40 lg:pb-32 border-b border-slate-50 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-50/50 via-transparent to-transparent -z-10" />
