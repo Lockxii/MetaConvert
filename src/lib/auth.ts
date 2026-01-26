@@ -10,7 +10,10 @@ export const auth = betterAuth({
              ...schema
         }
     }),
-    baseURL: process.env.BETTER_AUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
+    // On force l'URL de production pour éviter les erreurs de détection sur Vercel
+    baseURL: process.env.NODE_ENV === "production" 
+        ? "https://meta-convert-steel.vercel.app" 
+        : "http://localhost:3000",
     trustedOrigins: [
         "http://localhost:3000", 
         "https://*.vercel.app",
