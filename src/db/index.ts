@@ -8,8 +8,33 @@ dotenv.config({ path: ".env.local" });
 const connectionString = process.env.DATABASE_URL;
 
 // Create a client only if connection string is available.
-// This prevents build crashes when env var is missing.
-// The actual queries will fail at runtime if db is used without config.
-const sql = connectionString ? neon(connectionString) : null;
 
-export const db = sql ? drizzle(sql, { schema }) : ({} as any);
+const sqlClient = connectionString ? neon(connectionString) : null;
+
+
+
+// Auto-repair missing columns for Better Auth
+
+if (sqlClient) {
+
+    (async () => {
+
+        try {
+
+            await sqlClient`ALTER TABLE "verification" ADD COLUMN IF NOT EXISTS "createdAt" timestamp;`;
+
+            await sqlClient`ALTER TABLE "verification" ADD COLUMN IF NOT EXISTS "updatedAt" timestamp;`;
+
+        } catch (e) {
+
+            // Ignore if columns already exist or other permission issues
+
+        }
+
+    })();
+
+}
+
+
+
+export const db = sqlClient ? drizzle(sqlClient, { schema }) : ({} as any);
