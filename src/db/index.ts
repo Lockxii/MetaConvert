@@ -65,7 +65,7 @@ if (sqlClient) {
 
 
 
-                        // Table account - Crucial pour le lien social
+                                    // Table account - Mise à jour selon les specs Better Auth 1.x
 
 
 
@@ -73,7 +73,7 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "accountId" text;`;
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "accessTokenExpiresAt" timestamp;`;
 
 
 
@@ -81,7 +81,7 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "providerId" text;`;
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "refreshTokenExpiresAt" timestamp;`;
 
 
 
@@ -89,7 +89,7 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "accessToken" text;`;
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "scope" text;`;
 
 
 
@@ -97,7 +97,7 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "refreshToken" text;`;
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "accountId" text;`;
 
 
 
@@ -105,7 +105,7 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "idToken" text;`;
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "providerId" text;`;
 
 
 
@@ -113,7 +113,7 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "expiresAt" timestamp;`;
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "accessToken" text;`;
 
 
 
@@ -121,7 +121,7 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "password" text;`;
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "refreshToken" text;`;
 
 
 
@@ -129,7 +129,7 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "createdAt" timestamp DEFAULT now();`;
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "idToken" text;`;
 
 
 
@@ -137,7 +137,31 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "updatedAt" timestamp DEFAULT now();`;
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "password" text;`;
+
+
+
+
+
+
+
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "createdAt" timestamp DEFAULT now();`;
+
+
+
+
+
+
+
+                                    await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "updatedAt" timestamp DEFAULT now();`;
+
+
+
+
+
+
+
+                        
 
 
 
