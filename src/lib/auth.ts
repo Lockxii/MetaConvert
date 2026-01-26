@@ -10,13 +10,12 @@ export const auth = betterAuth({
              ...schema
         }
     }),
-    // On force l'URL de production pour éviter les erreurs de détection sur Vercel
-    baseURL: process.env.NODE_ENV === "production" 
-        ? "https://meta-convert-steel.vercel.app" 
-        : "http://localhost:3000",
+    // On passe le secret explicitement
+    secret: process.env.BETTER_AUTH_SECRET,
+    // URL de base propre
+    baseURL: "https://meta-convert-steel.vercel.app",
     trustedOrigins: [
         "http://localhost:3000", 
-        "https://*.vercel.app",
         "https://meta-convert-steel.vercel.app"
     ],
     emailAndPassword: {
@@ -28,4 +27,6 @@ export const auth = betterAuth({
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
         },
     },
+    // Activer les logs pour voir l'erreur réelle dans Vercel
+    debug: true,
 });
