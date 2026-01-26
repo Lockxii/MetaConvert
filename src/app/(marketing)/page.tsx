@@ -20,7 +20,12 @@ import {
   ShieldCheck,
   ZapIcon,
   MousePointer2,
-  Share2
+  Share2,
+  Archive,
+  Download,
+  Search,
+  Lock,
+  Scissors
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -31,215 +36,203 @@ import Image from "next/image";
 export default function HomePage() {
   const { data: session } = authClient.useSession();
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.3 }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
-  };
-
   return (
-    <div className="overflow-hidden bg-[#0A0A0B] text-white">
-      {/* Background Layer */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/5 blur-[120px] animate-pulse" />
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900">
+      {/* Background Decor */}
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] rounded-full bg-blue-500/10 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-500/10 blur-[120px]" />
       </div>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 z-10">
-        <div className="container px-6 mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 py-2 px-4 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-8 shadow-2xl"
-          >
-            <ZapIcon className="w-3 h-3 fill-current" />
-            Vitesse de traitement record
-          </motion.div>
+      <section className="relative pt-32 pb-24 lg:pt-48 lg:pb-40 z-10">
+        <div className="container px-6 mx-auto">
+          <div className="max-w-5xl mx-auto text-center space-y-10">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 py-2 px-5 rounded-full bg-blue-600/10 border border-blue-600/20 text-xs font-bold uppercase tracking-[0.2em] text-blue-700 mb-4"
+            >
+              <ZapIcon className="w-3.5 h-3.5 fill-current" />
+              L'écosystème de fichiers n°1
+            </motion.div>
 
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-5xl md:text-8xl lg:text-9xl font-black tracking-tighter mb-8 leading-[0.9] text-white"
-          >
-            Maîtrisez vos <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-primary to-blue-700">fichiers.</span>
-          </motion.h1>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="text-6xl md:text-8xl lg:text-[10rem] font-[1000] tracking-tighter leading-[0.85] text-slate-950"
+            >
+              Tout transformer. <br/>
+              <span className="text-blue-600">Sans effort.</span>
+            </motion.h1>
 
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 1 }}
-            className="text-slate-400 text-lg md:text-2xl max-w-2xl mx-auto mb-12 font-medium italic leading-relaxed"
-          >
-            L'écosystème ultime pour convertir, transférer et stocker vos médias. 
-            Pensé pour la performance, conçu pour la simplicité.
-          </motion.p>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4, duration: 1 }}
+              className="text-slate-600 text-xl md:text-2xl max-w-3xl mx-auto font-medium leading-relaxed"
+            >
+              MetaConvert réunit tous les outils dont vous avez besoin pour vos médias, 
+              vos documents et vos transferts. Rapide, sécurisé et incroyablement simple.
+            </motion.p>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.6, type: "spring", stiffness: 100 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-6"
-          >
-            <Button size="lg" className="rounded-2xl px-10 h-16 text-lg font-black shadow-2xl shadow-primary/20 gap-3 group transition-all hover:scale-105 active:scale-95" asChild>
-              <Link href={session ? "/dashboard" : "/sign-up"}>
-                {session ? "Accéder au Dashboard" : "Commencer maintenant"} 
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-            {!session && (
-              <Link href="/sign-in" className="text-sm font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
-                Se connecter
-              </Link>
-            )}
-          </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4"
+            >
+              <Button size="lg" className="rounded-2xl px-12 h-20 text-xl font-black shadow-2xl shadow-blue-600/30 gap-3 group transition-all hover:scale-105 active:scale-95 bg-blue-600 hover:bg-blue-700 text-white" asChild>
+                <Link href={session ? "/dashboard" : "/sign-up"}>
+                  {session ? "Accéder au Dashboard" : "Commencer gratuitement"} 
+                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </Button>
+              {!session && (
+                <Link href="/sign-in" className="text-sm font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-colors">
+                  Déjà membre ? Se connecter
+                </Link>
+              )}
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Bento Grid Tools */}
-      <section className="relative py-24 z-10">
+      {/* Main Tools Grid - THE META SUITE */}
+      <section className="relative py-32 z-10 bg-white border-y border-slate-200">
         <div className="container px-6 mx-auto">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-            <div className="space-y-4">
-              <h2 className="text-primary font-black uppercase tracking-[0.3em] text-xs">La Meta-Suite</h2>
-              <h3 className="text-4xl md:text-6xl font-black tracking-tight">Des outils pro, <br/><span className="text-slate-500">en un clic.</span></h3>
-            </div>
-            <p className="text-slate-400 max-w-sm font-medium">Chaque outil a été optimisé pour garantir une qualité sans compromis et une rapidité d'exécution instantanée.</p>
+          <div className="text-center mb-24 space-y-4">
+            <h2 className="text-blue-600 font-black uppercase tracking-[0.3em] text-sm">La Meta-Suite</h2>
+            <h3 className="text-4xl md:text-6xl font-black tracking-tight text-slate-950">Un outil pour chaque besoin.</h3>
+            <p className="text-slate-500 max-w-2xl mx-auto text-lg font-medium">Plus de 50 fonctionnalités réparties dans 8 modules spécialisés.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Image Tool */}
-            <BentoCard 
-              className="md:col-span-8"
-              icon={ImageIcon}
-              title="Image Pro"
-              desc="Conversion, Upscaling IA, Compression et Redimensionnement. Le tout géré en parallèle pour vos dossiers entiers."
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <ToolCard 
+              icon={ImageIcon} 
+              title="Image Pro" 
+              desc="Convertissez en WebP, AVIF, ou réalisez des upscales IA jusqu'à 4x sans perte."
               color="bg-blue-500"
-              visual={<div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent" />}
+              href="/dashboard/image"
             />
-            
-            {/* PDF Tool */}
-            <BentoCard 
-              className="md:col-span-4"
-              icon={FileText}
-              title="PDF Weaver"
-              desc="Fusionnez, divisez et transformez vos PDF. L'outil ultime pour vos documents."
+            <ToolCard 
+              icon={FileText} 
+              title="PDF Weaver" 
+              desc="Fusionnez, divisez, compressez et convertissez vos PDF en Word ou images."
               color="bg-emerald-500"
+              href="/dashboard/pdf"
             />
-
-            {/* Transfer Tool */}
-            <BentoCard 
-              className="md:col-span-4"
-              icon={Send}
-              title="MetaTransfer"
-              desc="Envoyez vos fichiers volumineux jusqu'à 2Go avec des liens éphémères sécurisés."
-              color="bg-purple-500"
-            />
-
-            {/* Video & Audio Tool */}
-            <BentoCard 
-              className="md:col-span-8"
-              icon={Video}
-              title="Médias HD"
-              desc="Traitement vidéo et audio ultra-rapide. Conversion, extraction audio et optimisation pour le web."
+            <ToolCard 
+              icon={Video} 
+              title="Vidéo HD" 
+              desc="Compressez vos vidéos pour Discord, convertissez en MP4 ou créez des GIFs."
               color="bg-indigo-500"
-              visual={
-                <div className="flex gap-2 mt-4">
-                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold">4K</span>
-                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold">MP4</span>
-                    <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold">WAV</span>
-                </div>
-              }
+              href="/dashboard/video"
+            />
+            <ToolCard 
+              icon={Music} 
+              title="Audio Master" 
+              desc="Extrayez l'audio des vidéos ou changez le format de vos musiques instantanément."
+              color="bg-purple-500"
+              href="/dashboard/audio"
+            />
+            <ToolCard 
+              icon={Send} 
+              title="MetaTransfer" 
+              desc="Envoyez vos fichiers volumineux avec des liens sécurisés et éphémères."
+              color="bg-pink-500"
+              href="/dashboard/transfer"
+            />
+            <ToolCard 
+              icon={Globe} 
+              title="Web Capture" 
+              desc="Transformez n'importe quelle page web en capture d'écran HD ou en PDF."
+              color="bg-amber-500"
+              href="/dashboard/web"
+            />
+            <ToolCard 
+              icon={Archive} 
+              title="Archives" 
+              desc="Gérez vos fichiers ZIP et RAR directement dans votre navigateur."
+              color="bg-slate-700"
+              href="/dashboard/archive"
+            />
+            <ToolCard 
+              icon={Cloud} 
+              title="Cloud" 
+              desc="Toutes vos conversions sont stockées et prêtes à être partagées."
+              color="bg-sky-500"
+              href="/dashboard/cloud"
             />
           </div>
         </div>
       </section>
 
-      {/* MetaTransfer Section Highlight */}
-      <section className="relative py-32 z-10 bg-white/5 backdrop-blur-sm border-y border-white/5">
+      {/* Feature Focus: MetaTransfer */}
+      <section className="relative py-32 z-10 overflow-hidden">
         <div className="container px-6 mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-20">
-            <div className="flex-1 space-y-8">
-              <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-primary/20 rotate-3">
-                <Send size={32} strokeWidth={2.5} />
+          <div className="bg-slate-900 rounded-[4rem] p-12 md:p-24 text-white flex flex-col lg:flex-row items-center gap-20 relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(15,23,42,0.3)]">
+            <div className="absolute top-0 right-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none" />
+            <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] bg-blue-600/20 rounded-full blur-[120px]" />
+            
+            <div className="flex-1 space-y-8 relative z-10">
+              <div className="inline-flex items-center gap-2 py-2 px-4 rounded-xl bg-white/10 border border-white/10 text-[10px] font-black uppercase tracking-widest text-blue-400">
+                NOUVEAU
               </div>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-none">
-                Le transfert de fichiers, <br/>
-                <span className="text-primary">réinventé.</span>
+              <h2 className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.9]">
+                Envoyez gros. <br/>
+                <span className="text-blue-500">Sans limites.</span>
               </h2>
               <p className="text-slate-400 text-xl font-medium leading-relaxed italic">
-                Oubliez les limitations. Glissez, déposez, envoyez. 
-                Vos destinataires reçoivent un lien premium, sans publicité, prêt pour le téléchargement.
+                MetaTransfer permet de partager vos fichiers en un éclair. 
+                Glissez, déposez, envoyez. C'est aussi simple que ça.
               </p>
-              <ul className="space-y-4">
-                <li className="flex items-center gap-3 font-bold text-slate-300">
-                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                    <Check size={12} strokeWidth={4} />
-                  </div>
-                  Liens valides jusqu'à 30 jours
-                </li>
-                <li className="flex items-center gap-3 font-bold text-slate-300">
-                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                    <Check size={12} strokeWidth={4} />
-                  </div>
-                  Protection par mot de passe incluse
-                </li>
-                <li className="flex items-center gap-3 font-bold text-slate-300">
-                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                    <Check size={12} strokeWidth={4} />
-                  </div>
-                  Statistiques de téléchargement en temps réel
-                </li>
-              </ul>
-              <Button size="lg" className="rounded-2xl h-14 px-8 font-black gap-2" asChild>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <FeatureItem text="Jusqu'à 2 Go par envoi" />
+                <FeatureItem text="Protection par mot de passe" />
+                <FeatureItem text="Validité jusqu'à 30 jours" />
+                <FeatureItem text="Zipping automatique" />
+              </div>
+              <Button size="lg" className="rounded-2xl h-16 px-10 bg-white text-slate-900 hover:bg-slate-100 font-black text-lg gap-2 mt-4" asChild>
                 <Link href="/dashboard/transfer">Essayer MetaTransfer</Link>
               </Button>
             </div>
-            <div className="flex-1 relative">
-                <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full" />
-                <div className="relative rounded-[2.5rem] bg-[#0A0A0B] border border-white/10 p-8 shadow-2xl overflow-hidden group hover:border-primary/50 transition-colors duration-500">
-                    <div className="flex items-center justify-between mb-12">
+
+            <div className="flex-1 w-full relative z-10">
+                <div className="bg-white/5 backdrop-blur-2xl rounded-[3rem] border border-white/10 p-8 shadow-2xl scale-105">
+                    <div className="flex items-center justify-between mb-8">
                         <div className="flex gap-2">
-                            <div className="w-3 h-3 rounded-full bg-red-500/20" />
-                            <div className="w-3 h-3 rounded-full bg-amber-500/20" />
-                            <div className="w-3 h-3 rounded-full bg-green-500/20" />
+                            <div className="w-3 h-3 rounded-full bg-red-500/40" />
+                            <div className="w-3 h-3 rounded-full bg-amber-500/40" />
+                            <div className="w-3 h-3 rounded-full bg-green-500/40" />
                         </div>
-                        <div className="text-[10px] font-black uppercase tracking-widest text-slate-600">MetaTransfer Protocol</div>
+                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Envoi sécurisé</div>
                     </div>
                     <div className="space-y-6">
-                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between">
+                        <div className="p-5 bg-white/10 rounded-2xl border border-white/10 flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                                    <FileText size={20} />
+                                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-600/20">
+                                    <Archive size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold">Projet_Final.zip</p>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase">1.2 GB • Prêt</p>
+                                    <p className="font-bold text-base">Projet_Architecture.zip</p>
+                                    <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">842 MB • Transfert en cours</p>
                                 </div>
                             </div>
-                            <Share2 size={18} className="text-slate-600" />
                         </div>
-                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                            <motion.div 
-                                initial={{ width: 0 }}
-                                whileInView={{ width: "100%" }}
-                                transition={{ duration: 2, ease: "easeInOut" }}
-                                className="h-full bg-primary"
-                            />
-                        </div>
-                        <div className="flex justify-center">
-                            <div className="px-6 py-3 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20">
-                                Copier le lien
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs font-black uppercase tracking-widest text-slate-400">
+                                <span>Progression</span>
+                                <span className="text-blue-400">74%</span>
+                            </div>
+                            <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden p-0.5 border border-white/5">
+                                <motion.div 
+                                    initial={{ width: 0 }}
+                                    whileInView={{ width: "74%" }}
+                                    transition={{ duration: 2, ease: "easeInOut" }}
+                                    className="h-full bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+                                />
                             </div>
                         </div>
                     </div>
@@ -249,79 +242,86 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Cloud Integration */}
-      <section className="relative py-24 z-10">
-        <div className="container px-6 mx-auto text-center">
-            <div className="max-w-3xl mx-auto space-y-8">
-                <div className="w-20 h-20 bg-blue-600/10 rounded-3xl flex items-center justify-center text-blue-500 mx-auto mb-8 border border-blue-500/20">
-                    <Cloud size={40} />
-                </div>
-                <h2 className="text-4xl md:text-6xl font-black tracking-tight">Votre Cloud, <br/><span className="text-slate-500">votre liberté.</span></h2>
-                <p className="text-slate-400 text-lg font-medium italic">
-                    Chaque conversion effectuée sur MetaConvert est instantanément sauvegardée dans votre Cloud personnel. 
-                    Retrouvez vos fichiers partout, tout le temps.
-                </p>
-                <div className="pt-8">
-                    <Button variant="outline" className="rounded-2xl h-14 px-8 border-white/10 hover:bg-white hover:text-black font-black uppercase tracking-widest transition-all" asChild>
-                        <Link href="/dashboard/cloud">Explorer le Cloud</Link>
-                    </Button>
-                </div>
-            </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="relative py-32 z-10">
+      {/* Statistics / Social Proof */}
+      <section className="py-32 z-10 bg-slate-50 border-y border-slate-200">
         <div className="container px-6 mx-auto">
-            <div className="relative rounded-[4rem] bg-gradient-to-br from-primary via-blue-700 to-indigo-900 p-12 md:p-24 overflow-hidden text-center shadow-[0_40px_100px_-20px_rgba(37,99,235,0.5)]">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48 blur-3xl" />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/20 rounded-full -ml-48 -mb-48 blur-3xl" />
-                
-                <h2 className="text-5xl md:text-8xl font-black tracking-tighter text-white mb-8 relative z-10 leading-none">
-                    Prêt pour le <br/>futur ?
-                </h2>
-                <p className="text-white/80 text-xl font-medium mb-12 max-w-2xl mx-auto relative z-10 italic leading-relaxed">
-                    Rejoignez les milliers de professionnels qui optimisent leur temps avec l'écosystème MetaConvert.
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 relative z-10">
-                    <Button size="lg" variant="secondary" className="rounded-2xl px-12 h-16 text-lg font-black shadow-2xl transition-all hover:scale-105 active:scale-95 w-full sm:w-auto" asChild>
-                        <Link href="/sign-up">Créer mon compte gratuit</Link>
-                    </Button>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+                <StatBox label="Fichiers Convertis" value="1.2M+" />
+                <StatBox label="Utilisateurs Pro" value="15k+" />
+                <StatBox label="Temps de Traitement" value="< 1s" />
+                <StatBox label="Uptime Service" value="99.9%" />
             </div>
         </div>
       </section>
 
-      {/* Mini Footer Credits */}
-      <footer className="relative py-12 z-10 border-t border-white/5 text-center text-slate-600 font-bold text-xs uppercase tracking-[0.3em]">
-        © 2026 MetaConvert Ecosystem • Built for Performance
+      {/* CTA Section */}
+      <section className="relative py-40 z-10">
+        <div className="container px-6 mx-auto text-center space-y-12">
+            <h2 className="text-5xl md:text-8xl font-[1000] tracking-tighter leading-none text-slate-950">
+                Libérez votre <br/>productivité.
+            </h2>
+            <p className="text-slate-500 text-xl md:text-2xl max-w-2xl mx-auto font-medium">
+                Rejoignez la nouvelle ère du traitement de fichiers. Gratuit, illimité et sans publicité.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-8">
+                <Button size="lg" className="rounded-2xl px-12 h-20 text-xl font-black shadow-2xl shadow-blue-600/30 bg-blue-600 hover:bg-blue-700 text-white" asChild>
+                    <Link href="/sign-up">Créer mon compte maintenant</Link>
+                </Button>
+            </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative py-16 z-10 border-t border-slate-200 text-center">
+        <div className="flex flex-col items-center gap-6">
+            <div className="w-12 h-12 bg-white rounded-xl shadow-xl flex items-center justify-center border border-slate-100">
+                <Image src="/logo.svg" alt="MetaConvert" width={30} height={30} />
+            </div>
+            <p className="text-slate-400 font-bold text-sm uppercase tracking-[0.4em]">
+                © 2026 MetaConvert • Performance First
+            </p>
+        </div>
       </footer>
     </div>
   );
 }
 
-function BentoCard({ icon: Icon, title, desc, color, className, visual }: any) {
+function ToolCard({ icon: Icon, title, desc, color, href }: any) {
     return (
-        <motion.div 
-            whileHover={{ y: -5 }}
-            className={cn(
-                "group relative p-8 rounded-[2.5rem] bg-white/5 border border-white/5 overflow-hidden transition-all hover:border-white/10 hover:bg-white/[0.07]",
-                className
-            )}
-        >
-            <div className="relative z-10 h-full flex flex-col">
-                <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center text-white mb-8 transition-transform duration-500 group-hover:scale-110 shadow-2xl", color)}>
+        <Link href={href}>
+            <motion.div 
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="group p-8 rounded-[2.5rem] bg-white border border-slate-200 shadow-sm hover:shadow-2xl hover:border-blue-600/30 transition-all duration-500 h-full flex flex-col"
+            >
+                <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-8 shadow-lg transition-transform duration-500 group-hover:rotate-6", color)}>
                     <Icon size={28} strokeWidth={2.5} />
                 </div>
-                <h3 className="text-2xl font-black mb-4 tracking-tight group-hover:text-primary transition-colors">{title}</h3>
-                <p className="text-slate-400 font-medium leading-relaxed mb-6">{desc}</p>
-                <div className="mt-auto">
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-white transition-colors">
-                        Lancer l'outil <ArrowUpRight size={14} />
-                    </div>
+                <h3 className="text-2xl font-black mb-4 tracking-tight text-slate-950">{title}</h3>
+                <p className="text-slate-500 font-medium leading-relaxed mb-8 flex-1">{desc}</p>
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-600 group-hover:translate-x-2 transition-transform">
+                    Ouvrir <ArrowRight size={14} />
                 </div>
+            </motion.div>
+        </Link>
+    )
+}
+
+function FeatureItem({ text }: { text: string }) {
+    return (
+        <div className="flex items-center gap-3 font-bold text-slate-300">
+            <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                <Check size={14} strokeWidth={4} />
             </div>
-            {visual}
-        </motion.div>
+            <span className="text-sm md:text-base">{text}</span>
+        </div>
+    )
+}
+
+function StatBox({ label, value }: { label: string, value: string }) {
+    return (
+        <div className="space-y-2">
+            <p className="text-4xl md:text-6xl font-[1000] text-slate-950 tracking-tighter">{value}</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">{label}</p>
+        </div>
     )
 }
