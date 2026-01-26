@@ -30,7 +30,7 @@ export function MarketingNavbar() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
         scrolled 
-          ? "bg-white/70 backdrop-blur-xl border-b border-slate-200/50 py-3 shadow-sm" 
+          ? "bg-white/90 dark:bg-white/90 backdrop-blur-xl border-b border-slate-200/50 py-3 shadow-sm" 
           : "bg-transparent border-transparent py-5"
       )}
     >
@@ -95,7 +95,7 @@ export function MarketingNavbar() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-50 bg-white md:hidden flex flex-col p-8 pt-32"
+            className="fixed inset-0 z-50 bg-white dark:bg-white flex flex-col p-8 pt-32"
           >
             <div className="flex flex-col gap-8">
               {navLinks.map((link, idx) => (
@@ -111,7 +111,7 @@ export function MarketingNavbar() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.name}
-                    <ChevronRight className="text-slate-200 group-hover:text-blue-600 transition-colors" size={32} />
+                    <ChevronRight className="text-slate-300 group-hover:text-blue-600 transition-colors" size={32} />
                   </Link>
                 </motion.div>
               ))}
@@ -121,15 +121,15 @@ export function MarketingNavbar() {
               {!isPending && (
                 <>
                   {session ? (
-                    <Button className="w-full h-16 rounded-[1.5rem] text-lg font-black uppercase tracking-widest bg-blue-600 text-white" asChild onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full h-16 rounded-[1.5rem] text-lg font-black uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-700" asChild onClick={() => setMobileMenuOpen(false)}>
                       <Link href="/dashboard">Aller au Dashboard</Link>
                     </Button>
                   ) : (
                     <>
-                      <Button variant="outline" className="w-full h-16 rounded-[1.5rem] text-lg font-black uppercase tracking-widest border-slate-200" asChild onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full h-16 rounded-[1.5rem] text-lg font-black uppercase tracking-widest border-slate-200 text-slate-950" asChild onClick={() => setMobileMenuOpen(false)}>
                         <Link href="/sign-in">Connexion</Link>
                       </Button>
-                      <Button className="w-full h-16 rounded-[1.5rem] text-lg font-black uppercase tracking-widest bg-slate-950 text-white shadow-2xl shadow-slate-950/20" asChild onClick={() => setMobileMenuOpen(false)}>
+                      <Button className="w-full h-16 rounded-[1.5rem] text-lg font-black uppercase tracking-widest bg-slate-950 text-white shadow-2xl shadow-slate-950/20 hover:bg-slate-800" asChild onClick={() => setMobileMenuOpen(false)}>
                         <Link href="/sign-up">Commencer gratuitement</Link>
                       </Button>
                     </>
