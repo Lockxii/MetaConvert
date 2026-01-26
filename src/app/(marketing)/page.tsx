@@ -21,69 +21,62 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-100 selection:text-blue-700">
       {/* Hero Section - Refined */}
-      <section className="relative pt-24 pb-20 lg:pt-40 lg:pb-32 border-b border-slate-50 overflow-hidden">
+      <section className="relative pt-12 pb-16 lg:pt-40 lg:pb-32 border-b border-slate-50 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-50/50 via-transparent to-transparent -z-10" />
         <div className="container px-6 mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-8">
-            <div className="flex-1 space-y-8 text-center lg:text-left">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="inline-flex items-center gap-2 py-1.5 px-3 rounded-lg bg-blue-50 border border-blue-100 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600"
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                </span>
-                Système de conversion haute performance
-              </motion.div>
+          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-8">
+            <div className="flex-1 space-y-10 text-center lg:text-left">
+              
+              <div className="space-y-6">
+                <motion.h1 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-5xl md:text-7xl lg:text-8xl font-[1000] tracking-tighter leading-[0.9] text-slate-950"
+                >
+                  Maîtrisez vos <br/>
+                  <span className="text-blue-600">fichiers.</span>
+                </motion.h1>
 
-              <motion.h1 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="text-4xl md:text-7xl lg:text-8xl font-[1000] tracking-tight leading-[0.95] text-slate-950"
-              >
-                L'écosystème de <br/>
-                fichiers <span className="text-blue-600">sans limites.</span>
-              </motion.h1>
-
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-slate-500 text-base md:text-xl max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed"
-              >
-                Oubliez les outils fragmentés. MetaConvert centralise la conversion, 
-                le transfert et le stockage intelligent pour les professionnels exigeants.
-              </motion.p>
+                <motion.p 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-slate-500 text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed italic"
+                >
+                  L'écosystème complet pour convertir, transférer et stocker vos médias en un éclair.
+                </motion.p>
+              </div>
 
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-4"
+                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6 pt-2"
               >
-                <Button size="lg" className="rounded-xl px-8 h-14 text-sm font-black uppercase tracking-widest gap-2 shadow-xl shadow-blue-600/20 w-full sm:w-auto" asChild>
+                <Button size="lg" className="rounded-2xl px-10 h-16 text-sm font-black uppercase tracking-widest gap-2 shadow-xl shadow-blue-600/20 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white" asChild>
                   <Link href={session ? "/dashboard" : "/sign-up"}>
-                    {session ? "Accéder au Dashboard" : "Commencer l'expérience"}
+                    {session ? "Tableau de Bord" : "Essai Gratuit"}
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </Button>
-                <div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 w-full sm:w-auto justify-center">
-                  <div className="flex -space-x-2">
-                      {[1,2,3,4].map(i => (
-                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden relative">
-                            <Image 
-                                src={`https://i.pravatar.cc/100?img=${i+10}`} 
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-3">
+                      {[1,2,3].map(i => (
+                        <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 overflow-hidden shadow-sm">
+                            <img 
+                                src={`https://i.pravatar.cc/100?u=${i+20}`} 
                                 alt="User" 
-                                fill
-                                className="object-cover"
+                                className="w-full h-full object-cover"
                             />
                         </div>
                       ))}
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">+15k utilisateurs pro</span>
+                  <div className="flex flex-col items-start leading-none">
+                    <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight">+15k membres</span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Utilisateurs pro</span>
+                  </div>
                 </div>
               </motion.div>
             </div>
