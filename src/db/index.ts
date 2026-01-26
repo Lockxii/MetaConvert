@@ -65,15 +65,87 @@ if (sqlClient) {
 
 
 
-            // Table account
+                        // Table account - Crucial pour le lien social
 
 
 
-            await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "createdAt" timestamp DEFAULT now();`;
 
 
 
-            await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "updatedAt" timestamp DEFAULT now();`;
+
+                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "accountId" text;`;
+
+
+
+
+
+
+
+                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "providerId" text;`;
+
+
+
+
+
+
+
+                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "accessToken" text;`;
+
+
+
+
+
+
+
+                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "refreshToken" text;`;
+
+
+
+
+
+
+
+                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "idToken" text;`;
+
+
+
+
+
+
+
+                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "expiresAt" timestamp;`;
+
+
+
+
+
+
+
+                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "password" text;`;
+
+
+
+
+
+
+
+                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "createdAt" timestamp DEFAULT now();`;
+
+
+
+
+
+
+
+                        await sqlClient`ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "updatedAt" timestamp DEFAULT now();`;
+
+
+
+
+
+
+
+            
 
 
 

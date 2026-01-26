@@ -27,6 +27,10 @@ export const auth = betterAuth({
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
         },
     },
+    // Autoriser le lien automatique entre les comptes (ex: Email -> Google)
+    accountLinking: {
+        enabled: true,
+    },
     // Activer les logs pour voir l'erreur réelle dans Vercel
     debug: true,
 });
