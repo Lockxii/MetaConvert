@@ -53,7 +53,9 @@ export default function SignIn() {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: "/dashboard"
+        callbackURL: window.location.origin === "http://localhost:3000" 
+          ? "/dashboard" 
+          : "https://meta-convert-steel.vercel.app/dashboard"
       });
     } catch (e) {
       toast.error(`Erreur de connexion avec ${provider}`);
