@@ -12,7 +12,8 @@ export const auth = betterAuth({
     }),
     trustedOrigins: [
         "http://localhost:3000", 
-        "https://*.vercel.app" // Allow all vercel deployments
+        "https://*.vercel.app",
+        "https://meta-convert-steel.vercel.app"
     ],
     emailAndPassword: {
         enabled: true,
