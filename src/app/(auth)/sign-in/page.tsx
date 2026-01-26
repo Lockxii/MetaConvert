@@ -17,13 +17,6 @@ export default function SignIn() {
   const [loading, setLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const router = useRouter();
-  const { data: session, isPending } = authClient.useSession();
-
-  useEffect(() => {
-    if (!isPending && session) {
-      router.push("/dashboard");
-    }
-  }, [session, isPending, router]);
 
   const handleSignIn = async () => {
     if (!email || !password) return toast.error("Veuillez remplir tous les champs");
