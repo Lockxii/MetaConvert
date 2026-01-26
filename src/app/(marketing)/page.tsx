@@ -50,61 +50,117 @@ export default function HomePage() {
       </nav>
 
       {/* Hero Section - Refined */}
-      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 border-b border-slate-50 overflow-hidden">
+      <section className="relative pt-24 pb-20 lg:pt-40 lg:pb-32 border-b border-slate-50 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-50/50 via-transparent to-transparent -z-10" />
         <div className="container px-6 mx-auto">
-          <div className="max-w-4xl space-y-8">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="inline-flex items-center gap-2 py-1.5 px-3 rounded-lg bg-blue-50 border border-blue-100 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600"
-            >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              Système de conversion haute performance
-            </motion.div>
+          <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-8">
+            <div className="flex-1 space-y-8 text-center lg:text-left">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="inline-flex items-center gap-2 py-1.5 px-3 rounded-lg bg-blue-50 border border-blue-100 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600"
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                Système de conversion haute performance
+              </motion.div>
 
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-5xl md:text-7xl lg:text-8xl font-[1000] tracking-tight leading-[0.95] text-slate-950"
-            >
-              L'écosystème de <br/>
-              fichiers <span className="text-blue-600">sans limites.</span>
-            </motion.h1>
+              <motion.h1 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="text-4xl md:text-7xl lg:text-8xl font-[1000] tracking-tight leading-[0.95] text-slate-950"
+              >
+                L'écosystème de <br/>
+                fichiers <span className="text-blue-600">sans limites.</span>
+              </motion.h1>
 
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-slate-500 text-lg md:text-xl max-w-2xl font-medium leading-relaxed"
-            >
-              Oubliez les outils fragmentés. MetaConvert centralise la conversion, 
-              le transfert et le stockage intelligent pour les professionnels exigeants.
-            </motion.p>
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-slate-500 text-base md:text-xl max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed"
+              >
+                Oubliez les outils fragmentés. MetaConvert centralise la conversion, 
+                le transfert et le stockage intelligent pour les professionnels exigeants.
+              </motion.p>
 
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-wrap items-center gap-4 pt-4"
-            >
-              <Button size="lg" className="rounded-xl px-8 h-14 text-sm font-black uppercase tracking-widest gap-2 shadow-xl shadow-blue-600/20" asChild>
-                <Link href={session ? "/dashboard" : "/sign-up"}>
-                  {session ? "Accéder au Dashboard" : "Commencer l'expérience"}
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
-              <div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="flex -space-x-2">
-                    {[1,2,3].map(i => <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-200" />)}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-4"
+              >
+                <Button size="lg" className="rounded-xl px-8 h-14 text-sm font-black uppercase tracking-widest gap-2 shadow-xl shadow-blue-600/20 w-full sm:w-auto" asChild>
+                  <Link href={session ? "/dashboard" : "/sign-up"}>
+                    {session ? "Accéder au Dashboard" : "Commencer l'expérience"}
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+                <div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-slate-50 border border-slate-100 w-full sm:w-auto justify-center">
+                  <div className="flex -space-x-2">
+                      {[1,2,3,4].map(i => (
+                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden relative">
+                            <Image 
+                                src={`https://i.pravatar.cc/100?img=${i+10}`} 
+                                alt="User" 
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                      ))}
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">+15k utilisateurs pro</span>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">+15k utilisateurs pro</span>
-              </div>
-            </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Visual on the right */}
+            <div className="flex-1 w-full relative hidden lg:block">
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
+                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="relative z-10"
+                >
+                    <div className="bg-white rounded-[3rem] border border-slate-100 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.1)] p-4 overflow-hidden">
+                        <div className="bg-slate-50 rounded-[2.2rem] aspect-[4/3] overflow-hidden flex items-center justify-center relative group">
+                            <Image 
+                                src="/logo.svg" 
+                                alt="MetaConvert App" 
+                                width={120} 
+                                height={120}
+                                className="opacity-20 group-hover:scale-110 transition-transform duration-700"
+                            />
+                            {/* Floating UI Elements */}
+                            <div className="absolute top-8 left-8 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 animate-bounce [animation-duration:4s]">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white">
+                                        <ImageIcon size={16} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="h-2 w-16 bg-slate-100 rounded" />
+                                        <div className="h-1.5 w-10 bg-slate-50 rounded" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="absolute bottom-12 right-8 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 animate-bounce [animation-duration:5s] [animation-delay:1s]">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white">
+                                        <Check size={16} />
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase text-slate-400">Terminé</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/* Decorative Blobs */}
+                    <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-100 rounded-full blur-[100px] -z-10" />
+                    <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-100 rounded-full blur-[100px] -z-10" />
+                </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -261,14 +317,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section - Refined */}
-      <section className="py-32 bg-slate-50">
+      {/* Final CTA - Refined */}
+      <section className="py-32 bg-slate-50 border-t border-slate-100">
         <div className="container px-6 mx-auto text-center">
             <div className="max-w-2xl mx-auto space-y-10">
                 <h2 className="text-4xl md:text-6xl font-black tracking-tight text-slate-950">Prêt à transformer votre workflow ?</h2>
                 <p className="text-slate-500 text-lg font-medium">Rejoignez les professionnels qui ne perdent plus de temps avec leurs fichiers.</p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <Button size="lg" className="rounded-xl px-10 h-16 font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 bg-blue-600 text-white" asChild>
+                    <Button size="lg" className="rounded-xl px-10 h-16 font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 bg-blue-600 text-white w-full sm:w-auto" asChild>
                         <Link href="/sign-up">Créer un compte gratuit</Link>
                     </Button>
                     <Link href="#tools" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-all underline underline-offset-8">Voir tous les outils</Link>
@@ -276,38 +332,6 @@ export default function HomePage() {
             </div>
         </div>
       </section>
-
-      {/* Modern Footer */}
-      <footer className="bg-white border-t border-slate-100 py-20">
-        <div className="container px-6 mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-20">
-                <div className="col-span-2 space-y-6">
-                    <Link href="/" className="flex items-center gap-2">
-                        <Image src="/logo.svg" alt="MetaConvert" width={24} height={26} />
-                        <span className="font-black text-base tracking-tighter uppercase">MetaConvert</span>
-                    </Link>
-                    <p className="text-slate-400 text-xs font-medium leading-relaxed max-w-xs">
-                        L'écosystème de traitement de fichiers le plus rapide du web. 
-                        Pensé pour la performance et la sécurité.
-                    </p>
-                </div>
-                <FooterCol title="Produit" links={[{l: "Outils Image", h: "/dashboard/image"}, {l: "PDF Weaver", h: "/dashboard/pdf"}, {l: "Vidéo HD", h: "/dashboard/video"}]} />
-                <FooterCol title="Services" links={[{l: "MetaTransfer", h: "/dashboard/transfer"}, {l: "Cloud Sync", h: "/dashboard/cloud"}, {l: "Web Capture", h: "/dashboard/web"}]} />
-                <FooterCol title="Légal" links={[{l: "Confidentialité", h: "/legal/privacy"}, {l: "Conditions", h: "/legal/terms"}, {l: "Cookies", h: "/legal/cookies"}]} />
-            </div>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-slate-50">
-                <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">© 2026 MetaConvert Ecosystem</p>
-                <div className="flex gap-6">
-                    <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors cursor-pointer">
-                        <ZapIcon size={14} />
-                    </div>
-                    <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors cursor-pointer">
-                        <ShieldCheck size={14} />
-                    </div>
-                </div>
-            </div>
-        </div>
-      </footer>
     </div>
   );
 }
