@@ -71,7 +71,7 @@ export default function TransferPage() {
             // --- UPLOAD DIRECT (OUTILS PRO) ---
             const blob = await upload(finalFileName, finalFile, {
                 access: 'public',
-                handleUploadUrl: '/api/transfer/token', // Utilise notre route de token
+                handleUploadUrl: '/api/transfer/token',
                 onUploadProgress: (progressEvent) => {
                     setProgress(progressEvent.percentage);
                 },
