@@ -5,7 +5,8 @@ import { Buffer } from "buffer";
 // @ts-ignore
 import pdf from "pdf-parse/lib/pdf-parse.js";
 import JSZip from "jszip";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
 export async function POST(req: NextRequest) {
   let originalFileName = "unknown.pdf";
@@ -145,9 +146,11 @@ export async function POST(req: NextRequest) {
         if (!inputPdfBytes) throw new Error("PDF file required");
         
         // Use Puppeteer for robust rendering
+        const executablePath = await chromium.executablePath();
         const browser = await puppeteer.launch({ 
-            headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: chromium.args,
+            executablePath: executablePath,
+            headless: true
         });
         const page = await browser.newPage();
         
