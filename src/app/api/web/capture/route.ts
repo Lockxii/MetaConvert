@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "URL et format sont requis" }, { status: 400 });
     }
 
-    // Version sans 'embed' pour avoir un JSON propre et éviter les problèmes de flux binaire direct
+    // Version sans 'embed' pour avoir un JSON propre
     const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&${format === "jpeg" ? "screenshot=true" : "pdf=true"}&meta=false`;
 
     console.log(`[Web Capture] Calling Microlink: ${microlinkUrl}`);
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
         await logOperation({
           userId: userId,
           type: "conversion",
-          fileName: url.substring(0, 100), // Tronquer l'URL pour le nom de fichier
+          fileName: url.substring(0, 100),
           originalSize: 0,
           convertedSize: outputBuffer.length,
           targetType: outputFileType,
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
           fileBuffer: outputBuffer,
         });
     } catch (logErr) {
-        console.error("[Web Capture] Log Operation Error (Non-blocking):", logErr);
+        console.error("[Web Capture] Log Operation Error:", logErr);
     }
 
     return new NextResponse(outputBuffer as any, {
@@ -87,4 +87,16 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error(`[Web Capture] Global Error:`, error);
-    // ... reste du catch
+    try {
+        await logOperation({
+            userId: userId || 'anonymous',
+            type: 'conversion',
+            fileName: originalFileName,
+            status: 'failed',
+            targetType: 'web_capture',
+            originalSize: 0
+        });
+    } catch {}
+    return NextResponse.json({ error: "Échec de la capture : " + error.message }, { status: 500 });
+  }
+}
