@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Version sans 'embed' pour avoir un JSON propre
-    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&${format === "jpeg" ? "screenshot=true" : "pdf=true"}&meta=false`;
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&${format === "jpeg" ? "screenshot=true&fullPage=true" : "pdf=true"}&meta=false`;
 
     console.log(`[Web Capture] Calling Microlink: ${microlinkUrl}`);
     const response = await fetch(microlinkUrl);
