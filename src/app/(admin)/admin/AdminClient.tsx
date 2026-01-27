@@ -640,6 +640,7 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Aperçu Admin</p>
                             </div>
                         </DialogTitle>
+                        <DialogDescription className="sr-only">Visualisation du fichier sélectionné.</DialogDescription>
                     </DialogHeader>
                     <div className="p-6 sm:p-10 bg-muted/30 flex items-center justify-center min-h-[300px] sm:min-h-[400px]">
                         {previewFile?.url && (
@@ -670,7 +671,7 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                     <DialogHeader>
                         <DialogTitle className="text-xl sm:text-2xl font-[1000] text-destructive uppercase tracking-tighter">Suppression</DialogTitle>
                         <DialogDescription className="text-sm sm:text-lg font-medium italic">
-                            Supprimer définitivement {selectedIds.length} éléments ?
+                            Tu vas supprimer définitivement {selectedIds.length} éléments. Cette action est irréversible.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="mt-6 flex flex-col sm:flex-row gap-3">

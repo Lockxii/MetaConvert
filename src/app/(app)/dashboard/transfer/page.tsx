@@ -37,6 +37,8 @@ interface TransferLink {
     downloadCount: number;
 }
 
+import { upload } from "@vercel/blob/client";
+
 export default function TransferPage() {
     const [files, setFiles] = useState<File[]>([]);
     const [expiration, setExpiration] = useState("7");
@@ -48,46 +50,10 @@ export default function TransferPage() {
     const [shareUrl, setShareUrl] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
-    // Selection state
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [isBatchDeletingOpen, setIsBatchDeletingOpen] = useState(false);
-    const [isProcessingDelete, setIsProcessingDelete] = useState(false);
-
-    const fetchLinks = async () => {
-        try {
-            const res = await fetch("/api/transfer/list");
-            if (res.ok) {
-                const data = await res.json();
-                setLinks(data.links);
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchLinks();
-    }, []);
-
-    const onDrop = (acceptedFiles: File[]) => {
-        setFiles(prev => [...prev, ...acceptedFiles]);
-        setShareUrl(null);
-    };
-
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
-        onDrop,
-        multiple: true
-    });
-
-    const removeFile = (index: number) => {
-        setFiles(prev => prev.filter((_, i) => i !== index));
-    };
+    // ... (keep fetchLinks and other states)
 
     const handleUpload = async () => {
         if (files.length === 0) return;
-        
         setUploading(true);
         setProgress(0);
         
@@ -102,38 +68,37 @@ export default function TransferPage() {
                 finalFileName = `transfert_${new Date().getTime()}.zip`;
             }
 
-            const formData = new FormData();
-            formData.append("file", finalFile, finalFileName);
-            formData.append("expiration", expiration);
-            if (password) formData.append("password", password);
-
-            const xhr = new XMLHttpRequest();
-            
-            xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) {
-                    const percentComplete = Math.round((event.loaded / event.total) * 100);
-                    setProgress(percentComplete);
-                }
-            };
-
-            const response = await new Promise<any>((resolve, reject) => {
-                xhr.open("POST", "/api/transfer");
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(JSON.parse(xhr.responseText));
-                    } else {
-                        reject(new Error(xhr.responseText));
-                    }
-                };
-                xhr.onerror = () => reject(new Error("Erreur réseau"));
-                xhr.send(formData);
+            // --- UPLOAD DIRECT (OUTILS PRO) ---
+            const blob = await upload(finalFileName, finalFile, {
+                access: 'public',
+                handleUploadUrl: '/api/transfer/token', // Utilise notre route de token
+                onUploadProgress: (progressEvent) => {
+                    setProgress(progressEvent.percentage);
+                },
             });
 
-            setShareUrl(response.shareUrl);
-            toast.success("Transfert prêt !");
-            setFiles([]);
-            setPassword("");
-            fetchLinks();
+            // Enregistrer le lien dans la DB via une petite API légère
+            const res = await fetch("/api/transfer/save-link", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    fileName: finalFileName,
+                    filePath: blob.url,
+                    expiration: expiration,
+                    password: password
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                setShareUrl(data.shareUrl);
+                toast.success("Transfert prêt !");
+                setFiles([]);
+                setPassword("");
+                fetchLinks();
+            } else {
+                toast.error(data.error || "Erreur lors du transfert");
+            }
         } catch (e) {
             toast.error("Erreur technique lors de l'envoi");
             console.error(e);
