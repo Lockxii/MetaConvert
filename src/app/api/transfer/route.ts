@@ -5,6 +5,8 @@ import { getUserSession } from "@/lib/server-utils";
 import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
 
+export const maxDuration = 60; // Autorise 60 secondes d'exécution sur Vercel
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getUserSession(req);
