@@ -273,7 +273,7 @@ if (sqlClient) {
 
 
 
-                        // Table notifications
+                                    // Table notifications
 
 
 
@@ -297,7 +297,7 @@ if (sqlClient) {
 
 
 
-                        await sqlClient`CREATE TABLE IF NOT EXISTS "notifications" (
+            
 
 
 
@@ -321,7 +321,7 @@ if (sqlClient) {
 
 
 
-                            "id" text PRIMARY KEY NOT NULL,
+                                    await sqlClient`ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "image" text;`;
 
 
 
@@ -345,7 +345,7 @@ if (sqlClient) {
 
 
 
-                            "user_id" text NOT NULL,
+            
 
 
 
@@ -369,7 +369,7 @@ if (sqlClient) {
 
 
 
-                            "title" text NOT NULL,
+                                    await sqlClient`ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "is_interactive" boolean DEFAULT false;`;
 
 
 
@@ -393,7 +393,7 @@ if (sqlClient) {
 
 
 
-                            "message" text NOT NULL,
+            
 
 
 
@@ -417,7 +417,7 @@ if (sqlClient) {
 
 
 
-                            "type" text DEFAULT 'info',
+                                    await sqlClient`ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "poll_options" text;`;
 
 
 
@@ -441,7 +441,7 @@ if (sqlClient) {
 
 
 
-                            "link" text,
+            
 
 
 
@@ -465,7 +465,7 @@ if (sqlClient) {
 
 
 
-                            "is_read" boolean DEFAULT false,
+                                    await sqlClient`ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "poll_results" text;`;
 
 
 
@@ -489,7 +489,7 @@ if (sqlClient) {
 
 
 
-                            "created_at" timestamp DEFAULT now()
+            
 
 
 
@@ -513,7 +513,103 @@ if (sqlClient) {
 
 
 
-                        );`;
+                                    await sqlClient`ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "requires_response" boolean DEFAULT false;`;
+
+
+
+
+
+
+
+                        
+
+
+
+
+
+
+
+            
+
+
+
+            
+
+
+
+            
+
+
+
+
+
+
+
+                        
+
+
+
+
+
+
+
+            
+
+
+
+            
+
+
+
+                                    await sqlClient`ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "user_response" text;`;
+
+
+
+
+
+
+
+                        
+
+
+
+
+
+
+
+            
+
+
+
+            
+
+
+
+            
+
+
+
+
+
+
+
+                        
+
+
+
+
+
+
+
+            
+
+
+
+            
+
+
+
+                        
 
 
 

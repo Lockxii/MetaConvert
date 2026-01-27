@@ -24,7 +24,10 @@ import {
     Info,
     AlertTriangle,
     CheckCircle,
-    Loader2
+    Loader2,
+    Image as ImageIcon,
+    Plus,
+    ListTodo
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,6 +75,10 @@ export default function AdminClient({ initialData }: AdminClientProps) {
     const [notifMessage, setNotifMessage] = useState("");
     const [notifType, setNotifType] = useState("info");
     const [notifLink, setNotifLink] = useState("");
+    const [notifImage, setNotifImage] = useState("");
+    const [requiresResponse, setRequiresResponse] = useState(false);
+    const [pollOptions, setPollOptions] = useState<string[]>([]);
+    const [newOption, setNewOption] = useState("");
     const [sendingNotif, setSendingNotif] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
@@ -127,6 +134,17 @@ export default function AdminClient({ initialData }: AdminClientProps) {
         }
     };
 
+    const addPollOption = () => {
+        if (newOption && pollOptions.length < 5) {
+            setPollOptions([...pollOptions, newOption]);
+            setNewOption("");
+        }
+    };
+
+    const removePollOption = (index: number) => {
+        setPollOptions(pollOptions.filter((_, i) => i !== index));
+    };
+
     const handleSendNotification = async (sendToAll: boolean = false) => {
         if (!notifTitle || !notifMessage) return toast.error("Titre et message requis");
         if (!sendToAll && selectedUsers.length === 0) return toast.error("Sélectionnez au moins un utilisateur");
@@ -143,6 +161,9 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                     message: notifMessage,
                     type: notifType,
                     link: notifLink,
+                    image: notifImage,
+                    requiresResponse,
+                    pollOptions: pollOptions.length > 0 ? pollOptions : null,
                     sendToAll
                 }),
                 headers: { "Content-Type": "application/json" }
@@ -153,6 +174,9 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                 setNotifTitle("");
                 setNotifMessage("");
                 setNotifLink("");
+                setNotifImage("");
+                setPollOptions([]);
+                setRequiresResponse(false);
                 setSelectedUsers([]);
             } else {
                 toast.error("Erreur lors de l'envoi", { id: toastId });
@@ -417,68 +441,123 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         {/* Send Form */}
                         <div className="lg:col-span-5">
-                            <Card className="rounded-[2.5rem] border-border bg-card p-8 space-y-6 shadow-sm">
-                                <div className="space-y-2">
+                            <Card className="rounded-[2.5rem] border-border bg-card p-8 space-y-6 shadow-sm overflow-hidden relative">
+                                <div className="space-y-2 relative z-10">
                                     <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-4">
                                         <Megaphone size={24} strokeWidth={2.5} />
                                     </div>
-                                    <h3 className="text-2xl font-[1000] tracking-tight text-foreground">Envoyer un message</h3>
-                                    <p className="text-sm text-muted-foreground font-medium italic">Communiquez avec vos membres.</p>
+                                    <h3 className="text-2xl font-[1000] tracking-tight text-foreground">Communication</h3>
+                                    <p className="text-sm text-muted-foreground font-medium italic">Créez des messages interactifs.</p>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Titre de la notif</label>
-                                        <Input 
-                                            placeholder="Ex: Mise à jour système" 
-                                            value={notifTitle}
-                                            onChange={(e) => setNotifTitle(e.target.value)}
-                                            className="h-12 rounded-xl bg-muted/30 border-border font-bold"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Message</label>
-                                        <Textarea 
-                                            placeholder="Votre contenu..." 
-                                            value={notifMessage}
-                                            onChange={(e) => setNotifMessage(e.target.value)}
-                                            className="min-h-[120px] rounded-xl bg-muted/30 border-border font-medium leading-relaxed"
-                                        />
-                                    </div>
+                                <div className="space-y-4 relative z-10">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Type</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Titre</label>
+                                            <Input 
+                                                placeholder="Titre accrocheur" 
+                                                value={notifTitle}
+                                                onChange={(e) => setNotifTitle(e.target.value)}
+                                                className="h-12 rounded-xl bg-muted/30 border-border font-bold"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Type d'alerte</label>
                                             <Select value={notifType} onValueChange={setNotifType}>
                                                 <SelectTrigger className="h-12 rounded-xl bg-muted/30 border-border">
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent className="rounded-xl border-border">
-                                                    <SelectItem value="info">Information</SelectItem>
+                                                    <SelectItem value="info">Info</SelectItem>
                                                     <SelectItem value="success">Succès</SelectItem>
-                                                    <SelectItem value="warning">Alerte</SelectItem>
+                                                    <SelectItem value="warning">Attention</SelectItem>
                                                     <SelectItem value="error">Erreur</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Message principal</label>
+                                        <Textarea 
+                                            placeholder="Tapez votre message ici..." 
+                                            value={notifMessage}
+                                            onChange={(e) => setNotifMessage(e.target.value)}
+                                            className="min-h-[100px] rounded-xl bg-muted/30 border-border font-medium"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Lien (Optionnel)</label>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-1.5">
+                                                <ImageIcon size={10} /> Image URL
+                                            </label>
                                             <Input 
                                                 placeholder="https://..." 
+                                                value={notifImage}
+                                                onChange={(e) => setNotifImage(e.target.value)}
+                                                className="h-12 rounded-xl bg-muted/30 border-border text-xs"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-1.5">
+                                                <Send size={10} /> Lien Action
+                                            </label>
+                                            <Input 
+                                                placeholder="/dashboard/..." 
                                                 value={notifLink}
                                                 onChange={(e) => setNotifLink(e.target.value)}
-                                                className="h-12 rounded-xl bg-muted/30 border-border font-medium"
+                                                className="h-12 rounded-xl bg-muted/30 border-border text-xs"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 flex flex-col gap-3">
+                                    {/* Interactivity Options */}
+                                    <div className="p-4 bg-muted/20 rounded-2xl border border-border space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Mail size={14} className="text-primary" />
+                                                <span className="text-[10px] font-black uppercase text-foreground">Réponse requise</span>
+                                            </div>
+                                            <Checkbox checked={requiresResponse} onCheckedChange={(v) => setRequiresResponse(!!v)} />
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                <ListTodo size={14} className="text-primary" />
+                                                <span className="text-[10px] font-black uppercase text-foreground">Créer un sondage</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Input 
+                                                    placeholder="Option..." 
+                                                    value={newOption}
+                                                    onChange={(e) => setNewOption(e.target.value)}
+                                                    className="h-10 text-xs rounded-lg bg-background"
+                                                    onKeyDown={(e) => e.key === 'Enter' && addPollOption()}
+                                                />
+                                                <Button size="icon" className="h-10 w-10 shrink-0" onClick={addPollOption}>
+                                                    <Plus size={16} />
+                                                </Button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {pollOptions.map((opt, i) => (
+                                                    <span key={i} className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-bold">
+                                                        {opt}
+                                                        <X size={10} className="cursor-pointer" onClick={() => removePollOption(i)} />
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-2 flex flex-col gap-3">
                                         <Button 
                                             className="h-14 rounded-2xl font-black text-sm uppercase tracking-widest gap-2 shadow-xl shadow-primary/20"
                                             onClick={() => handleSendNotification(false)}
                                             disabled={sendingNotif || selectedUsers.length === 0}
                                         >
                                             {sendingNotif ? <Loader2 className="animate-spin" /> : <Mail size={18} />}
-                                            Envoyer aux {selectedUsers.length} sélectionnés
+                                            Envoyer aux {selectedUsers.length} membres
                                         </Button>
                                         <Button 
                                             variant="outline" 
@@ -487,21 +566,21 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                                             disabled={sendingNotif}
                                         >
                                             <Megaphone size={18} />
-                                            Diffuser à TOUT LE MONDE
+                                            Diffuser globalement
                                         </Button>
                                     </div>
                                 </div>
                             </Card>
                         </div>
 
-                        {/* User Selection List */}
+                        {/* User List */}
                         <div className="lg:col-span-7">
                             <Card className="rounded-[2.5rem] border-border bg-card overflow-hidden shadow-sm h-full flex flex-col">
                                 <CardHeader className="bg-muted/30 border-b border-border py-6">
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-xl font-black tracking-tight text-foreground">Destinataires</CardTitle>
                                         <span className="bg-primary/10 text-primary text-[10px] font-black px-3 py-1 rounded-full border border-primary/20">
-                                            {initialData.users.length} MEMBRES
+                                            {data.users.length} MEMBRES
                                         </span>
                                     </div>
                                 </CardHeader>
@@ -511,15 +590,15 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                                             <tr>
                                                 <th className="px-6 py-4 w-10">
                                                     <Checkbox 
-                                                        checked={selectedUsers.length === initialData.users.length && initialData.users.length > 0}
+                                                        checked={selectedUsers.length === data.users.length && data.users.length > 0}
                                                         onCheckedChange={() => {
-                                                            if (selectedUsers.length === initialData.users.length) setSelectedUsers([]);
-                                                            else setSelectedUsers(initialData.users.map(u => u.id));
+                                                            if (selectedUsers.length === data.users.length) setSelectedUsers([]);
+                                                            else setSelectedUsers(data.users.map(u => u.id));
                                                         }}
                                                     />
                                                 </th>
                                                 <th className="px-6 py-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Utilisateur</th>
-                                                <th className="px-6 py-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Date Inscription</th>
+                                                <th className="px-6 py-4 font-black uppercase text-[10px] tracking-widest text-slate-400 text-right pr-10">Date</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border">
@@ -539,7 +618,7 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4 text-slate-400 text-xs font-bold uppercase">
+                                                    <td className="px-6 py-4 text-slate-400 text-xs font-bold uppercase text-right pr-10">
                                                         {new Date(user.createdAt).toLocaleDateString()}
                                                     </td>
                                                 </tr>
@@ -600,9 +679,9 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                     <div className="p-10 bg-muted/30 flex items-center justify-center min-h-[400px]">
                         {previewFile?.url && (
                             <div className="w-full flex justify-center">
-                                {previewFile.fileName.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i) ? (
+                                {previewFile.fileName?.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i) ? (
                                     <img src={previewFile.url} className="max-w-full max-h-[60vh] rounded-2xl shadow-xl border border-border" alt="Preview" />
-                                ) : previewFile.fileName.match(/\.(mp4|webm|mov)$/i) ? (
+                                ) : previewFile.fileName?.match(/\.(mp4|webm|mov)$/i) ? (
                                     <video src={previewFile.url} controls className="max-w-full max-h-[60vh] rounded-2xl shadow-xl" />
                                 ) : (
                                     <div className="text-center space-y-6">

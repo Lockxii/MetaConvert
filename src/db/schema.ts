@@ -127,20 +127,78 @@ export const dropLinks = pgTable('drop_links', {
 
 export const notifications = pgTable('notifications', {
 
+
+
   id: text('id').primaryKey(),
+
+
 
   userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
 
+
+
   title: text('title').notNull(),
+
+
 
   message: text('message').notNull(),
 
-  type: text('type').default('info'), // 'info', 'success', 'warning', 'error', 'system'
+
+
+  type: text('type').default('info'), 
+
+
+
+  image: text('image'), // URL de l'image
+
+
 
   link: text('link'),
 
+
+
   isRead: boolean('is_read').default(false),
+
+
+
+  
+
+
+
+  // Polls & Interactive features
+
+
+
+  isInteractive: boolean('is_interactive').default(false),
+
+
+
+  pollOptions: text('poll_options'), // Stocké en JSON : ["Option A", "Option B"]
+
+
+
+  pollVotes: text('poll_results'), // Stocké en JSON : {"Option A": 5, "Option B": 2}
+
+
+
+  requiresResponse: boolean('requires_response').default(false),
+
+
+
+  userResponse: text('user_response'),
+
+
+
+  
+
+
 
   createdAt: timestamp('created_at').defaultNow(),
 
+
+
 });
+
+
+
+

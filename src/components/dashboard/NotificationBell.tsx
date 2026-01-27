@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Bell, BellRing, Info, CheckCircle2, AlertTriangle, XCircle, Clock, Trash2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ interface Notification {
 export function NotificationBell() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [open, setOpen] = useState(false);
+    const router = useRouter();
 
     const fetchNotifications = async () => {
         try {
@@ -47,15 +49,9 @@ export function NotificationBell() {
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
-    const markAllAsRead = async () => {
-        try {
-            const res = await fetch("/api/notifications", { method: "PATCH" });
-            if (res.ok) {
-                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-            }
-        } catch (e) {
-            console.error("Failed to mark read");
-        }
+    const handleNotifClick = (id: string) => {
+        setOpen(false);
+        router.push(`/dashboard/notifications/${id}`);
     };
 
     const getTypeIcon = (type: string) => {
@@ -68,9 +64,9 @@ export function NotificationBell() {
     };
 
     return (
-        <DropdownMenu open={open} onOpenChange={(o) => { setOpen(o); if (o) markAllAsRead(); }}>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative rounded-xl hover:bg-primary/5 transition-all">
+                <Button variant="ghost" size="icon" className="relative rounded-xl hover:bg-primary/5 transition-all outline-none">
                     {unreadCount > 0 ? (
                         <>
                             <BellRing className="h-5 w-5 text-primary animate-pulse" />
@@ -103,8 +99,8 @@ export function NotificationBell() {
                         </div>
                     ) : (
                         notifications.map((n) => (
-                            <DropdownMenuItem key={n.id} className={cn(
-                                "flex flex-col items-start gap-1 p-4 cursor-default focus:bg-muted/50 transition-colors relative",
+                            <DropdownMenuItem key={n.id} onClick={() => handleNotifClick(n.id)} className={cn(
+                                "flex flex-col items-start gap-1 p-4 cursor-pointer focus:bg-muted/50 transition-colors relative",
                                 !n.isRead && "bg-primary/[0.02]"
                             )}>
                                 <div className="flex items-center gap-2 w-full">
@@ -114,15 +110,8 @@ export function NotificationBell() {
                                     <span className="font-black text-sm text-foreground flex-1 truncate">{n.title}</span>
                                     <span className="text-[9px] font-bold text-muted-foreground uppercase">{new Date(n.createdAt).toLocaleDateString()}</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground leading-relaxed pl-9 pr-4">{n.message}</p>
+                                <p className="text-xs text-muted-foreground leading-relaxed pl-9 pr-4 line-clamp-2">{n.message}</p>
                                 
-                                {n.link && (
-                                    <Button variant="link" className="h-auto p-0 pl-9 text-[10px] font-black uppercase tracking-widest text-primary gap-1" asChild>
-                                        <a href={n.link}>
-                                            En savoir plus <ExternalLink size={10} />
-                                        </a>
-                                    </Button>
-                                )}
                                 {!n.isRead && <div className="absolute top-1/2 left-1 -translate-y-1/2 w-1 h-8 bg-primary rounded-full" />}
                             </DropdownMenuItem>
                         ))
