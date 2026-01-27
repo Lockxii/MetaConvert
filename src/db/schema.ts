@@ -104,12 +104,43 @@ export const sharedLinks = pgTable('shared_links', {
 });
 
 export const dropLinks = pgTable('drop_links', {
+
   id: text('id').primaryKey(), // UUID
+
   title: text('title').notNull(),
+
   description: text('description'),
+
   password: text('password'),
+
   expiresAt: timestamp('expires_at').notNull(),
+
   createdAt: timestamp('created_at').defaultNow(),
+
   userId: text('user_id').notNull().references(() => user.id),
+
   isActive: boolean('active').default(true)
+
+});
+
+
+
+export const notifications = pgTable('notifications', {
+
+  id: text('id').primaryKey(),
+
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+
+  title: text('title').notNull(),
+
+  message: text('message').notNull(),
+
+  type: text('type').default('info'), // 'info', 'success', 'warning', 'error', 'system'
+
+  link: text('link'),
+
+  isRead: boolean('is_read').default(false),
+
+  createdAt: timestamp('created_at').defaultNow(),
+
 });

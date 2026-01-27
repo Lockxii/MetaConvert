@@ -83,6 +83,10 @@ async function getRecentData() {
     .orderBy(desc(dropLinks.createdAt))
     .limit(100);
 
+    const allUsers = await db.select()
+        .from(user)
+        .orderBy(desc(user.createdAt));
+
     // Données pour les graphiques (7 derniers jours)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -100,7 +104,8 @@ async function getRecentData() {
         conversions: recentConversions,
         transfers: activeTransfers,
         drops: activeDrops,
-        chart: chartData
+        chart: chartData,
+        users: allUsers
     };
 }
 

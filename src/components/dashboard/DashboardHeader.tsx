@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
+import { NotificationBell } from "./NotificationBell";
 
 export function DashboardHeader() {
   const router = useRouter();
@@ -25,6 +26,8 @@ export function DashboardHeader() {
             <p className="text-muted-foreground font-medium italic">Voici l'activité de vos outils MetaConvert.</p>
          </div>
          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <div className="w-[1px] h-8 bg-border mx-1" />
             <Button variant="outline" className="rounded-xl border-border bg-card shadow-sm h-11 hidden sm:flex" asChild>
                 <Link href="/dashboard/cloud">Accéder au Cloud</Link>
             </Button>
