@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserSession, logOperation } from "@/lib/server-utils";
-import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
 
-export const maxDuration = 60; // Set max duration for Vercel
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   let userId: string | null = null;
@@ -25,70 +23,45 @@ export async function POST(req: NextRequest) {
     const format = formData.get("format") as "jpeg" | "pdf";
 
     if (!url || !format) {
-      return NextResponse.json({ error: "URL and format are required" }, { status: 400 });
+      return NextResponse.json({ error: "URL et format sont requis" }, { status: 400 });
     }
 
-    // Validate URL format
-    try {
-      new URL(url);
-    } catch {
-      return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
-    }
+    // On utilise Microlink API pour la capture (Ultra robuste et rapide sur Vercel)
+    // C'est une technique beaucoup plus fiable que de faire tourner Puppeteer sur Vercel
+    const microlinkUrl = format === "jpeg" 
+        ? `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`
+        : `https://api.microlink.io?url=${encodeURIComponent(url)}&pdf=true&meta=false&embed=pdf.url`;
 
-    // Chromium configuration for Vercel
-    const executablePath = await chromium.executablePath();
+    const response = await fetch(microlinkUrl);
     
-    const browser = await puppeteer.launch({ 
-      args: chromium.args,
-      executablePath: executablePath,
-      headless: true,
-    });
-    
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 800 });
-
-    // Set a default timeout for navigation
-    await page.setDefaultNavigationTimeout(60000); // 60 seconds
-
-    try {
-      await page.goto(url, { waitUntil: 'networkidle2' });
-    } catch (e) {
-      await browser.close();
-      return NextResponse.json({ error: `Failed to navigate to URL: ${e instanceof Error ? e.message : String(e)}` }, { status: 400 });
+    if (!response.ok) {
+        throw new Error("L'API de capture a échoué");
     }
+
+    // Microlink nous donne l'URL de l'image ou du PDF généré
+    const data = await response.json();
+    const targetUrl = format === "jpeg" ? data.data.screenshot.url : data.data.pdf.url;
+
+    // On télécharge le fichier généré pour le traiter
+    const fileResponse = await fetch(targetUrl);
+    const arrayBuffer = await fileResponse.arrayBuffer();
+    outputBuffer = Buffer.from(arrayBuffer);
 
     if (format === "jpeg") {
-      const screenshot = await page.screenshot({ 
-        type: "jpeg", 
-        quality: 80, 
-        fullPage: true 
-      });
-      outputBuffer = Buffer.from(screenshot);
-      outputFileName = `${originalFileName}_${Date.now()}.jpeg`;
+      outputFileName = `capture_${Date.now()}.jpeg`;
       outputMimeType = "image/jpeg";
       outputFileType = "jpeg";
-    } else if (format === "pdf") {
-      const pdf = await page.pdf({ 
-        format: "A4", 
-        printBackground: true,
-        margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' }
-      });
-      outputBuffer = Buffer.from(pdf);
-      outputFileName = `${originalFileName}_${Date.now()}.pdf`;
+    } else {
+      outputFileName = `capture_${Date.now()}.pdf`;
       outputMimeType = "application/pdf";
       outputFileType = "pdf";
-    } else {
-      await browser.close();
-      return NextResponse.json({ error: "Unsupported capture format" }, { status: 400 });
     }
-
-    await browser.close();
 
     await logOperation({
       userId: userId,
       type: "conversion",
-      fileName: url, // Log the URL as file name
-      originalSize: 0, 
+      fileName: url,
+      originalSize: 0,
       convertedSize: outputBuffer.length,
       targetType: outputFileType,
       status: 'completed',
@@ -111,6 +84,6 @@ export async function POST(req: NextRequest) {
         targetType: 'web_capture',
         originalSize: 0
     });
-    return NextResponse.json({ error: "Failed to capture web page: " + error.message }, { status: 500 });
+    return NextResponse.json({ error: "Échec de la capture : " + error.message }, { status: 500 });
   }
 }
