@@ -6,7 +6,7 @@ import {
     Shield, CheckCircle2, XCircle, Send, FolderUp, Activity,
     TrendingUp, X, Bell, Megaphone, Mail, Info,
     AlertTriangle, CheckCircle, Loader2, Image as ImageIcon, Plus, ListTodo,
-    BarChart, PieChart, MessageSquare, Users as UsersGroup, ArrowUpRight
+    PieChart, MessageSquare, Users as UsersGroup, ArrowUpRight, BarChart3
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
