@@ -1,4 +1,4 @@
-import { generateClientTokenFromReadWriteToken } from '@vercel/blob';
+import { generateClientToken } from '@vercel/blob';
 import { NextResponse } from 'next/server';
 import { getUserSession } from "@/lib/server-utils";
 
@@ -13,15 +13,11 @@ export async function GET(request: Request) {
 
   if (!pathname) return NextResponse.json({ error: "Pathname required" }, { status: 400 });
 
-  const token = await generateClientTokenFromReadWriteToken({
-    returnPayload: JSON.stringify({
-      userId: session.user.id,
-    }),
-    allowedContentTypes: [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 
-        'video/mp4', 'video/quicktime', 'video/webm', 
-        'application/pdf', 'application/zip', 'application/x-zip-compressed'
-    ],
+  const token = await generateClientToken({
+    pathname,
+    onUploadCompleted: async ({ blob, tokenPayload }) => {
+      // Optionnel: on pourrait enregistrer ici, mais on le fait déjà côté client
+    },
   });
 
   return NextResponse.json({ token });
