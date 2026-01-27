@@ -58,6 +58,7 @@ interface PDFPage {
 
 export default function PDFWeaverPage() {
     const [pages, setPages] = useState<PDFPage[]>([]);
+    const [pdfBuffers, setPdfBuffers] = useState<Map<string, ArrayBuffer>>(new Map());
     const [loading, setLoading] = useState(false);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [generating, setGenerating] = useState(false);
@@ -123,8 +124,11 @@ export default function PDFWeaverPage() {
                 // but let's re-read files on generate or store them in a state.
                 
                 // Save file bytes for later merge
-                (window as any)._pdfBytes = (window as any)._pdfBytes || new Map();
-                (window as any)._pdfBytes.set(pdfId, arrayBuffer);
+                setPdfBuffers(prev => {
+                    const next = new Map(prev);
+                    next.set(pdfId, arrayBuffer);
+                    return next;
+                });
 
                 setPages(prev => [...prev, ...newPages]);
             }
@@ -173,7 +177,8 @@ export default function PDFWeaverPage() {
                 // Get or load the source PDF
                 let sourcePdfDoc = pdfCache.get(pageInfo.pdfId);
                 if (!sourcePdfDoc) {
-                    const bytes = (window as any)._pdfBytes.get(pageInfo.pdfId);
+                    const bytes = pdfBuffers.get(pageInfo.pdfId);
+                    if (!bytes) throw new Error("Source PDF bytes missing");
                     sourcePdfDoc = await PDFDocument.load(bytes);
                     pdfCache.set(pageInfo.pdfId, sourcePdfDoc);
                 }
@@ -183,12 +188,13 @@ export default function PDFWeaverPage() {
             }
 
             const mergedPdfBytes = await mergedPdf.save();
-            const blob = new Blob([mergedPdfBytes as any], { type: 'application/pdf' });
+            const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
             const url = URL.createObjectURL(blob);
             
             const a = document.createElement('a');
             a.href = url;
-            a.download = `weaved_document_${Date.now()}.pdf`;
+            const finalFileName = `weaved_document_${Date.now()}.pdf`;
+            a.download = finalFileName;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -196,7 +202,8 @@ export default function PDFWeaverPage() {
 
             // Also save to Cloud
             const formData = new FormData();
-            formData.append("file", new File([blob], `weaved_${Date.now()}.pdf`, { type: "application/pdf" }));
+            const fileToSave = new File([blob], finalFileName, { type: "application/pdf" });
+            formData.append("file", fileToSave);
             formData.append("tool", "pdf-weaver");
             await fetch("/api/dashboard/cloud/save", { method: "POST", body: formData });
 

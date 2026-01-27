@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserSession, logOperation } from "@/lib/server-utils";
-import puppeteer from "puppeteer";
-import { promises as fs } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
+
+export const maxDuration = 60; // Set max duration for Vercel
 
 export async function POST(req: NextRequest) {
   let userId: string | null = null;
@@ -35,10 +35,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
     }
 
+    // Chromium configuration for Vercel
+    const executablePath = await chromium.executablePath();
+    
     const browser = await puppeteer.launch({ 
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'] // Required for some environments like Vercel
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: executablePath,
+      headless: chromium.headless,
     });
+    
     const page = await browser.newPage();
 
     // Set a default timeout for navigation
@@ -51,23 +57,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Failed to navigate to URL: ${e instanceof Error ? e.message : String(e)}` }, { status: 400 });
     }
 
-    const tempDir = tmpdir();
-
     if (format === "jpeg") {
-      outputBuffer = (await page.screenshot({ 
+      const screenshot = await page.screenshot({ 
         type: "jpeg", 
         quality: 80, 
         fullPage: true 
-      })) as Buffer;
+      });
+      outputBuffer = Buffer.from(screenshot);
       outputFileName = `${originalFileName}_${Date.now()}.jpeg`;
       outputMimeType = "image/jpeg";
       outputFileType = "jpeg";
     } else if (format === "pdf") {
-      outputBuffer = (await page.pdf({ 
+      const pdf = await page.pdf({ 
         format: "A4", 
         printBackground: true,
         margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' }
-      })) as Buffer;
+      });
+      outputBuffer = Buffer.from(pdf);
       outputFileName = `${originalFileName}_${Date.now()}.pdf`;
       outputMimeType = "application/pdf";
       outputFileType = "pdf";
@@ -82,11 +88,11 @@ export async function POST(req: NextRequest) {
       userId: userId,
       type: "conversion",
       fileName: url, // Log the URL as file name
-      originalSize: 0, // No original file, so 0
+      originalSize: 0, 
       convertedSize: outputBuffer.length,
       targetType: outputFileType,
       status: 'completed',
-      fileBuffer: outputBuffer, // Added for Cloud storage
+      fileBuffer: outputBuffer,
     });
 
     return new NextResponse(outputBuffer as any, {
@@ -96,7 +102,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error(`Web capture error for URL ${req.formData().then(d=>d.get('url'))}:`, error);
+    console.error(`Web capture error:`, error);
     await logOperation({
         userId: userId || 'anonymous',
         type: 'conversion',
