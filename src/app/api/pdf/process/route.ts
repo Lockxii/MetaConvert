@@ -149,7 +149,6 @@ export async function POST(req: NextRequest) {
         const executablePath = await chromium.executablePath();
         const browser = await puppeteer.launch({ 
             args: [...chromium.args, '--hide-scrollbars', '--disable-web-security'],
-            defaultViewport: chromium.defaultViewport,
             executablePath: executablePath,
             headless: true
         });
