@@ -4,10 +4,11 @@ import { useState, useMemo, useEffect } from "react";
 import { 
     FileText, Download, Eye, Trash2, Clock, User as UserIcon, Search,
     Shield, CheckCircle2, XCircle, Send, FolderUp, Activity,
-    BarChart3, TrendingUp, X, Bell, Megaphone, Mail, Info,
+    TrendingUp, X, Bell, Megaphone, Mail, Info,
     AlertTriangle, CheckCircle, Loader2, Image as ImageIcon, Plus, ListTodo,
-    BarChart, PieChart, MessageSquare, Users as UsersGroup
+    BarChart, PieChart, MessageSquare, Users as UsersGroup, ArrowUpRight
 } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
