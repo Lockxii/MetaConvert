@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserSession, logOperation } from "@/lib/server-utils";
+import sharp from "sharp";
 
 export const maxDuration = 60;
 
@@ -26,11 +27,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "URL et format sont requis" }, { status: 400 });
     }
 
-    // On utilise Microlink API pour la capture (Ultra robuste et rapide sur Vercel)
-    // C'est une technique beaucoup plus fiable que de faire tourner Puppeteer sur Vercel
+    // On demande le binaire directement à Microlink (plus rapide)
     const microlinkUrl = format === "jpeg" 
-        ? `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`
-        : `https://api.microlink.io?url=${encodeURIComponent(url)}&pdf=true&meta=false&embed=pdf.url`;
+        ? `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot`
+        : `https://api.microlink.io?url=${encodeURIComponent(url)}&pdf=true&embed=pdf`;
 
     const response = await fetch(microlinkUrl);
     
@@ -38,20 +38,19 @@ export async function POST(req: NextRequest) {
         throw new Error("L'API de capture a échoué");
     }
 
-    // Microlink nous donne l'URL de l'image ou du PDF généré
-    const data = await response.json();
-    const targetUrl = format === "jpeg" ? data.data.screenshot.url : data.data.pdf.url;
-
-    // On télécharge le fichier généré pour le traiter
-    const fileResponse = await fetch(targetUrl);
-    const arrayBuffer = await fileResponse.arrayBuffer();
-    outputBuffer = Buffer.from(arrayBuffer);
+    const arrayBuffer = await response.arrayBuffer();
+    let rawBuffer = Buffer.from(arrayBuffer);
 
     if (format === "jpeg") {
+      // Microlink renvoie souvent du PNG par défaut, on convertit en JPEG haute qualité avec Sharp
+      outputBuffer = await sharp(rawBuffer)
+        .jpeg({ quality: 90 })
+        .toBuffer();
       outputFileName = `capture_${Date.now()}.jpeg`;
       outputMimeType = "image/jpeg";
       outputFileType = "jpeg";
     } else {
+      outputBuffer = rawBuffer;
       outputFileName = `capture_${Date.now()}.pdf`;
       outputMimeType = "application/pdf";
       outputFileType = "pdf";
