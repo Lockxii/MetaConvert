@@ -483,7 +483,7 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                     <div className="p-10 grid grid-cols-1 lg:grid-cols-2 gap-10 bg-background max-h-[70vh] overflow-y-auto no-scrollbar">
                         {/* Left: Poll Results Chart */}
                         <div className="space-y-6">
-                            <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><BarChart size={14} /> Résultats du Sondage</h3>
+                            <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><BarChart3 size={14} /> Résultats du Sondage</h3>
                             {pollChartData.length > 0 ? (
                                 <div className="h-[300px] w-full bg-muted/10 rounded-[2rem] p-6 border border-border">
                                     <ResponsiveContainer width="100%" height="100%">
