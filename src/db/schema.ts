@@ -137,6 +137,10 @@ export const notifications = pgTable('notifications', {
 
 
 
+  campaignId: text('campaign_id'), // Pour regrouper les envois de masse
+
+
+
   title: text('title').notNull(),
 
 
@@ -146,6 +150,10 @@ export const notifications = pgTable('notifications', {
 
 
   type: text('type').default('info'), 
+
+
+
+ 
 
 
 

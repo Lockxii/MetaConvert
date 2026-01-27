@@ -46,14 +46,10 @@ export async function POST(
                 .where(and(eq(notifications.id, id), eq(notifications.userId, session.user.id)));
         } 
         else if (action === 'vote') {
-            const results = await db.select().from(notifications).where(eq(notifications.id, id)).limit(1);
-            if (results.length > 0) {
-                const currentResults = results[0].pollVotes ? JSON.parse(results[0].pollVotes) : {};
-                currentResults[option] = (currentResults[option] || 0) + 1;
-                await db.update(notifications)
-                    .set({ pollVotes: JSON.stringify(currentResults) })
-                    .where(eq(notifications.id, id));
-            }
+            // On enregistre simplement le choix de l'utilisateur dans pollVotes
+            await db.update(notifications)
+                .set({ pollVotes: option }) 
+                .where(and(eq(notifications.id, id), eq(notifications.userId, session.user.id)));
         }
 
         return NextResponse.json({ success: true });

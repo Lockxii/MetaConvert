@@ -26,11 +26,20 @@ export async function POST(req: NextRequest) {
             targets = allUsers.map((u: { id: string }) => u.id);
         }
 
+        if (targets.length === 0) return NextResponse.json({ error: "Aucun destinataire" }, { status: 400 });
+
+        const campaignId = uuidv4();
         const isInteractive = requiresResponse || (pollOptions && pollOptions.length > 0);
+
+        // Initialiser les résultats du poll si présent
+        const initialPollResults = pollOptions ? JSON.stringify(
+            pollOptions.reduce((acc: any, opt: string) => ({ ...acc, [opt]: 0 }), {})
+        ) : null;
 
         const newNotifications = targets.map((uid: string) => ({
             id: uuidv4(),
             userId: uid,
+            campaignId: campaignId,
             title,
             message,
             type: type || 'info',
@@ -39,6 +48,7 @@ export async function POST(req: NextRequest) {
             requiresResponse: !!requiresResponse,
             isInteractive: !!isInteractive,
             pollOptions: pollOptions ? JSON.stringify(pollOptions) : null,
+            pollVotes: null, // Chaque utilisateur a son propre vote
             createdAt: new Date(),
         }));
 
@@ -47,7 +57,7 @@ export async function POST(req: NextRequest) {
             await db.insert(notifications).values(newNotifications.slice(i, i + chunkSize));
         }
 
-        return NextResponse.json({ success: true, count: targets.length });
+        return NextResponse.json({ success: true, campaignId, count: targets.length });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

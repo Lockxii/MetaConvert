@@ -273,7 +273,7 @@ if (sqlClient) {
 
 
 
-                                    // Table notifications
+                                                // Table notifications
 
 
 
@@ -321,7 +321,103 @@ if (sqlClient) {
 
 
 
-                                    await sqlClient`ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "image" text;`;
+                                                await sqlClient`ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "campaign_id" text;`;
+
+
+
+
+
+
+
+                        
+
+
+
+
+
+
+
+            
+
+
+
+            
+
+
+
+            
+
+
+
+
+
+
+
+                        
+
+
+
+
+
+
+
+            
+
+
+
+            
+
+
+
+                                                await sqlClient`ALTER TABLE "notifications" ADD COLUMN IF NOT EXISTS "image" text;`;
+
+
+
+
+
+
+
+                        
+
+
+
+
+
+
+
+            
+
+
+
+            
+
+
+
+            
+
+
+
+
+
+
+
+                        
+
+
+
+
+
+
+
+            
+
+
+
+            
+
+
+
+                                    
 
 
 
