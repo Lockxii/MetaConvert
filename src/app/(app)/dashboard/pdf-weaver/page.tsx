@@ -179,7 +179,8 @@ export default function PDFWeaverPage() {
                 if (!sourcePdfDoc) {
                     const bytes = pdfBuffers.get(pageInfo.pdfId);
                     if (!bytes) throw new Error("Source PDF bytes missing");
-                    sourcePdfDoc = await PDFDocument.load(bytes);
+                    // On utilise slice(0) pour créer une copie et ne pas détacher le buffer original
+                    sourcePdfDoc = await PDFDocument.load(bytes.slice(0));
                     pdfCache.set(pageInfo.pdfId, sourcePdfDoc);
                 }
 
