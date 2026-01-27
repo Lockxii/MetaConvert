@@ -40,12 +40,12 @@ export async function POST(req: NextRequest) {
     
     const browser = await puppeteer.launch({ 
       args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
       executablePath: executablePath,
-      headless: chromium.headless,
+      headless: chromium.headless as any,
     });
     
     const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 800 });
 
     // Set a default timeout for navigation
     await page.setDefaultNavigationTimeout(60000); // 60 seconds
