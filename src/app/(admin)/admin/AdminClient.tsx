@@ -531,7 +531,7 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden relative border border-border">
-                                                                {user.image ? <Image src={user.image} alt={user.name} fill className="object-cover" /> : <UserIcon className="p-2 text-slate-400" />}
+                                                                {user.image ? <img src={user.image} alt={user.name} className="w-full h-full object-cover" /> : <UserIcon className="p-2 text-slate-400" />}
                                                             </div>
                                                             <div className="min-w-0">
                                                                 <p className="font-bold text-foreground truncate">{user.name}</p>
