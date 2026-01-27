@@ -100,6 +100,9 @@ export default function PDFWeaverPage() {
                 if (file.type !== "application/pdf") continue;
 
                 const arrayBuffer = await file.arrayBuffer();
+                // On clone le buffer immédiatement avant que pdfjs ne puisse le détacher
+                const bufferForStorage = arrayBuffer.slice(0);
+                
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 
                 const newPages: PDFPage[] = [];
@@ -118,15 +121,10 @@ export default function PDFWeaverPage() {
                     });
                 }
 
-                // We need the original bytes later for merging, but for now we store the info
-                // In a real app, we'd store the PDF bytes in a Map or similar
-                // For simplicity, we'll store the source bytes in a global-ish map if needed, 
-                // but let's re-read files on generate or store them in a state.
-                
                 // Save file bytes for later merge
                 setPdfBuffers(prev => {
                     const next = new Map(prev);
-                    next.set(pdfId, arrayBuffer);
+                    next.set(pdfId, bufferForStorage);
                     return next;
                 });
 
