@@ -93,25 +93,25 @@ export default async function AdminDashboard() {
   const data = await getRecentData();
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
+    <div className="min-h-screen bg-background pb-20 text-foreground">
         {/* Header Admin */}
-        <div className="bg-white border-b border-slate-200 mb-8">
+        <div className="bg-card border-b border-border mb-8">
             <div className="container mx-auto px-6 py-8">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="space-y-1">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-slate-950 rounded-lg text-white">
+                            <div className="p-2 bg-primary rounded-lg text-primary-foreground shadow-lg shadow-primary/20">
                                 <Shield size={24} />
                             </div>
                             <h1 className="text-3xl font-[1000] tracking-tighter uppercase">Administration</h1>
                         </div>
-                        <p className="text-slate-500 font-medium italic">Centre de contrôle global de MetaConvert.</p>
+                        <p className="text-muted-foreground font-medium italic">Centre de contrôle global de MetaConvert.</p>
                     </div>
                     <div className="flex flex-wrap gap-3">
-                        <Button variant="outline" className="rounded-xl font-bold gap-2" asChild>
+                        <Button variant="outline" className="rounded-xl font-bold gap-2 border-border" asChild>
                             <Link href="/dashboard"><ArrowLeft size={18} /> Retour site</Link>
                         </Button>
-                        <Button className="rounded-xl font-black gap-2 bg-slate-950" asChild>
+                        <Button className="rounded-xl font-black gap-2 bg-foreground text-background hover:bg-foreground/90" asChild>
                             <Link href="/admin/users"><Users size={18} /> Utilisateurs</Link>
                         </Button>
                     </div>
@@ -122,12 +122,12 @@ export default async function AdminDashboard() {
         <div className="container mx-auto px-6 space-y-8">
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <AdminStatCard title="Membres" value={stats.users} icon={Users} color="text-blue-600" />
-                <AdminStatCard title="Conversions" value={stats.conversions} icon={Activity} color="text-emerald-600" />
-                <AdminStatCard title="Upscales" value={stats.upscales} icon={TrendingUp} color="text-indigo-600" />
-                <AdminStatCard title="Transferts" value={stats.transfers} icon={Send} color="text-purple-600" />
-                <AdminStatCard title="Demandes" value={stats.drops} icon={FolderUp} color="text-pink-600" />
-                <AdminStatCard title="Cloud Files" value={stats.storage} icon={Database} color="text-sky-600" />
+                <AdminStatCard title="Membres" value={stats.users} icon={Users} color="text-blue-500" />
+                <AdminStatCard title="Conversions" value={stats.conversions} icon={Activity} color="text-emerald-500" />
+                <AdminStatCard title="Upscales" value={stats.upscales} icon={TrendingUp} color="text-indigo-500" />
+                <AdminStatCard title="Transferts" value={stats.transfers} icon={Send} color="text-purple-500" />
+                <AdminStatCard title="Demandes" value={stats.drops} icon={FolderUp} color="text-pink-500" />
+                <AdminStatCard title="Cloud Files" value={stats.storage} icon={Database} color="text-sky-500" />
             </div>
 
             {/* Interactive Admin Panel */}
@@ -139,15 +139,15 @@ export default async function AdminDashboard() {
 
 function AdminStatCard({ title, value, icon: Icon, color }: any) {
     return (
-        <Card className="rounded-2xl border-slate-200 shadow-sm overflow-hidden group hover:border-blue-600/30 transition-all">
+        <Card className="rounded-2xl border-border bg-card shadow-sm overflow-hidden group hover:border-primary/30 transition-all">
             <CardContent className="p-6">
                 <div className="flex flex-col gap-4">
-                    <div className={cn("p-2.5 rounded-xl bg-slate-50 w-fit group-hover:scale-110 transition-transform", color)}>
+                    <div className={cn("p-2.5 rounded-xl bg-muted w-fit group-hover:scale-110 transition-transform", color)}>
                         <Icon size={20} strokeWidth={2.5} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{title}</p>
-                        <p className="text-2xl font-[1000] text-slate-950 tracking-tighter">{value}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{title}</p>
+                        <p className="text-2xl font-[1000] tracking-tighter text-foreground">{value}</p>
                     </div>
                 </div>
             </CardContent>
