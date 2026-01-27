@@ -88,10 +88,10 @@ export default function TransferPage() {
     const handleUpload = async () => {
         if (files.length === 0) return;
         
-        // Vérification de la taille totale (Vercel Hobby = 4.5MB limite de body)
+        // Limite stricte Vercel Hobby (4.5MB payload total)
         const totalSize = files.reduce((acc, f) => acc + f.size, 0);
-        if (totalSize > 4.5 * 1024 * 1024) {
-            toast.error("Fichier trop volumineux pour l'offre gratuite (Max 4.5 Mo). Les vidéos HD dépassent souvent cette limite.");
+        if (totalSize > 4 * 1024 * 1024) {
+            toast.error("Fichier trop lourd (> 4Mo). Pour les vidéos et photos HD, nous devons passer sur un stockage spécialisé.");
             return;
         }
 
