@@ -52,11 +52,44 @@ export default function AdminClient({ initialData }: AdminClientProps) {
     const [notifType, setNotifType] = useState("info");
     const [notifLink, setNotifLink] = useState("");
     const [notifImage, setNotifImage] = useState("");
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [requiresResponse, setRequiresResponse] = useState(false);
+    
+    // Chart Colors
+    const CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+                setNotifImage(base64);
+                setImagePreview(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
     const [pollOptions, setPollOptions] = useState<string[]>([]);
     const [newOption, setNewOption] = useState("");
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [sendingNotif, setSendingNotif] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+
+    const CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+                setNotifImage(base64);
+                setImagePreview(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     // Selection State
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -391,8 +424,28 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                                     </div>
                                     <Textarea placeholder="Message..." value={notifMessage} onChange={(e) => setNotifMessage(e.target.value)} className="min-h-[100px] rounded-xl bg-muted/30" />
                                     <div className="grid grid-cols-2 gap-4">
-                                        <Input placeholder="Image URL" value={notifImage} onChange={(e) => setNotifImage(e.target.value)} className="h-12 rounded-xl bg-muted/30 text-xs" />
-                                        <Input placeholder="Lien action" value={notifLink} onChange={(e) => setNotifLink(e.target.value)} className="h-12 rounded-xl bg-muted/30 text-xs" />
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-1.5 cursor-pointer">
+                                                <ImageIcon size={10} /> Image (PC)
+                                                <input type="file" accept="image/*" className="hidden" id="notif-img-upload" onChange={handleImageUpload} />
+                                            </label>
+                                            <div 
+                                                className="h-12 rounded-xl bg-muted/30 border border-border flex items-center justify-center cursor-pointer hover:bg-muted/50 overflow-hidden group"
+                                                onClick={() => (document.getElementById('notif-img-upload') as any)?.click()}
+                                            >
+                                                {imagePreview ? (
+                                                    <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
+                                                ) : (
+                                                    <Plus size={16} className="text-slate-500 group-hover:scale-110 transition-transform" />
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-1.5">
+                                                <Send size={10} /> Lien Action
+                                            </label>
+                                            <Input placeholder="/dashboard/..." value={notifLink} onChange={(e) => setNotifLink(e.target.value)} className="h-12 rounded-xl bg-muted/30 border-border text-xs" />
+                                        </div>
                                     </div>
                                     <div className="p-4 bg-muted/20 rounded-2xl border border-border space-y-4">
                                         <div className="flex items-center justify-between"><span className="text-[10px] font-black uppercase">Réponse requise</span><Checkbox checked={requiresResponse} onCheckedChange={(v) => setRequiresResponse(!!v)} /></div>
@@ -492,7 +545,11 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                                             <XAxis type="number" hide />
                                             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 'bold', fill: '#94a3b8'}} width={100} />
                                             <Tooltip contentStyle={{ borderRadius: '12px', border: 'none' }} />
-                                            <ReBar dataKey="value" fill="#3b82f6" radius={[0, 8, 8, 0]} />
+                                            <ReBar dataKey="value" radius={[0, 8, 8, 0]}>
+                                                {pollChartData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                                                ))}
+                                            </ReBar>
                                         </ReBarChart>
                                     </ResponsiveContainer>
                                 </div>

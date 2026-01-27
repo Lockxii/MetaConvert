@@ -54,6 +54,19 @@ export function NotificationBell() {
         router.push(`/dashboard/notifications/${id}`);
     };
 
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        try {
+            const res = await fetch(`/api/notifications/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                setNotifications(prev => prev.filter(n => n.id !== id));
+                toast.success("Message supprimé");
+            }
+        } catch (e) {
+            toast.error("Erreur");
+        }
+    };
+
     const getTypeIcon = (type: string) => {
         switch (type) {
             case 'success': return <CheckCircle2 className="text-emerald-500" size={16} />;
@@ -108,7 +121,12 @@ export function NotificationBell() {
                                         {getTypeIcon(n.type)}
                                     </div>
                                     <span className="font-black text-sm text-foreground flex-1 truncate">{n.title}</span>
-                                    <span className="text-[9px] font-bold text-muted-foreground uppercase">{new Date(n.createdAt).toLocaleDateString()}</span>
+                                    <button 
+                                        onClick={(e) => handleDelete(e, n.id)}
+                                        className="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors group/trash"
+                                    >
+                                        <Trash2 size={12} className="opacity-40 group-hover/trash:opacity-100" />
+                                    </button>
                                 </div>
                                 <p className="text-xs text-muted-foreground leading-relaxed pl-9 pr-4 line-clamp-2">{n.message}</p>
                                 
