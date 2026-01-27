@@ -23,28 +23,34 @@ export async function POST(req: NextRequest) {
     const url = formData.get("url") as string;
     const format = formData.get("format") as "jpeg" | "pdf";
 
+    console.log(`[Web Capture] Starting capture for: ${url}, Format: ${format}`);
+
     if (!url || !format) {
       return NextResponse.json({ error: "URL et format sont requis" }, { status: 400 });
     }
 
-    // On demande le binaire directement à Microlink (plus rapide)
-    const microlinkUrl = format === "jpeg" 
-        ? `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot`
-        : `https://api.microlink.io?url=${encodeURIComponent(url)}&pdf=true&embed=pdf`;
+    // Version sans 'embed' pour avoir un JSON propre et éviter les problèmes de flux binaire direct
+    const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&${format === "jpeg" ? "screenshot=true" : "pdf=true"}&meta=false`;
 
+    console.log(`[Web Capture] Calling Microlink: ${microlinkUrl}`);
     const response = await fetch(microlinkUrl);
-    
-    if (!response.ok) {
-        throw new Error("L'API de capture a échoué");
+    const data = await response.json();
+
+    if (!response.ok || !data.data) {
+        console.error("[Web Capture] Microlink Error:", data);
+        throw new Error(data.message || "L'API de capture a échoué");
     }
 
-    const arrayBuffer = await response.arrayBuffer();
+    const targetUrl = format === "jpeg" ? data.data.screenshot.url : data.data.pdf.url;
+    console.log(`[Web Capture] Downloading result from: ${targetUrl}`);
+
+    const fileResponse = await fetch(targetUrl);
+    const arrayBuffer = await fileResponse.arrayBuffer();
     let rawBuffer = Buffer.from(arrayBuffer);
 
     if (format === "jpeg") {
-      // Microlink renvoie souvent du PNG par défaut, on convertit en JPEG haute qualité avec Sharp
       outputBuffer = await sharp(rawBuffer)
-        .jpeg({ quality: 90 })
+        .jpeg({ quality: 85 })
         .toBuffer();
       outputFileName = `capture_${Date.now()}.jpeg`;
       outputMimeType = "image/jpeg";
@@ -56,16 +62,22 @@ export async function POST(req: NextRequest) {
       outputFileType = "pdf";
     }
 
-    await logOperation({
-      userId: userId,
-      type: "conversion",
-      fileName: url,
-      originalSize: 0,
-      convertedSize: outputBuffer.length,
-      targetType: outputFileType,
-      status: 'completed',
-      fileBuffer: outputBuffer,
-    });
+    console.log(`[Web Capture] Capture successful, size: ${outputBuffer.length} bytes`);
+
+    try {
+        await logOperation({
+          userId: userId,
+          type: "conversion",
+          fileName: url.substring(0, 100), // Tronquer l'URL pour le nom de fichier
+          originalSize: 0,
+          convertedSize: outputBuffer.length,
+          targetType: outputFileType,
+          status: 'completed',
+          fileBuffer: outputBuffer,
+        });
+    } catch (logErr) {
+        console.error("[Web Capture] Log Operation Error (Non-blocking):", logErr);
+    }
 
     return new NextResponse(outputBuffer as any, {
       headers: {
@@ -74,15 +86,5 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error(`Web capture error:`, error);
-    await logOperation({
-        userId: userId || 'anonymous',
-        type: 'conversion',
-        fileName: originalFileName,
-        status: 'failed',
-        targetType: 'web_capture',
-        originalSize: 0
-    });
-    return NextResponse.json({ error: "Échec de la capture : " + error.message }, { status: 500 });
-  }
-}
+    console.error(`[Web Capture] Global Error:`, error);
+    // ... reste du catch
