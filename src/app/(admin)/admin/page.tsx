@@ -55,7 +55,7 @@ async function getRecentData() {
     .from(conversions)
     .leftJoin(user, eq(conversions.userId, user.id))
     .orderBy(desc(conversions.createdAt))
-    .limit(10);
+    .limit(100); // On augmente à 100 pour une meilleure visibilité
 
     const activeTransfers = await db.select({
         id: sharedLinks.id,
@@ -63,28 +63,44 @@ async function getRecentData() {
         expiresAt: sharedLinks.expiresAt,
         downloadCount: sharedLinks.downloadCount,
         userName: user.name,
-        filePath: sharedLinks.filePath
+        filePath: sharedLinks.filePath,
+        createdAt: sharedLinks.createdAt
     })
     .from(sharedLinks)
     .leftJoin(user, eq(sharedLinks.userId, user.id))
     .orderBy(desc(sharedLinks.createdAt))
-    .limit(10);
+    .limit(100);
 
     const activeDrops = await db.select({
         id: dropLinks.id,
         title: dropLinks.title,
         expiresAt: dropLinks.expiresAt,
-        userName: user.name
+        userName: user.name,
+        createdAt: dropLinks.createdAt
     })
     .from(dropLinks)
     .leftJoin(user, eq(dropLinks.userId, user.id))
     .orderBy(desc(dropLinks.createdAt))
-    .limit(10);
+    .limit(100);
+
+    // Données pour les graphiques (7 derniers jours)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
+    const chartData = await db.select({
+        date: sql`DATE(${conversions.createdAt})`,
+        count: count()
+    })
+    .from(conversions)
+    .where(gte(conversions.createdAt, sevenDaysAgo))
+    .groupBy(sql`DATE(${conversions.createdAt})`)
+    .orderBy(sql`DATE(${conversions.createdAt})`);
 
     return {
         conversions: recentConversions,
         transfers: activeTransfers,
-        drops: activeDrops
+        drops: activeDrops,
+        chart: chartData
     };
 }
 

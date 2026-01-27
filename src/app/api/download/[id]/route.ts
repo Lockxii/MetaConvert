@@ -45,15 +45,36 @@ export async function GET(
         return NextResponse.json({ error: "Fichier introuvable" }, { status: 404 });
     }
 
-    // Le contenu est maintenant stocké en Base64 dans une colonne TEXT
-    const base64Content = fileRecord[0].content;
+    // Le contenu peut être en Base64 (nouveau) ou binaire/hex (ancien)
+    const rawContent = fileRecord[0].content;
     let buffer: Buffer;
 
-    try {
-        buffer = Buffer.from(base64Content, 'base64');
-    } catch (e) {
-        console.error("Failed to decode base64 for ID:", id);
-        return NextResponse.json({ error: "Erreur de décodage du fichier" }, { status: 500 });
+    // Détection intelligente du format
+    if (typeof rawContent === 'string') {
+        if (rawContent.startsWith('\\x')) {
+            // Ancien format Hex
+            buffer = Buffer.from(rawContent.slice(2), 'hex');
+        } else {
+            // Nouveau format Base64 (ou Hex sans préfixe)
+            try {
+                // On vérifie si c'est du Base64 valide
+                if (/^[A-Za-z0-9+/=]+$/.test(rawContent) && rawContent.length % 4 === 0) {
+                    buffer = Buffer.from(rawContent, 'base64');
+                } else {
+                    buffer = Buffer.from(rawContent, 'hex');
+                }
+            } catch (e) {
+                buffer = Buffer.from(rawContent as any);
+            }
+        }
+    } else if (Buffer.isBuffer(rawContent)) {
+        buffer = rawContent;
+    } else if (rawContent instanceof Uint8Array) {
+        buffer = Buffer.from(rawContent);
+    } else {
+        // Fallback pour les objets sérialisés
+        const data = (rawContent as any).data || rawContent;
+        buffer = Buffer.from(Array.isArray(data) ? data : (data as any).data || data);
     }
 
     const dbPath = `db://${id}`;

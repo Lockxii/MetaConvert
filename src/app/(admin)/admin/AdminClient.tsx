@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { 
     FileText, 
     Download, 
@@ -8,44 +8,55 @@ import {
     Trash2, 
     Clock, 
     User as UserIcon,
-    ArrowUpRight,
     Search,
     Shield,
     CheckCircle2,
     XCircle,
-    MoreVertical,
     Send,
     FolderUp,
-    Activity
+    Activity,
+    BarChart3,
+    TrendingUp
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+    BarChart, 
+    Bar, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer,
+    AreaChart,
+    Area
+} from 'recharts';
 
 interface AdminClientProps {
     initialData: {
         conversions: any[];
         transfers: any[];
         drops: any[];
+        chart: any[];
     };
 }
 
 export default function AdminClient({ initialData }: AdminClientProps) {
     const [previewFile, setPreviewFile] = useState<any>(null);
-    const [loading, setLoading] = useState<string | null>(null);
+    const [searchTerm, setSearchQuery] = useState("");
 
     const handleDownload = (filePath: string, fileName: string) => {
         if (!filePath) return toast.error("Chemin introuvable");
-        
         let url = filePath;
         if (filePath.startsWith('db://')) {
             const id = filePath.replace('db://', '');
             url = `/api/download/${id}?download=true`;
         }
-
         const a = document.createElement('a');
         a.href = url;
         a.download = fileName;
@@ -63,179 +74,247 @@ export default function AdminClient({ initialData }: AdminClientProps) {
         setPreviewFile({ ...file, url });
     };
 
+    // Filtering logic
+    const filteredConversions = useMemo(() => {
+        return initialData.conversions.filter(c => 
+            c.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.userName || "").toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [searchTerm, initialData.conversions]);
+
+    const filteredTransfers = useMemo(() => {
+        return initialData.transfers.filter(t => 
+            t.fileName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (t.userName || "").toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [searchTerm, initialData.transfers]);
+
     return (
-        <Tabs defaultValue="conversions" className="space-y-6">
-            <div className="flex items-center justify-between">
-                <TabsList className="bg-muted p-1 rounded-xl border border-border">
-                    <TabsTrigger value="conversions" className="rounded-lg font-bold uppercase text-[10px] tracking-widest gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-                        <Activity size={14} /> Activité
-                    </TabsTrigger>
-                    <TabsTrigger value="transfers" className="rounded-lg font-bold uppercase text-[10px] tracking-widest gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-                        <Send size={14} /> Transferts
-                    </TabsTrigger>
-                    <TabsTrigger value="drops" className="rounded-lg font-bold uppercase text-[10px] tracking-widest gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
-                        <FolderUp size={14} /> Demandes
-                    </TabsTrigger>
-                </TabsList>
+        <div className="space-y-8">
+            {/* --- CHARTS SECTION --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2 rounded-[2rem] border-border bg-card shadow-sm p-6">
+                    <CardHeader className="px-0 pt-0">
+                        <CardTitle className="text-lg font-black uppercase tracking-widest flex items-center gap-2">
+                            <BarChart3 size={18} className="text-primary" /> Volume de Conversions
+                        </CardTitle>
+                    </CardHeader>
+                    <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={initialData.chart}>
+                                <defs>
+                                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                <XAxis 
+                                    dataKey="date" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{fontSize: 10, fontWeight: 'bold', fill: '#94a3b8'}}
+                                    tickFormatter={(str) => new Date(str).toLocaleDateString('fr-FR', { weekday: 'short' })}
+                                />
+                                <YAxis hide />
+                                <Tooltip 
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                                    labelStyle={{ fontWeight: 'bold' }}
+                                />
+                                <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </Card>
+
+                <Card className="rounded-[2rem] border-border bg-card shadow-sm p-6 flex flex-col justify-center text-center space-y-4">
+                    <div className="w-16 h-16 bg-emerald-500/10 rounded-3xl flex items-center justify-center text-emerald-500 mx-auto shadow-inner">
+                        <TrendingUp size={32} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h3 className="text-3xl font-[1000] tracking-tighter">Croissance</h3>
+                        <p className="text-sm text-muted-foreground font-medium italic">Vos services tournent à plein régime.</p>
+                    </div>
+                    <div className="pt-4 grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-muted/50 rounded-2xl border border-border">
+                            <p className="text-[10px] font-black text-slate-400 uppercase">Aujourd'hui</p>
+                            <p className="text-xl font-black">{initialData.conversions.filter(c => new Date(c.createdAt).toDateString() === new Date().toDateString()).length}</p>
+                        </div>
+                        <div className="p-4 bg-muted/50 rounded-2xl border border-border">
+                            <p className="text-[10px] font-black text-slate-400 uppercase">Réussite</p>
+                            <p className="text-xl font-black text-emerald-500">98%</p>
+                        </div>
+                    </div>
+                </Card>
             </div>
 
-            {/* --- CONVERSIONS TAB --- */}
-            <TabsContent value="conversions">
-                <Card className="rounded-[2rem] border-border bg-card overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-muted/50 border-b border-border">
-                                <tr>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Fichier</th>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Utilisateur</th>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Statut</th>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {initialData.conversions.map((conv) => (
-                                    <tr key={conv.id} className="hover:bg-muted/30 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center text-muted-foreground">
-                                                    <FileText size={20} />
+            <Tabs defaultValue="conversions" className="space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <TabsList className="bg-muted p-1 rounded-xl border border-border w-fit">
+                        <TabsTrigger value="conversions" className="rounded-lg font-bold uppercase text-[10px] tracking-widest gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+                            <Activity size={14} /> Activité ({filteredConversions.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="transfers" className="rounded-lg font-bold uppercase text-[10px] tracking-widest gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+                            <Send size={14} /> Transferts ({filteredTransfers.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="drops" className="rounded-lg font-bold uppercase text-[10px] tracking-widest gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm px-4">
+                            <FolderUp size={14} /> Demandes
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <div className="relative w-full md:w-72">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                        <Input 
+                            placeholder="Rechercher un fichier ou user..." 
+                            className="pl-10 h-11 rounded-xl bg-card border-border"
+                            value={searchTerm}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                {/* --- CONVERSIONS TAB --- */}
+                <TabsContent value="conversions">
+                    <Card className="rounded-[2rem] border-border bg-card overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-muted/50 border-b border-border">
+                                    <tr>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Fichier</th>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Utilisateur</th>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Date</th>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {filteredConversions.map((conv) => (
+                                        <tr key={conv.id} className="hover:bg-muted/30 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center text-muted-foreground">
+                                                        <FileText size={20} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-bold text-foreground truncate max-w-[200px]">{conv.fileName}</p>
+                                                        <p className="text-[10px] font-black uppercase text-primary tracking-widest">{conv.targetType}</p>
+                                                    </div>
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-foreground truncate max-w-[200px]">{conv.fileName}</p>
-                                                    <p className="text-[10px] font-black uppercase text-primary tracking-widest">{conv.targetType}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
                                                     <UserIcon size={12} className="text-muted-foreground" />
+                                                    <span className="font-medium text-foreground/80">{conv.userName || "Anonyme"}</span>
                                                 </div>
-                                                <span className="font-medium text-foreground/80">{conv.userName || "Anonyme"}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {conv.status === 'completed' ? (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                                                    <CheckCircle2 size={10} strokeWidth={3} /> Succès
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/10 text-red-500 text-[10px] font-black uppercase tracking-widest border border-red-500/20">
-                                                    <XCircle size={10} strokeWidth={3} /> Échec
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                {conv.filePath && (
-                                                    <>
-                                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => handlePreview(conv)}>
-                                                            <Eye size={16} />
-                                                        </Button>
-                                                        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => handleDownload(conv.filePath, conv.fileName)}>
-                                                            <Download size={16} />
-                                                        </Button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </Card>
-            </TabsContent>
+                                            </td>
+                                            <td className="px-6 py-4 text-muted-foreground font-medium">
+                                                {new Date(conv.createdAt).toLocaleDateString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    {conv.filePath && (
+                                                        <>
+                                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => handlePreview(conv)}>
+                                                                <Eye size={16} />
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => handleDownload(conv.filePath, conv.fileName)}>
+                                                                <Download size={16} />
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </TabsContent>
 
-            {/* --- TRANSFERS TAB --- */}
-            <TabsContent value="transfers">
-                <Card className="rounded-[2rem] border-border bg-card overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-muted/50 border-b border-border">
-                                <tr>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Transfert</th>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Expéditeur</th>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Téléchargements</th>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {initialData.transfers.map((link) => (
-                                    <tr key={link.id} className="hover:bg-muted/30 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500">
-                                                    <Send size={20} />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-foreground truncate max-w-[200px]">{link.fileName}</p>
-                                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Expire le {new Date(link.expiresAt).toLocaleDateString()}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="font-medium text-foreground/80">{link.userName || "Anonyme"}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2 py-1 rounded-lg bg-muted font-black text-[10px] text-muted-foreground">
-                                                {link.downloadCount} DL
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => handlePreview(link)}>
-                                                    <Eye size={16} />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => handleDownload(link.filePath, link.fileName)}>
-                                                    <Download size={16} />
-                                                </Button>
-                                            </div>
-                                        </td>
+                {/* --- TRANSFERS TAB --- */}
+                <TabsContent value="transfers">
+                    <Card className="rounded-[2rem] border-border bg-card overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-muted/50 border-b border-border">
+                                    <tr>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Transfert</th>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Expéditeur</th>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground text-right">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </Card>
-            </TabsContent>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {filteredTransfers.map((link) => (
+                                        <tr key={link.id} className="hover:bg-muted/30 transition-colors group">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-500">
+                                                        <Send size={20} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="font-bold text-foreground truncate max-w-[200px]">{link.fileName}</p>
+                                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{link.downloadCount} DL • Expire le {new Date(link.expiresAt).toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="font-medium text-foreground/80">{link.userName || "Anonyme"}</span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => handlePreview(link)}>
+                                                        <Eye size={16} />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg" onClick={() => handleDownload(link.filePath, link.fileName)}>
+                                                        <Download size={16} />
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </TabsContent>
 
-            {/* --- DROPS TAB --- */}
-            <TabsContent value="drops">
-                <Card className="rounded-[2rem] border-border bg-card overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-muted/50 border-b border-border">
-                                <tr>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Demande</th>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Créé par</th>
-                                    <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Expiration</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                                {initialData.drops.map((drop) => (
-                                    <tr key={drop.id} className="hover:bg-muted/30 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-pink-500/10 rounded-xl flex items-center justify-center text-pink-500">
-                                                    <FolderUp size={20} />
-                                                </div>
-                                                <p className="font-bold text-foreground">{drop.title}</p>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 font-medium text-foreground/80">{drop.userName}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="flex items-center gap-1.5 text-xs text-amber-500 font-bold uppercase tracking-widest">
-                                                <Clock size={12} /> {new Date(drop.expiresAt).toLocaleDateString()}
-                                            </span>
-                                        </td>
+                {/* --- DROPS TAB --- */}
+                <TabsContent value="drops">
+                    <Card className="rounded-[2rem] border-border bg-card overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-muted/50 border-b border-border">
+                                    <tr>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Demande</th>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Créé par</th>
+                                        <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Expiration</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </Card>
-            </TabsContent>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {initialData.drops.map((drop) => (
+                                        <tr key={drop.id} className="hover:bg-muted/30 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 bg-pink-500/10 rounded-xl flex items-center justify-center text-pink-500">
+                                                        <FolderUp size={20} />
+                                                    </div>
+                                                    <p className="font-bold text-foreground">{drop.title}</p>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 font-medium text-foreground/80">{drop.userName}</td>
+                                            <td className="px-6 py-4">
+                                                <span className="flex items-center gap-1.5 text-xs text-amber-500 font-bold uppercase tracking-widest">
+                                                    <Clock size={12} /> {new Date(drop.expiresAt).toLocaleDateString()}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </TabsContent>
+            </Tabs>
 
             {/* --- PREVIEW DIALOG --- */}
             <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
@@ -274,6 +353,6 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                     </div>
                 </DialogContent>
             </Dialog>
-        </Tabs>
+        </div>
     );
 }
