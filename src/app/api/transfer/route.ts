@@ -4,8 +4,9 @@ import { fileStorage, sharedLinks } from "@/db/schema";
 import { getUserSession } from "@/lib/server-utils";
 import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
+import { put } from "@vercel/blob";
 
-export const maxDuration = 60; // Autorise 60 secondes d'exécution sur Vercel
+export const maxDuration = 60; 
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,28 +25,25 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = session.user.id;
-    const fileId = uuidv4();
     const shareId = uuidv4();
 
-    // 1. Convert to Buffer then Base64
+    // 1. Upload direct vers Vercel Blob
     const buffer = Buffer.from(await file.arrayBuffer());
-    const base64Content = buffer.toString('base64');
-
-    // 2. Store file content
-    await db.insert(fileStorage).values({
-      id: fileId,
-      content: base64Content,
+    const blob = await put(`transfers/${uuidv4()}-${file.name}`, buffer, {
+      access: 'public',
     });
 
-    // 3. Calculate expiration
+    const filePath = blob.url;
+
+    // 2. Calcul expiration
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + expirationDays);
 
-    // 4. Create shared link
+    // 3. Création du lien de partage (on stocke l'URL Blob au lieu de db://)
     await db.insert(sharedLinks).values({
       id: shareId,
       fileName: file.name,
-      filePath: `db://${fileId}`,
+      filePath: filePath,
       password: password,
       expiresAt: expiresAt,
       userId: userId,

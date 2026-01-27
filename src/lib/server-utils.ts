@@ -26,6 +26,8 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+import { put } from "@vercel/blob";
+
 export async function logOperation(params: LogOperationParams) {
     if (!process.env.DATABASE_URL) {
         console.warn("Skipping DB logging: DATABASE_URL is not set.");
@@ -41,26 +43,32 @@ export async function logOperation(params: LogOperationParams) {
                 "created_at" timestamp DEFAULT now()
             );
         `);
-    } catch (e) {
-        // Table might exist, we try to handle it
-    }
+    } catch (e) {}
 
     let filePath: string | null = null;
     if (params.fileBuffer && params.status === 'completed') {
         try {
-            const fileId = uuidv4();
-            
-            // Store in DB as Base64 string
-            const base64Content = params.fileBuffer.toString('base64');
-            
-            await db.insert(fileStorage).values({
-                id: fileId,
-                content: base64Content
-            });
-            
-            filePath = `db://${fileId}`;
+            // Si le fichier fait plus de 4Mo ou si c'est une vidéo, on utilise Vercel Blob
+            // Sinon on garde la DB pour les petits fichiers (plus rapide à lire)
+            const isLarge = params.fileBuffer.length > 4 * 1024 * 1024;
+            const isVideo = params.fileName.match(/\.(mp4|webm|mov|avi)$/i);
+
+            if (isLarge || isVideo || process.env.BLOB_READ_WRITE_TOKEN) {
+                const blob = await put(`conversions/${uuidv4()}-${params.fileName}`, params.fileBuffer, {
+                    access: 'public',
+                });
+                filePath = blob.url;
+            } else {
+                const fileId = uuidv4();
+                const base64Content = params.fileBuffer.toString('base64');
+                await db.insert(fileStorage).values({
+                    id: fileId,
+                    content: base64Content
+                });
+                filePath = `db://${fileId}`;
+            }
         } catch (e) {
-            console.error("Error saving file to DB storage:", e);
+            console.error("Error saving file to storage:", e);
         }
     }
 

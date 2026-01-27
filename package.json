@@ -33,6 +33,7 @@
     "@radix-ui/react-toast": "^1.2.1",
     "@sparticuz/chromium": "^143.0.4",
     "@types/fluent-ffmpeg": "^2.1.28",
+    "@vercel/blob": "^2.0.1",
     "archiver": "^7.0.1",
     "archiver-zip-encrypted": "^2.0.0",
     "better-auth": "^1.4.6",

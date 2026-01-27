@@ -88,13 +88,6 @@ export default function TransferPage() {
     const handleUpload = async () => {
         if (files.length === 0) return;
         
-        // Limite stricte Vercel Hobby (4.5MB payload total)
-        const totalSize = files.reduce((acc, f) => acc + f.size, 0);
-        if (totalSize > 4 * 1024 * 1024) {
-            toast.error("Fichier trop lourd (> 4Mo). Pour les vidéos et photos HD, nous devons passer sur un stockage spécialisé.");
-            return;
-        }
-
         setUploading(true);
         setProgress(0);
         
