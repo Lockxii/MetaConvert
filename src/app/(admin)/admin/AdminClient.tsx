@@ -4,11 +4,10 @@ import { useState, useMemo, useEffect } from "react";
 import { 
     FileText, Download, Eye, Trash2, Clock, User as UserIcon, Search,
     Shield, CheckCircle2, XCircle, Send, FolderUp, Activity,
-    TrendingUp, X, Bell, Megaphone, Mail, Info,
+    BarChart3, TrendingUp, X, Bell, Megaphone, Mail, Info,
     AlertTriangle, CheckCircle, Loader2, Image as ImageIcon, Plus, ListTodo,
-    PieChart, MessageSquare, Users as UsersGroup, ArrowUpRight, BarChart3
+    PieChart, MessageSquare, Users as UsersGroup, ArrowUpRight
 } from "lucide-react";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -54,42 +53,12 @@ export default function AdminClient({ initialData }: AdminClientProps) {
     const [notifImage, setNotifImage] = useState("");
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [requiresResponse, setRequiresResponse] = useState(false);
-    
-    // Chart Colors
-    const CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
-
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result as string;
-                setNotifImage(base64);
-                setImagePreview(base64);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
     const [pollOptions, setPollOptions] = useState<string[]>([]);
     const [newOption, setNewOption] = useState("");
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [sendingNotif, setSendingNotif] = useState(false);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
     const CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
-
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result as string;
-                setNotifImage(base64);
-                setImagePreview(base64);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
 
     // Selection State
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -125,7 +94,19 @@ export default function AdminClient({ initialData }: AdminClientProps) {
         }
     };
 
-    // Aggregate poll results for charts
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result as string;
+                setNotifImage(base64);
+                setImagePreview(base64);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const pollChartData = useMemo(() => {
         if (!campaignDetails.length) return [];
         const results: Record<string, number> = {};
@@ -218,7 +199,7 @@ export default function AdminClient({ initialData }: AdminClientProps) {
             });
             if (res.ok) {
                 toast.success("Envoyé !", { id: toastId });
-                setNotifTitle(""); setNotifMessage(""); setNotifImage("");
+                setNotifTitle(""); setNotifMessage(""); setNotifImage(""); setImagePreview(null);
                 setPollOptions([]); setRequiresResponse(false); setSelectedUsers([]);
                 fetchCampaigns();
             }
@@ -227,7 +208,6 @@ export default function AdminClient({ initialData }: AdminClientProps) {
         }
     };
 
-    // Filtering
     const filteredConversions = useMemo(() => data.conversions.filter(c => c.fileName.toLowerCase().includes(searchTerm.toLowerCase()) || (c.userName || "").toLowerCase().includes(searchTerm.toLowerCase())), [searchTerm, data.conversions]);
     const filteredTransfers = useMemo(() => data.transfers.filter(t => t.fileName.toLowerCase().includes(searchTerm.toLowerCase()) || (t.userName || "").toLowerCase().includes(searchTerm.toLowerCase())), [searchTerm, data.transfers]);
     const filteredUsers = useMemo(() => data.users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase())), [searchTerm, data.users]);
@@ -238,7 +218,6 @@ export default function AdminClient({ initialData }: AdminClientProps) {
 
     return (
         <div className="space-y-8 relative">
-            {/* --- CHARTS SECTION --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2 rounded-[2rem] border-border bg-card shadow-sm p-6">
                     <CardHeader className="px-0 pt-0">
@@ -312,9 +291,7 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-muted/50 border-b border-border">
                                     <tr>
-                                        <th className="px-6 py-4 w-10">
-                                            <Checkbox checked={selectedIds.length === filteredConversions.length && filteredConversions.length > 0} onCheckedChange={() => toggleSelectAll(filteredConversions)} />
-                                        </th>
+                                        <th className="px-6 py-4 w-10"><Checkbox checked={selectedIds.length === filteredConversions.length && filteredConversions.length > 0} onCheckedChange={() => toggleSelectAll(filteredConversions)} /></th>
                                         <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Fichier</th>
                                         <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Utilisateur</th>
                                         <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Date</th>
@@ -368,9 +345,7 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-muted/50 border-b border-border">
                                     <tr>
-                                        <th className="px-6 py-4 w-10">
-                                            <Checkbox checked={selectedIds.length === filteredTransfers.length && filteredTransfers.length > 0} onCheckedChange={() => toggleSelectAll(filteredTransfers)} />
-                                        </th>
+                                        <th className="px-6 py-4 w-10"><Checkbox checked={selectedIds.length === filteredTransfers.length && filteredTransfers.length > 0} onCheckedChange={() => toggleSelectAll(filteredTransfers)} /></th>
                                         <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground">Transfert</th>
                                         <th className="px-6 py-4 font-black uppercase text-[10px] tracking-[0.2em] text-muted-foreground text-right">Actions</th>
                                     </tr>
@@ -407,7 +382,6 @@ export default function AdminClient({ initialData }: AdminClientProps) {
 
                 <TabsContent value="notifications">
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                        {/* Composer & Campaigns */}
                         <div className="xl:col-span-5 space-y-6">
                             <Card className="rounded-[2.5rem] border-border bg-card p-8 space-y-6 shadow-sm">
                                 <div className="space-y-2">
@@ -441,10 +415,8 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-1.5">
-                                                <Send size={10} /> Lien Action
-                                            </label>
-                                            <Input placeholder="/dashboard/..." value={notifLink} onChange={(e) => setNotifLink(e.target.value)} className="h-12 rounded-xl bg-muted/30 border-border text-xs" />
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-1.5"><Send size={10} /> Lien Action</label>
+                                            <Input placeholder="/dashboard/..." value={notifLink} onChange={(e) => setNotifLink(e.target.value)} className="h-12 rounded-xl bg-muted/30 text-xs" />
                                         </div>
                                     </div>
                                     <div className="p-4 bg-muted/20 rounded-2xl border border-border space-y-4">
@@ -457,12 +429,11 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                                             <div className="flex flex-wrap gap-2">{pollOptions.map((opt, i) => <span key={i} className="px-2 py-1 rounded-lg bg-primary/10 text-primary text-[10px] font-bold flex gap-1">{opt}<X size={10} className="cursor-pointer" onClick={() => removePollOption(i)} /></span>)}</div>
                                         </div>
                                     </div>
-                                    <Button className="w-full h-14 rounded-2xl font-black uppercase text-xs tracking-widest gap-2" onClick={() => handleSendNotification(false)} disabled={sendingNotif || selectedUsers.length === 0}>{sendingNotif ? <Loader2 className="animate-spin" /> : <Mail size={18} />}Envoyer ({selectedUsers.length})</Button>
+                                    <Button className="w-full h-14 rounded-2xl font-black uppercase text-xs tracking-widest gap-2 shadow-xl" onClick={() => handleSendNotification(false)} disabled={sendingNotif || selectedUsers.length === 0}>{sendingNotif ? <Loader2 className="animate-spin" /> : <Mail size={18} />}Envoyer ({selectedUsers.length})</Button>
                                     <Button variant="outline" className="w-full h-14 rounded-2xl font-black uppercase text-xs tracking-widest gap-2" onClick={() => handleSendNotification(true)} disabled={sendingNotif}><Megaphone size={18} />Diffuser à tous</Button>
                                 </div>
                             </Card>
 
-                            {/* Recent Campaigns List */}
                             <Card className="rounded-[2.5rem] border-border bg-card p-6 shadow-sm">
                                 <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2"><Clock size={14} /> Campagnes Récentes</h4>
                                 <div className="space-y-3">
@@ -483,7 +454,6 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                             </Card>
                         </div>
 
-                        {/* User List for Selection */}
                         <div className="xl:col-span-7">
                             <Card className="rounded-[2.5rem] border-border bg-card overflow-hidden shadow-sm h-full">
                                 <CardHeader className="bg-muted/30 border-b border-border py-6"><CardTitle className="text-xl font-black">Membres</CardTitle></CardHeader>
@@ -534,7 +504,6 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                     </div>
                     
                     <div className="p-10 grid grid-cols-1 lg:grid-cols-2 gap-10 bg-background max-h-[70vh] overflow-y-auto no-scrollbar">
-                        {/* Left: Poll Results Chart */}
                         <div className="space-y-6">
                             <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><BarChart3 size={14} /> Résultats du Sondage</h3>
                             {pollChartData.length > 0 ? (
@@ -558,7 +527,6 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                             )}
                         </div>
 
-                        {/* Right: Detailed Responses */}
                         <div className="space-y-6">
                             <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><MessageSquare size={14} /> Réponses des Utilisateurs</h3>
                             <div className="space-y-4">
@@ -580,8 +548,88 @@ export default function AdminClient({ initialData }: AdminClientProps) {
                 </DialogContent>
             </Dialog>
 
-            {/* Existing Dialogs (Preview, Batch Delete) */}
-            {/* ... (Keep same as before) ... */}
+            {selectedIds.length > 0 && (
+                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-2xl animate-in slide-in-from-bottom-10 duration-500 ease-out">
+                    <div className="bg-slate-950 dark:bg-card border border-white/10 dark:border-border text-white dark:text-foreground px-6 py-4 rounded-3xl shadow-2xl flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="h-10 w-10 bg-primary rounded-2xl flex items-center justify-center font-black text-primary-foreground shadow-lg shadow-primary/20">
+                                {selectedIds.length}
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold">Éléments sélectionnés</p>
+                                <p className="text-[10px] font-black uppercase text-slate-500">Actions Super-Admin</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button 
+                                variant="destructive" 
+                                size="sm" 
+                                className="rounded-xl gap-2 font-black h-10 px-6 bg-red-500 text-white border-none" 
+                                onClick={() => setIsBatchDeletingOpen(true)}
+                            >
+                                <Trash2 size={16} /> Supprimer tout
+                            </Button>
+                            <Button variant="ghost" size="icon" className="rounded-xl text-white/40 hover:text-white" onClick={() => setSelectedIds([])}>
+                                <X size={20} />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+                <DialogContent className="max-w-4xl rounded-[2.5rem] p-0 overflow-hidden border-border bg-card shadow-2xl">
+                    <DialogHeader className="p-8 border-b border-border bg-card">
+                        <DialogTitle className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center">
+                                <FileText size={24} className="text-muted-foreground" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-xl font-[1000] tracking-tight truncate max-w-md text-foreground">{previewFile?.fileName}</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Aperçu Admin</p>
+                            </div>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="p-10 bg-muted/30 flex items-center justify-center min-h-[400px]">
+                        {previewFile?.url && (
+                            <div className="w-full flex justify-center">
+                                {previewFile.fileName?.match(/\.(jpg|jpeg|png|webp|gif|svg)$/i) ? (
+                                    <img src={previewFile.url} className="max-w-full max-h-[60vh] rounded-2xl shadow-xl border border-border" alt="Preview" />
+                                ) : previewFile.fileName?.match(/\.(mp4|webm|mov)$/i) ? (
+                                    <video src={previewFile.url} controls className="max-w-full max-h-[60vh] rounded-2xl shadow-xl" />
+                                ) : (
+                                    <div className="text-center space-y-6">
+                                        <div className="w-20 h-20 bg-background rounded-3xl flex items-center justify-center mx-auto shadow-sm border border-border">
+                                            <FileText size={40} className="text-muted-foreground/30" />
+                                        </div>
+                                        <p className="text-muted-foreground font-medium">Aperçu non disponible pour ce type de fichier.</p>
+                                        <Button onClick={() => handleDownload(previewFile.filePath, previewFile.fileName)} className="rounded-xl font-black gap-2">
+                                            <Download size={18} /> Télécharger pour voir
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={isBatchDialogOpen} onOpenChange={setIsBatchDeletingOpen}>
+                <DialogContent className="max-w-md rounded-[2.5rem] bg-card border-border">
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-black text-destructive">Suppression massive</DialogTitle>
+                        <DialogDescription className="text-lg">
+                            Tu vas supprimer définitivement {selectedIds.length} éléments. Cette action est irréversible.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="mt-6 gap-3">
+                        <Button variant="ghost" onClick={() => setIsBatchDeletingOpen(false)} className="rounded-xl font-bold h-12">Annuler</Button>
+                        <Button variant="destructive" onClick={() => handleDelete(selectedIds, activeTab === 'conversions' ? 'conversion' : 'transfer')} disabled={isDeleting} className="rounded-xl font-black h-12 px-6">
+                            Confirmer la suppression
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
