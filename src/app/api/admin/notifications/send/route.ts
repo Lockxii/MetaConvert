@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         // Si on envoie à tout le monde, on récupère tous les IDs
         if (sendToAll) {
             const allUsers = await db.select({ id: user.id }).from(user);
-            targets = allUsers.map(u => u.id);
+            targets = allUsers.map((u: { id: string }) => u.id);
         }
 
         if (targets.length === 0) {
