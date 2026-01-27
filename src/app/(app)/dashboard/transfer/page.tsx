@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import JSZip from "jszip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { upload } from "@vercel/blob/client";
 
 interface TransferLink {
     id: string;
@@ -36,8 +37,6 @@ interface TransferLink {
     createdAt: string;
     downloadCount: number;
 }
-
-import { upload } from "@vercel/blob/client";
 
 export default function TransferPage() {
     const [files, setFiles] = useState<File[]>([]);
@@ -50,7 +49,42 @@ export default function TransferPage() {
     const [shareUrl, setShareUrl] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
-    // ... (keep fetchLinks and other states)
+    // Selection state
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isBatchDeletingOpen, setIsBatchDeletingOpen] = useState(false);
+    const [isProcessingDelete, setIsProcessingDelete] = useState(false);
+
+    const fetchLinks = async () => {
+        try {
+            const res = await fetch("/api/transfer/list");
+            if (res.ok) {
+                const data = await res.json();
+                setLinks(data.links);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchLinks();
+    }, []);
+
+    const onDrop = (acceptedFiles: File[]) => {
+        setFiles(prev => [...prev, ...acceptedFiles]);
+        setShareUrl(null);
+    };
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        onDrop,
+        multiple: true
+    });
+
+    const removeFile = (index: number) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
+    };
 
     const handleUpload = async () => {
         if (files.length === 0) return;
