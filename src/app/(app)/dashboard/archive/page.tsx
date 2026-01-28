@@ -15,7 +15,8 @@ import {
     FileArchive,
     Shield,
     Zap,
-    Unlock
+    Unlock,
+    Smartphone
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
