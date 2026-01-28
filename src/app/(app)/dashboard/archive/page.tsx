@@ -21,13 +21,15 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import JSZip from "jszip";
+import * as zip from "@zip.js/zip.js";
+import { upload } from "@vercel/blob/client";
 
 export default function ArchiveToolsPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [password, setPassword] = useState("");
   const [archiveName, setArchiveName] = useState("mon_archive.zip");
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [mode, setMode] = useState<"standard" | "windows" | "secure">("standard");
 
   const handleCreateArchive = async () => {
@@ -37,51 +39,36 @@ export default function ArchiveToolsPage() {
     }
 
     setLoading(true);
-    const toastId = toast.loading(mode === "standard" ? "Création de l'archive (Navigateur)..." : "Création du coffre-fort (Serveur)...");
+    setProgress(0);
+    const toastId = toast.loading("Préparation de l'archive...");
 
     try {
-        let finalBlob: Blob;
         const finalName = archiveName.endsWith(".zip") ? archiveName : `${archiveName}.zip`;
+        
+        // --- LOGIQUE CLIENT-SIDE (ZIP.JS) ---
+        // Création du flux d'écriture ZIP
+        const zipWriter = new zip.ZipWriter(new zip.BlobWriter("application/zip"));
 
-        if (mode === "standard") {
-            // --- MODE STANDARD (CLIENT-SIDE / JSZIP) ---
-            const zip = new JSZip();
-            selectedFiles.forEach(f => zip.file(f.name, f));
-            finalBlob = await zip.generateAsync({ type: "blob" });
+        // Ajout des fichiers
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            const options: any = {};
             
-            const formData = new FormData();
-            formData.append("file", new File([finalBlob], finalName, { type: "application/zip" }));
-            formData.append("tool", "archive");
-            await fetch("/api/dashboard/cloud/save", { method: "POST", body: formData });
-
-        } else {
-            // --- MODE SERVER (WINDOWS ou SECURE) ---
-            if (!password) {
-                toast.error("Un mot de passe est requis pour ce mode.");
-                setLoading(false);
-                toast.dismiss(toastId);
-                return;
+            if (mode !== "standard" && password) {
+                options.password = password;
+                // zipCrypto = true pour Windows (ZipCrypto Legacy)
+                // zipCrypto = false pour Sécurisé (AES-256 par défaut dans zip.js)
+                options.zipCrypto = (mode === "windows");
             }
 
-            const formData = new FormData();
-            selectedFiles.forEach((file) => formData.append("files", file));
-            formData.append("password", password);
-            formData.append("fileName", finalName);
-            formData.append("encryptionMethod", mode === "windows" ? "zip20" : "aes256");
-
-            const res = await fetch("/api/archive/create", {
-                method: "POST",
-                body: formData,
-            });
-
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error || "Erreur serveur.");
-            }
-            finalBlob = await res.blob();
+            await zipWriter.add(file.name, new zip.BlobReader(file), options);
+            setProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
         }
 
-        // Téléchargement
+        // Finalisation de l'archive
+        const finalBlob = await zipWriter.close();
+        
+        // 1. Téléchargement immédiat
         const url = URL.createObjectURL(finalBlob);
         const a = document.createElement("a");
         a.href = url;
@@ -91,14 +78,40 @@ export default function ArchiveToolsPage() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        toast.success(mode === "secure" ? "Coffre-fort créé !" : "Archive ZIP créée !", { id: toastId });
+        toast.success("Archive créée !", { id: toastId });
+
+        // 2. Sauvegarde asynchrone dans le Cloud (Blob)
+        // On ne bloque pas l'utilisateur pour ça
+        try {
+            const fileToSave = new File([finalBlob], finalName, { type: "application/zip" });
+            
+            // On utilise l'upload direct pour le Cloud aussi pour supporter les gros ZIP
+            const cloudBlob = await upload(finalName, fileToSave, {
+                access: 'public',
+                handleUploadUrl: '/api/transfer/token',
+            });
+
+            await fetch("/api/transfer/save-link", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    fileName: finalName,
+                    filePath: cloudBlob.url,
+                    expiration: "7"
+                })
+            });
+        } catch (cloudErr) {
+            console.warn("Cloud save failed (non-blocking):", cloudErr);
+        }
+
         setSelectedFiles([]);
         setPassword("");
     } catch (e: any) {
         console.error(e);
-        toast.error(e.message, { id: toastId });
+        toast.error("Erreur : " + e.message, { id: toastId });
     } finally {
         setLoading(false);
+        setProgress(0);
     }
   };
 
@@ -113,14 +126,13 @@ export default function ArchiveToolsPage() {
   const totalSize = selectedFiles.reduce((acc, f) => acc + f.size, 0);
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-20">
+    <div className="space-y-8 max-w-6xl mx-auto pb-20 selection:bg-blue-100">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-[1000] text-foreground tracking-tighter uppercase">MetaArchive</h1>
-        <p className="text-muted-foreground text-lg italic">Gérez vos fichiers avec élégance et sécurité.</p>
+        <p className="text-muted-foreground text-lg italic">Zippez sans limites, avec ou sans mot de passe.</p>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8">
-        {/* Left Column: File Selection */}
         <div className="lg:col-span-7 space-y-6">
             <div className="bg-card border border-border rounded-[2.5rem] p-1 overflow-hidden shadow-sm">
                 <FileUploader 
@@ -172,13 +184,11 @@ export default function ArchiveToolsPage() {
             )}
         </div>
 
-        {/* Right Column: Settings */}
         <div className="lg:col-span-5 space-y-6">
             <Card className="rounded-[2.5rem] border-border bg-card p-8 shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
                 
                 <div className="relative space-y-8">
-                    {/* Mode Selector - 3 Options */}
                     <div className="grid grid-cols-3 gap-2 p-1.5 bg-muted/50 rounded-2xl border border-border">
                         <button 
                             onClick={() => setMode("standard")}
@@ -239,7 +249,7 @@ export default function ArchiveToolsPage() {
                                 <p className="text-[9px] text-muted-foreground italic px-1 leading-relaxed">
                                     {mode === "windows" 
                                         ? "Utilise ZipCrypto : compatible nativement avec l'explorateur Windows, Mac et Linux." 
-                                        : "Utilise AES-256 : protection maximale. Nécessite 7-Zip ou WinRAR sur Windows."}
+                                        : "Utilise AES-256 : protection maximale. Incompatible avec Windows natif."}
                                 </p>
                             </div>
                         ) : (
@@ -256,10 +266,23 @@ export default function ArchiveToolsPage() {
                         size="lg"
                         onClick={handleCreateArchive}
                         disabled={loading || selectedFiles.length === 0}
-                        className="w-full h-16 rounded-[1.5rem] font-[1000] uppercase text-sm tracking-[0.2em] gap-3 shadow-2xl shadow-primary/20 transition-all active:scale-95"
+                        className="w-full h-16 rounded-[1.5rem] font-[1000] uppercase text-sm tracking-[0.2em] gap-3 shadow-2xl shadow-primary/20 transition-all active:scale-95 relative overflow-hidden"
                     >
-                        {loading ? <Loader2 className="animate-spin" size={20} /> : <Archive size={20} strokeWidth={3} />}
-                        {loading ? "Calcul..." : "Lancer l'archivage"}
+                        {loading ? (
+                            <>
+                                <div className="absolute inset-0 bg-primary/20 animate-pulse" />
+                                <div className="absolute inset-y-0 left-0 bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+                                <span className="relative z-10 flex items-center gap-2">
+                                    <Loader2 className="animate-spin w-5 h-5" />
+                                    {progress}%
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <Archive size={20} strokeWidth={3} />
+                                <span>Lancer l'archivage</span>
+                            </>
+                        )}
                     </Button>
                 </div>
             </Card>
@@ -269,8 +292,8 @@ export default function ArchiveToolsPage() {
                     <ShieldCheck className="text-emerald-500" size={20} />
                     <span className="text-[10px] font-black text-white uppercase tracking-widest">Technologie MetaArchive</span>
                 </div>
-                <p className="text-[11px] text-slate-400 font-medium leading-relaxed italic">
-                    Toutes les archives créées sont automatiquement synchronisées avec votre Cloud MetaConvert pour un accès universel.
+                <p className="text-[11px] text-slate-400 font-medium leading-relaxed italic text-center">
+                    Traitement 100% local : vos fichiers ne sont jamais envoyés au serveur pour l'archivage. Confidentialité et vitesse garanties.
                 </p>
             </div>
         </div>
