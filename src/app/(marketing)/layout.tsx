@@ -8,11 +8,11 @@ export default function MarketingLayout({
 }) {
   return (
     <div 
-      className="flex min-h-screen flex-col font-sans"
+      className="flex min-h-screen flex-col font-sans bg-white text-slate-900"
       suppressHydrationWarning
     >
       <MarketingNavbar />
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-20 bg-white">
         {children}
       </main>
       <MarketingFooter />

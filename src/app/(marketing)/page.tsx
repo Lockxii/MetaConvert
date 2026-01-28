@@ -177,71 +177,71 @@ export default function HomePage() {
       </section>
 
       {/* MetaTransfer Section - Specialized */}
-      <section id="transfer" className="py-24 bg-slate-950 text-white overflow-hidden relative">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none" />
+      <section id="transfer" className="py-24 bg-white text-slate-900 overflow-hidden relative border-y border-slate-50">
+        <div className="absolute inset-0 bg-blue-50/30 opacity-50 pointer-events-none" />
         <div className="container px-6 mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 space-y-10">
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-2xl">
+              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-600/20">
                 <Send size={24} strokeWidth={3} />
               </div>
               <div className="space-y-4">
-                <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9]">
+                <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] text-slate-950">
                   Transférez vos fichiers <br/>
-                  <span className="text-blue-500">avec style.</span>
+                  <span className="text-blue-600">avec style.</span>
                 </h2>
-                <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-xl">
+                <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-xl">
                   Plus qu'un simple upload. Offrez à vos clients et collaborateurs une expérience 
                   de réception premium, rapide et sécurisée.
                 </p>
               </div>
               
-              <div className="grid grid-cols-2 gap-8 border-t border-white/10 pt-10">
-                <FeatureSmall icon={ShieldCheck} title="Sécurité" desc="Chiffrement AES-256" />
-                <FeatureSmall icon={Clock} title="Éphémère" desc="Jusqu'à 30 jours" />
-                <FeatureSmall icon={FastIcon} title="Vitesse" desc="Upload multi-flux" />
-                <FeatureSmall icon={Lock} title="Confidentialité" desc="Mot de passe inclus" />
+              <div className="grid grid-cols-2 gap-8 border-t border-slate-100 pt-10">
+                <FeatureSmall icon={ShieldCheck} title="Sécurité" desc="Chiffrement AES-256" dark={false} />
+                <FeatureSmall icon={Clock} title="Éphémère" desc="Jusqu'à 30 jours" dark={false} />
+                <FeatureSmall icon={FastIcon} title="Vitesse" desc="Upload multi-flux" dark={false} />
+                <FeatureSmall icon={Lock} title="Confidentialité" desc="Mot de passe inclus" dark={false} />
               </div>
 
-              <Button size="lg" className="rounded-xl h-14 px-8 bg-white text-slate-950 hover:bg-slate-100 font-black uppercase text-xs tracking-widest mt-4" asChild>
+              <Button size="lg" className="rounded-xl h-14 px-8 bg-slate-950 text-white hover:bg-slate-800 font-black uppercase text-xs tracking-widest mt-4" asChild>
                 <Link href="/dashboard/transfer">Ouvrir MetaTransfer</Link>
               </Button>
             </div>
 
             <div className="flex-1 w-full relative">
-                <div className="absolute inset-0 bg-blue-600/20 blur-[120px] rounded-full" />
-                <div className="bg-white/5 border border-white/10 backdrop-blur-3xl rounded-[2.5rem] p-10 shadow-2xl relative z-10">
+                <div className="absolute inset-0 bg-blue-600/10 blur-[120px] rounded-full" />
+                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-10 shadow-2xl relative z-10">
                     <div className="space-y-8">
                         <div className="flex justify-between items-center">
                             <div className="flex gap-1.5">
-                                <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-amber-500/40" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-red-500/20" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-amber-500/20" />
+                                <div className="w-2.5 h-2.5 rounded-full bg-green-500/20" />
                             </div>
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Protocol MC-Transfer</span>
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Protocol MC-Transfer</span>
                         </div>
-                        <div className="p-4 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-between">
+                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
                                     <FileText size={20} />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-xs font-bold truncate">Projet_Architecture_Final.zip</p>
-                                    <p className="text-[9px] text-blue-400 font-black uppercase tracking-widest">1.4 GB • En cours</p>
+                                    <p className="text-xs font-bold truncate text-slate-950">Projet_Architecture_Final.zip</p>
+                                    <p className="text-[9px] text-blue-600 font-black uppercase tracking-widest">1.4 GB • En cours</p>
                                 </div>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
                                 <span>Envoi...</span>
-                                <span className="text-blue-400">89%</span>
+                                <span className="text-blue-600">89%</span>
                             </div>
-                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
                                 <motion.div initial={{width: 0}} whileInView={{width: '89%'}} transition={{duration: 2}} className="h-full bg-blue-500 rounded-full" />
                             </div>
                         </div>
                         <div className="pt-4 flex justify-center">
-                            <div className="px-6 py-2.5 rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                            <div className="px-6 py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[9px] font-black uppercase tracking-widest text-slate-400">
                                 mc-transfer.com/share/x7k29...
                             </div>
                         </div>
@@ -337,15 +337,18 @@ function StepItem({ num, title, desc }: any) {
     )
 }
 
-function FeatureSmall({ icon: Icon, title, desc }: any) {
+function FeatureSmall({ icon: Icon, title, desc, dark = true }: any) {
     return (
         <div className="flex gap-4">
-            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-blue-500 shrink-0 border border-white/5">
+            <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center text-blue-500 shrink-0 border",
+                dark ? "bg-white/5 border-white/5" : "bg-blue-50 border-blue-100"
+            )}>
                 <Icon size={16} />
             </div>
             <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white">{title}</p>
-                <p className="text-[10px] font-bold text-slate-500">{desc}</p>
+                <p className={cn("text-[10px] font-black uppercase tracking-widest", dark ? "text-white" : "text-slate-900")}>{title}</p>
+                <p className={cn("text-[10px] font-bold", dark ? "text-slate-500" : "text-slate-400")}>{desc}</p>
             </div>
         </div>
     )

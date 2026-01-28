@@ -92,13 +92,13 @@ export default function PublicDropPage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
     </div>
   );
 
   if (error) return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-center">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 text-center">
         <div className="w-20 h-20 bg-red-100 rounded-3xl flex items-center justify-center text-red-600 mb-8 shadow-xl">
             <AlertCircle size={40} />
         </div>
@@ -113,8 +113,8 @@ export default function PublicDropPage() {
   );
 
   if (linkInfo?.isClosed) return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-center animate-in fade-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-blue-100 dark:bg-blue-500/20 rounded-[2.5rem] flex items-center justify-center text-blue-600 dark:text-blue-400 mb-8 shadow-2xl">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 text-center animate-in fade-in zoom-in duration-500">
+        <div className="w-24 h-24 bg-blue-100 rounded-[2.5rem] flex items-center justify-center text-blue-600 mb-8 shadow-2xl">
             <Lock size={56} strokeWidth={2.5} />
         </div>
         <h1 className="text-4xl font-black mb-4">Dépôt fermé</h1>
@@ -130,11 +130,11 @@ export default function PublicDropPage() {
   );
 
   if (success) return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 text-center animate-in fade-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-500/20 rounded-[2.5rem] flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-8 shadow-2xl">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 text-center animate-in fade-in zoom-in duration-500">
+        <div className="w-24 h-24 bg-emerald-100 rounded-[2.5rem] flex items-center justify-center text-emerald-600 mb-8 shadow-2xl">
             <CheckCircle2 size={56} strokeWidth={2.5} />
         </div>
-        <h1 className="text-4xl font-black mb-4 text-white">Merci !</h1>
+        <h1 className="text-4xl font-black mb-4 text-slate-900">Merci !</h1>
         <p className="text-muted-foreground max-w-md text-lg leading-relaxed">
             Vos fichiers ont été déposés en toute sécurité dans l'espace cloud.
         </p>
@@ -150,21 +150,21 @@ export default function PublicDropPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-8">
         <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-4">
                 <FolderUp size={14} /> Dépôt Sécurisé
             </div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight">{linkInfo.title}</h1>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900">{linkInfo.title}</h1>
             {linkInfo.description && <p className="text-muted-foreground text-lg">{linkInfo.description}</p>}
         </div>
 
-        <Card className="shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-none rounded-[3rem] overflow-hidden bg-white dark:bg-card">
+        <Card className="shadow-[0_20px_50px_rgba(0,0,0,0.1)] border-none rounded-[3rem] overflow-hidden bg-white">
           <CardContent className="p-8 md:p-12 space-y-8">
             {linkInfo.hasPassword && (
-                <div className="space-y-3 p-6 bg-slate-50 dark:bg-muted/30 rounded-3xl border border-border">
-                    <label className="text-sm font-bold flex items-center gap-2 text-foreground">
+                <div className="space-y-3 p-6 bg-slate-50 rounded-3xl border border-border">
+                    <label className="text-sm font-bold flex items-center gap-2 text-slate-900">
                         <Lock size={16} /> Ce dépôt est protégé
                     </label>
                     <Input 
@@ -172,7 +172,7 @@ export default function PublicDropPage() {
                         placeholder="Entrez le mot de passe requis"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="bg-white dark:bg-background h-12 rounded-2xl border-border"
+                        className="bg-white h-12 rounded-2xl border-border"
                     />
                 </div>
             )}
@@ -181,15 +181,15 @@ export default function PublicDropPage() {
                 {...getRootProps()} 
                 className={cn(
                     "relative border-4 border-dashed rounded-[2.5rem] p-12 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[300px] text-center",
-                    isDragActive ? "border-primary bg-primary/5" : "border-slate-100 dark:border-border bg-slate-50/50 dark:bg-muted/10 hover:bg-slate-100/50",
+                    isDragActive ? "border-primary bg-primary/5" : "border-slate-100 bg-slate-50/50 hover:bg-slate-100/50",
                     files.length > 0 ? "border-emerald-200 bg-emerald-50/20" : ""
                 )}
             >
                 <input {...getInputProps()} />
-                <div className="w-20 h-20 rounded-3xl bg-white dark:bg-background shadow-xl flex items-center justify-center text-primary mb-6">
+                <div className="w-20 h-20 rounded-3xl bg-white shadow-xl flex items-center justify-center text-primary mb-6">
                     <UploadCloud size={40} strokeWidth={2.5} />
                 </div>
-                <h3 className="text-xl font-black mb-2">
+                <h3 className="text-xl font-black mb-2 text-slate-900">
                     {isDragActive ? "Relâchez vos fichiers !" : "Déposez vos documents ici"}
                 </h3>
                 <p className="text-muted-foreground max-w-xs leading-relaxed">
@@ -205,13 +205,13 @@ export default function PublicDropPage() {
                     </div>
                     <div className="grid gap-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
                         {files.map((file, i) => (
-                            <div key={i} className="flex items-center justify-between p-4 bg-muted/50 rounded-2xl border border-border group">
+                            <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-border group">
                                 <div className="flex items-center gap-4 min-w-0">
-                                    <div className="h-10 w-10 rounded-xl bg-white dark:bg-background flex items-center justify-center text-xs font-black text-primary border border-border">
+                                    <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center text-xs font-black text-primary border border-border">
                                         {file.name.split('.').pop()?.toUpperCase()}
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-sm font-bold truncate max-w-[200px] md:max-w-md">{file.name}</p>
+                                        <p className="text-sm font-bold truncate max-w-[200px] md:max-w-md text-slate-900">{file.name}</p>
                                         <p className="text-[10px] text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
                                     </div>
                                 </div>
