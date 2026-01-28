@@ -134,7 +134,7 @@ export default function PublicDropPage() {
         <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-500/20 rounded-[2.5rem] flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-8 shadow-2xl">
             <CheckCircle2 size={56} strokeWidth={2.5} />
         </div>
-        <h1 className="text-4xl font-black mb-4">Merci Arthur !</h1>
+        <h1 className="text-4xl font-black mb-4 text-white">Merci !</h1>
         <p className="text-muted-foreground max-w-md text-lg leading-relaxed">
             Vos fichiers ont été déposés en toute sécurité dans l'espace cloud.
         </p>
