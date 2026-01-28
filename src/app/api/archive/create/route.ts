@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
     const files = formData.getAll("files") as File[];
     const password = formData.get("password") as string;
     const fileName = formData.get("fileName") as string || "archive.zip";
+    const encryptionMethod = formData.get("encryptionMethod") as string || "aes256";
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: "Aucun fichier fourni" }, { status: 400 });
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     const chunks: any[] = [];
     const archive = archiver("zip-encrypted" as any, {
         zlib: { level: 9 },
-        encryptionMethod: "aes256",
+        encryptionMethod: encryptionMethod, // aes256 ou zip20
         password: password
     } as any);
 

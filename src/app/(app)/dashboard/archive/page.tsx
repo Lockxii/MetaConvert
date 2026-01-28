@@ -27,7 +27,7 @@ export default function ArchiveToolsPage() {
   const [password, setPassword] = useState("");
   const [archiveName, setArchiveName] = useState("mon_archive.zip");
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"standard" | "secure">("standard");
+  const [mode, setMode] = useState<"standard" | "windows" | "secure">("standard");
 
   const handleCreateArchive = async () => {
     if (selectedFiles.length === 0) {
@@ -36,7 +36,7 @@ export default function ArchiveToolsPage() {
     }
 
     setLoading(true);
-    const toastId = toast.loading(mode === "secure" ? "Création du coffre-fort (Serveur)..." : "Création de l'archive (Navigateur)...");
+    const toastId = toast.loading(mode === "standard" ? "Création de l'archive (Navigateur)..." : "Création du coffre-fort (Serveur)...");
 
     try {
         let finalBlob: Blob;
@@ -44,21 +44,19 @@ export default function ArchiveToolsPage() {
 
         if (mode === "standard") {
             // --- MODE STANDARD (CLIENT-SIDE / JSZIP) ---
-            // Ultra-rapide, pas de limite de taille, compatible Windows natif
             const zip = new JSZip();
             selectedFiles.forEach(f => zip.file(f.name, f));
             finalBlob = await zip.generateAsync({ type: "blob" });
             
-            // Sauvegarder dans le Cloud (via API save)
             const formData = new FormData();
             formData.append("file", new File([finalBlob], finalName, { type: "application/zip" }));
             formData.append("tool", "archive");
             await fetch("/api/dashboard/cloud/save", { method: "POST", body: formData });
 
         } else {
-            // --- MODE SECURE (SERVER-SIDE / AES-256) ---
+            // --- MODE SERVER (WINDOWS ou SECURE) ---
             if (!password) {
-                toast.error("Un mot de passe est requis pour le mode sécurisé.");
+                toast.error("Un mot de passe est requis pour ce mode.");
                 setLoading(false);
                 toast.dismiss(toastId);
                 return;
@@ -68,6 +66,7 @@ export default function ArchiveToolsPage() {
             selectedFiles.forEach((file) => formData.append("files", file));
             formData.append("password", password);
             formData.append("fileName", finalName);
+            formData.append("encryptionMethod", mode === "windows" ? "zip20" : "aes256");
 
             const res = await fetch("/api/archive/create", {
                 method: "POST",
@@ -178,25 +177,34 @@ export default function ArchiveToolsPage() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
                 
                 <div className="relative space-y-8">
-                    {/* Mode Selector */}
-                    <div className="grid grid-cols-2 gap-2 p-1.5 bg-muted/50 rounded-2xl border border-border">
+                    {/* Mode Selector - 3 Options */}
+                    <div className="grid grid-cols-3 gap-2 p-1.5 bg-muted/50 rounded-2xl border border-border">
                         <button 
                             onClick={() => setMode("standard")}
                             className={cn(
-                                "flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                "flex items-center justify-center gap-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
                                 mode === "standard" ? "bg-background text-primary shadow-sm shadow-primary/5" : "text-slate-500 hover:text-foreground"
                             )}
                         >
-                            <Zap size={14} /> Classique
+                            <Zap size={14} className="hidden sm:inline" /> Classique
+                        </button>
+                        <button 
+                            onClick={() => setMode("windows")}
+                            className={cn(
+                                "flex items-center justify-center gap-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                                mode === "windows" ? "bg-background text-blue-600 shadow-sm shadow-primary/5" : "text-slate-500 hover:text-foreground"
+                            )}
+                        >
+                            <Smartphone size={14} className="hidden sm:inline" /> Windows
                         </button>
                         <button 
                             onClick={() => setMode("secure")}
                             className={cn(
-                                "flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                mode === "secure" ? "bg-background text-primary shadow-sm shadow-primary/5" : "text-slate-500 hover:text-foreground"
+                                "flex items-center justify-center gap-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                                mode === "secure" ? "bg-background text-emerald-600 shadow-sm shadow-primary/5" : "text-slate-500 hover:text-foreground"
                             )}
                         >
-                            <Lock size={14} /> Sécurisé
+                            <Lock size={14} className="hidden sm:inline" /> Sécurisé
                         </button>
                     </div>
 
@@ -211,10 +219,11 @@ export default function ArchiveToolsPage() {
                             />
                         </div>
 
-                        {mode === "secure" ? (
+                        {mode !== "standard" ? (
                             <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                                 <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 flex items-center gap-2">
-                                    <Shield size={12} className="text-emerald-500" /> Mot de passe
+                                    {mode === "windows" ? <Smartphone size={12} className="text-blue-500" /> : <Shield size={12} className="text-emerald-500" />}
+                                    Mot de passe {mode === "windows" ? "(Compatible)" : "(Ultra-Sécurisé)"}
                                 </label>
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
@@ -227,15 +236,16 @@ export default function ArchiveToolsPage() {
                                     />
                                 </div>
                                 <p className="text-[9px] text-muted-foreground italic px-1 leading-relaxed">
-                                    Ce mode utilise le chiffrement AES-256. 
-                                    <br />⚠️ Incompatible avec l'explorateur Windows natif. Utilisez 7-Zip.
+                                    {mode === "windows" 
+                                        ? "Utilise ZipCrypto : compatible nativement avec l'explorateur Windows, Mac et Linux." 
+                                        : "Utilise AES-256 : protection maximale. Nécessite 7-Zip ou WinRAR sur Windows."}
                                 </p>
                             </div>
                         ) : (
                             <div className="p-6 rounded-[1.5rem] bg-blue-500/5 border border-blue-500/10 flex items-center gap-4 animate-in slide-in-from-top-2 duration-300">
                                 <Unlock className="text-blue-500 shrink-0" size={24} />
                                 <p className="text-xs font-medium text-slate-500 leading-relaxed">
-                                    Mode standard : compatible avec tous les systèmes (Windows, Mac, Linux). Idéal pour les fichiers volumineux.
+                                    Mode standard : archive simple sans mot de passe. Compatible avec 100% des appareils.
                                 </p>
                             </div>
                         )}
