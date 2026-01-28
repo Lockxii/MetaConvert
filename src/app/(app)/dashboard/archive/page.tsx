@@ -12,58 +12,85 @@ import {
     Check, 
     X,
     FileArchive,
-    Shield
+    Shield,
+    Zap,
+    Unlock
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import JSZip from "jszip";
 
 export default function ArchiveToolsPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [password, setPassword] = useState("");
   const [archiveName, setArchiveName] = useState("mon_archive.zip");
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"standard" | "secure">("standard");
 
   const handleCreateArchive = async () => {
     if (selectedFiles.length === 0) {
       toast.error("Veuillez sélectionner au moins un fichier.");
       return;
     }
-    if (!password) {
-      toast.error("Un mot de passe est requis pour le chiffrement AES-256.");
-      return;
-    }
 
     setLoading(true);
-    const toastId = toast.loading("Création de l'archive chiffrée...");
-
-    const formData = new FormData();
-    selectedFiles.forEach((file) => formData.append("files", file));
-    formData.append("password", password);
-    formData.append("fileName", archiveName.endsWith(".zip") ? archiveName : `${archiveName}.zip`);
+    const toastId = toast.loading(mode === "secure" ? "Création du coffre-fort (Serveur)..." : "Création de l'archive (Navigateur)...");
 
     try {
-        const res = await fetch("/api/archive/create", {
-            method: "POST",
-            body: formData,
-        });
+        let finalBlob: Blob;
+        const finalName = archiveName.endsWith(".zip") ? archiveName : `${archiveName}.zip`;
 
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || "Erreur lors de la création de l'archive.");
+        if (mode === "standard") {
+            // --- MODE STANDARD (CLIENT-SIDE / JSZIP) ---
+            // Ultra-rapide, pas de limite de taille, compatible Windows natif
+            const zip = new JSZip();
+            selectedFiles.forEach(f => zip.file(f.name, f));
+            finalBlob = await zip.generateAsync({ type: "blob" });
+            
+            // Sauvegarder dans le Cloud (via API save)
+            const formData = new FormData();
+            formData.append("file", new File([finalBlob], finalName, { type: "application/zip" }));
+            formData.append("tool", "archive");
+            await fetch("/api/dashboard/cloud/save", { method: "POST", body: formData });
+
+        } else {
+            // --- MODE SECURE (SERVER-SIDE / AES-256) ---
+            if (!password) {
+                toast.error("Un mot de passe est requis pour le mode sécurisé.");
+                setLoading(false);
+                toast.dismiss(toastId);
+                return;
+            }
+
+            const formData = new FormData();
+            selectedFiles.forEach((file) => formData.append("files", file));
+            formData.append("password", password);
+            formData.append("fileName", finalName);
+
+            const res = await fetch("/api/archive/create", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Erreur serveur.");
+            }
+            finalBlob = await res.blob();
         }
 
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
+        // Téléchargement
+        const url = URL.createObjectURL(finalBlob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = archiveName.endsWith(".zip") ? archiveName : `${archiveName}.zip`;
+        a.download = finalName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        toast.success("Archive créée et chiffrée avec succès !", { id: toastId });
+        toast.success(mode === "secure" ? "Coffre-fort créé !" : "Archive ZIP créée !", { id: toastId });
         setSelectedFiles([]);
         setPassword("");
     } catch (e: any) {
@@ -74,50 +101,68 @@ export default function ArchiveToolsPage() {
     }
   };
 
+  const formatSize = (bytes: number) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const totalSize = selectedFiles.reduce((acc, f) => acc + f.size, 0);
+
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="text-center mb-10">
-        <h1 className="text-3xl font-black text-foreground tracking-tight">MetaVault</h1>
-        <p className="text-muted-foreground mt-2 text-lg">Créez des archives ZIP ultra-sécurisées avec chiffrement AES-256.</p>
+    <div className="space-y-8 max-w-6xl mx-auto pb-20">
+      <div className="text-center space-y-2">
+        <h1 className="text-4xl font-[1000] text-foreground tracking-tighter uppercase">MetaArchive</h1>
+        <p className="text-muted-foreground text-lg italic">Gérez vos fichiers avec élégance et sécurité.</p>
       </div>
 
       <div className="grid lg:grid-cols-12 gap-8">
         {/* Left Column: File Selection */}
         <div className="lg:col-span-7 space-y-6">
-            <div className="bg-card border border-border rounded-[2rem] p-1 overflow-hidden shadow-sm">
+            <div className="bg-card border border-border rounded-[2.5rem] p-1 overflow-hidden shadow-sm">
                 <FileUploader 
                     onFileChange={(files) => setSelectedFiles(prev => [...prev, ...files])}
-                    label="Déposez les fichiers à inclure dans le coffre-fort"
+                    label="Glissez vos fichiers ici"
                     multiple={true}
-                    className="border-none bg-transparent min-h-[300px]"
+                    className="border-none bg-transparent min-h-[350px]"
                 />
             </div>
 
             {selectedFiles.length > 0 && (
-                <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-2">
+                <div className="bg-card border border-border rounded-[2rem] p-6 shadow-sm space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <FileArchive size={16} />
-                            Fichiers sélectionnés ({selectedFiles.length})
-                        </h3>
-                        <Button variant="ghost" size="sm" onClick={() => setSelectedFiles([])} className="text-red-500 hover:text-red-600 hover:bg-red-500/10 h-7 text-[10px] font-black uppercase">
+                        <div className="space-y-1">
+                            <h3 className="font-black text-xs uppercase tracking-widest text-foreground flex items-center gap-2">
+                                <FileArchive size={16} className="text-primary" />
+                                File d'attente
+                            </h3>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+                                {selectedFiles.length} fichiers • {formatSize(totalSize)}
+                            </p>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedFiles([])} className="text-red-500 hover:text-red-600 hover:bg-red-500/10 h-8 rounded-xl text-[10px] font-black uppercase">
                             Tout vider
                         </Button>
                     </div>
-                    <div className="max-h-[200px] overflow-y-auto pr-2 custom-scrollbar space-y-2">
+                    <div className="max-h-[300px] overflow-y-auto pr-2 no-scrollbar space-y-2">
                         {selectedFiles.map((file, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border group">
-                                <div className="flex items-center gap-3 min-w-0">
-                                    <div className="h-8 w-8 rounded-lg bg-background flex items-center justify-center text-[10px] font-bold text-primary border border-border">
-                                        {file.name.split('.').pop()?.toUpperCase()}
+                            <div key={i} className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border group hover:border-primary/30 transition-all">
+                                <div className="flex items-center gap-4 min-w-0">
+                                    <div className="h-10 w-10 rounded-xl bg-background flex items-center justify-center text-[10px] font-black text-primary border border-border shadow-sm">
+                                        {file.name.split('.').pop()?.substring(0, 3).toUpperCase()}
                                     </div>
-                                    <span className="text-sm font-medium truncate max-w-[200px]">{file.name}</span>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-bold truncate max-w-[250px]">{file.name}</p>
+                                        <p className="text-[10px] text-muted-foreground font-bold">{formatSize(file.size)}</p>
+                                    </div>
                                 </div>
                                 <button 
                                     onClick={() => setSelectedFiles(prev => prev.filter((_, idx) => idx !== i))}
-                                    className="p-1 hover:bg-red-500/10 text-muted-foreground hover:text-red-500 rounded-md transition-colors"
+                                    className="p-2 hover:bg-red-500/10 text-muted-foreground hover:text-red-500 rounded-xl transition-colors"
                                 >
-                                    <X size={14} />
+                                    <X size={16} />
                                 </button>
                             </div>
                         ))}
@@ -128,74 +173,93 @@ export default function ArchiveToolsPage() {
 
         {/* Right Column: Settings */}
         <div className="lg:col-span-5 space-y-6">
-            <div className="bg-card border border-border rounded-[2rem] p-8 shadow-xl relative overflow-hidden group">
+            <Card className="rounded-[2.5rem] border-border bg-card p-8 shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
                 
-                <div className="relative space-y-6">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
-                            <ShieldCheck size={24} />
-                        </div>
-                        <div>
-                            <h2 className="font-black text-xl">Paramètres du Coffre</h2>
-                            <p className="text-xs text-muted-foreground">Chiffrement AES-256 activé par défaut</p>
-                        </div>
+                <div className="relative space-y-8">
+                    {/* Mode Selector */}
+                    <div className="grid grid-cols-2 gap-2 p-1.5 bg-muted/50 rounded-2xl border border-border">
+                        <button 
+                            onClick={() => setMode("standard")}
+                            className={cn(
+                                "flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                mode === "standard" ? "bg-background text-primary shadow-sm shadow-primary/5" : "text-slate-500 hover:text-foreground"
+                            )}
+                        >
+                            <Zap size={14} /> Classique
+                        </button>
+                        <button 
+                            onClick={() => setMode("secure")}
+                            className={cn(
+                                "flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                mode === "secure" ? "bg-background text-primary shadow-sm shadow-primary/5" : "text-slate-500 hover:text-foreground"
+                            )}
+                        >
+                            <Lock size={14} /> Sécurisé
+                        </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Nom de l'archive</label>
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Nom de l'archive</label>
                             <Input 
-                                placeholder="nom_archive.zip"
+                                placeholder="mon_projet.zip"
                                 value={archiveName}
                                 onChange={(e) => setArchiveName(e.target.value)}
-                                className="h-12 rounded-xl bg-muted/30 border-border focus:border-primary"
+                                className="h-14 rounded-[1.2rem] bg-muted/30 border-border focus:ring-primary/50 font-bold"
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Mot de passe secret</label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                                <Input 
-                                    type="password"
-                                    placeholder="••••••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="h-12 pl-12 rounded-xl bg-muted/30 border-border focus:border-primary"
-                                />
+                        {mode === "secure" ? (
+                            <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1 flex items-center gap-2">
+                                    <Shield size={12} className="text-emerald-500" /> Mot de passe
+                                </label>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+                                    <Input 
+                                        type="password"
+                                        placeholder="••••••••••••"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="h-14 pl-12 rounded-[1.2rem] bg-muted/30 border-border focus:ring-primary/50 font-bold"
+                                    />
+                                </div>
+                                <p className="text-[9px] text-muted-foreground italic px-1 leading-relaxed">
+                                    Ce mode utilise le chiffrement AES-256. 
+                                    <br />⚠️ Incompatible avec l'explorateur Windows natif. Utilisez 7-Zip.
+                                </p>
                             </div>
-                            <p className="text-[10px] text-muted-foreground italic px-1">
-                                Ce mot de passe sera requis pour ouvrir le fichier ZIP. Ne le perdez pas !
-                            </p>
-                        </div>
+                        ) : (
+                            <div className="p-6 rounded-[1.5rem] bg-blue-500/5 border border-blue-500/10 flex items-center gap-4 animate-in slide-in-from-top-2 duration-300">
+                                <Unlock className="text-blue-500 shrink-0" size={24} />
+                                <p className="text-xs font-medium text-slate-500 leading-relaxed">
+                                    Mode standard : compatible avec tous les systèmes (Windows, Mac, Linux). Idéal pour les fichiers volumineux.
+                                </p>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="pt-4">
-                        <Button 
-                            size="lg"
-                            onClick={handleCreateArchive}
-                            disabled={loading || selectedFiles.length === 0}
-                            className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-black text-lg gap-3 shadow-lg shadow-primary/20 transition-all active:scale-95"
-                        >
-                            {loading ? <Loader2 className="animate-spin" /> : <Archive size={20} strokeWidth={3} />}
-                            {loading ? "Archivage..." : "Créer le Coffre-Fort"}
-                        </Button>
-                    </div>
+                    <Button 
+                        size="lg"
+                        onClick={handleCreateArchive}
+                        disabled={loading || selectedFiles.length === 0}
+                        className="w-full h-16 rounded-[1.5rem] font-[1000] uppercase text-sm tracking-[0.2em] gap-3 shadow-2xl shadow-primary/20 transition-all active:scale-95"
+                    >
+                        {loading ? <Loader2 className="animate-spin" size={20} /> : <Archive size={20} strokeWidth={3} />}
+                        {loading ? "Calcul..." : "Lancer l'archivage"}
+                    </Button>
                 </div>
-            </div>
+            </Card>
 
-            {/* Security Note */}
-            <div className="p-6 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 flex items-start gap-4">
-                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600">
-                    <Shield size={20} />
+            <div className="p-6 bg-slate-900 rounded-[2rem] border border-white/5 space-y-4">
+                <div className="flex items-center gap-3">
+                    <ShieldCheck className="text-emerald-500" size={20} />
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Technologie MetaArchive</span>
                 </div>
-                <div className="space-y-1">
-                    <h4 className="text-sm font-bold text-emerald-700 dark:text-emerald-400">Protection Maximale</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                        MetaConvert utilise l'algorithme AES-256 bit pour protéger vos fichiers. Même nous ne pouvons pas accéder au contenu sans votre mot de passe.
-                    </p>
-                </div>
+                <p className="text-[11px] text-slate-400 font-medium leading-relaxed italic">
+                    Toutes les archives créées sont automatiquement synchronisées avec votre Cloud MetaConvert pour un accès universel.
+                </p>
             </div>
         </div>
       </div>
