@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Bricolage_Grotesque } from "next/font/google";
+import { Inter, Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
@@ -11,6 +11,12 @@ const display = Bricolage_Grotesque({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-display",
+});
+// Mono register for the technical voice: file extensions, sizes, formats, data labels.
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -40,7 +46,8 @@ export default function RootLayout({
         className={cn(
           "min-h-screen font-sans antialiased",
           inter.variable,
-          display.variable
+          display.variable,
+          mono.variable
         )}
         suppressHydrationWarning
       >

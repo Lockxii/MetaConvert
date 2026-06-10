@@ -98,9 +98,43 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Faint hairline grid — the warm-paper canvas texture (Dub-grounded). */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(27, 26, 23, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(27, 26, 23, 0.045) 1px, transparent 1px);
+    background-size: 58px 58px;
+  }
+  .bg-grid-fade {
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, #000 40%, transparent 100%);
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, #000 40%, transparent 100%);
+  }
+}
+
+/* Format marquee — honest proof strip, pauses on hover, stills on reduced motion. */
+@keyframes mc-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.mc-marquee-track {
+  display: inline-flex;
+  width: max-content;
+  animation: mc-marquee 42s linear infinite;
+}
+.mc-marquee-track.is-reverse {
+  animation-direction: reverse;
+}
+.mc-marquee:hover .mc-marquee-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-marquee-track {
+    animation: none;
   }
 }
 

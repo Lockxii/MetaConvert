@@ -1,669 +1,1045 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+/**
+ * MetaConvert — landing page.
+ *
+ * Signature (anti-slop) plan, anchored to Dub (product-as-hero, warm-paper ground,
+ * one signal-orange accent, honest proof) + Dropship (the tool suite IS the signature):
+ *   Tier 1 — (1) a real interactive converter in the hero that reacts to the file you
+ *            actually drop; (2) the ten-tool suite as one owned collection; (3) PDF Weaver
+ *            shown by real drag-to-reorder, and a live ephemeral-link QR.
+ *   Tier 2 — bento with genuinely different cells, a marquee of REAL supported formats
+ *            (honest proof, not fake logos), FAQ with concrete answers, one full-bleed
+ *            colour block for rhythm.
+ *   Recurring motif — the brand double-arrow (convert) in signal between every source→target.
+ */
+
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Reorder,
+  motion,
+  AnimatePresence,
+  useReducedMotion,
+} from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowRight,
   ArrowUpRight,
+  UploadCloud,
   Check,
-  FileImage,
+  Download,
+  Lock,
+  ShieldCheck,
+  Trash2,
+  Image as ImageIcon,
   FileText,
+  Layers,
   Video,
   Music,
+  Globe,
+  Archive,
   Send,
-  Lock,
-  QrCode,
-  Timer,
-  ShieldCheck,
+  FolderUp,
+  Cloud,
+  Plus,
+  Minus,
+  GripVertical,
+  Sparkles,
+  RefreshCw,
+  Link2,
+  Copy,
 } from "lucide-react";
-import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
 
-/* -------------------------------------------------------------------------- */
-/*  MetaConvert — landing                                                      */
-/*  Anchored to Dub (dub.co): product-as-hero with a live tool switcher.       */
-/*  Warm-white ground, warm ink, one orchestrated signal-orange accent.        */
-/*  Secondary anchor Ordalie: numbered claim device on the privacy block.      */
-/* -------------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------------
+ * Shared bits
+ * ------------------------------------------------------------------------- */
 
-export default function HomePage() {
-  const { data: session } = authClient.useSession();
-  const startHref = session ? "/dashboard" : "/sign-up";
+/** The brand mark idea: two opposing arrows = conversion. The recurring
+ *  source→target connector throughout the page. */
+function ConvertArrow({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden className={className}>
+      <path
+        d="M4 9h13M17 9l-4-4M17 9l-4 4"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M20 15H7M7 15l4-4M7 15l4 4"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.4"
+      />
+    </svg>
+  );
+}
+
+function Eyebrow({
+  children,
+  tone = "ink",
+}: {
+  children: React.ReactNode;
+  tone?: "ink" | "paper";
+}) {
+  return (
+    <span
+      className={
+        "inline-flex items-center gap-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.22em] " +
+        (tone === "paper" ? "text-paper/60" : "text-ink-soft")
+      }
+    >
+      <span className="h-1.5 w-1.5 rounded-[2px] bg-signal" />
+      {children}
+    </span>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Converter widget — the product-as-hero. Reacts to the real dropped file.
+ * ------------------------------------------------------------------------- */
+
+type FamKey = "image" | "pdf" | "video" | "audio" | "file";
+
+const FAMILIES: Record<
+  FamKey,
+  { label: string; exts: string[]; targets: string[] }
+> = {
+  image: {
+    label: "Image",
+    exts: ["png", "jpg", "jpeg", "webp", "avif", "heic", "heif", "gif", "bmp", "tif", "tiff", "psd", "raw", "cr2", "nef", "arw", "svg"],
+    targets: ["PNG", "WEBP", "AVIF", "JPG", "PDF"],
+  },
+  pdf: {
+    label: "Document",
+    exts: ["pdf"],
+    targets: ["PNG", "JPG", "WEBP", "TXT"],
+  },
+  video: {
+    label: "Vidéo",
+    exts: ["mp4", "mov", "avi", "mkv", "webm", "flv", "m4v"],
+    targets: ["MP4", "WEBM", "GIF", "MP3"],
+  },
+  audio: {
+    label: "Audio",
+    exts: ["mp3", "wav", "flac", "aac", "ogg", "m4a", "aiff"],
+    targets: ["MP3", "WAV", "OGG", "AAC"],
+  },
+  file: {
+    label: "Fichier",
+    exts: [],
+    targets: ["PDF", "PNG", "ZIP"],
+  },
+};
+
+const SIZE_FACTOR: Record<string, number> = {
+  PNG: 1.05, WEBP: 0.42, AVIF: 0.3, JPG: 0.55, PDF: 0.9, TXT: 0.04,
+  MP4: 0.85, WEBM: 0.58, GIF: 1.32, MP3: 0.12, WAV: 1.6, OGG: 0.11,
+  AAC: 0.1, ZIP: 0.7,
+};
+
+function familyFor(ext: string): FamKey {
+  for (const key of ["image", "pdf", "video", "audio"] as FamKey[]) {
+    if (FAMILIES[key].exts.includes(ext)) return key;
+  }
+  return "file";
+}
+
+function formatSize(bytes: number) {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`;
+  if (bytes >= 1024) return `${Math.round(bytes / 1024)} Ko`;
+  return `${Math.max(1, Math.round(bytes))} o`;
+}
+
+type FileState = { name: string; size: number; ext: string; fam: FamKey };
+
+function Converter() {
+  const reduce = useReducedMotion();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Seed with a believable, already-converted example so the hero demonstrates
+  // the product instantly — dropping a real file replaces it.
+  const [file, setFile] = useState<FileState>({
+    name: "photo-vacances.heic",
+    size: 4_613_734,
+    ext: "heic",
+    fam: "image",
+  });
+  const [target, setTarget] = useState("PNG");
+  const [phase, setPhase] = useState<"converting" | "done">("done");
+  const [progress, setProgress] = useState(100);
+  const [dragOver, setDragOver] = useState(false);
+
+  const targets = FAMILIES[file.fam].targets;
+
+  const run = useCallback(
+    (tgt: string) => {
+      if (timer.current) clearInterval(timer.current);
+      setTarget(tgt);
+      if (reduce) {
+        setProgress(100);
+        setPhase("done");
+        return;
+      }
+      setPhase("converting");
+      setProgress(0);
+      let p = 0;
+      timer.current = setInterval(() => {
+        p += Math.random() * 16 + 7;
+        if (p >= 100) {
+          p = 100;
+          if (timer.current) clearInterval(timer.current);
+          setProgress(100);
+          setPhase("done");
+        } else {
+          setProgress(p);
+        }
+      }, 75);
+    },
+    [reduce]
+  );
+
+  useEffect(
+    () => () => {
+      if (timer.current) clearInterval(timer.current);
+    },
+    []
+  );
+
+  const ingest = useCallback(
+    (f: File) => {
+      const ext = (f.name.split(".").pop() || "").toLowerCase();
+      const fam = familyFor(ext);
+      setFile({ name: f.name, size: f.size, ext, fam });
+      run(FAMILIES[fam].targets[0]);
+    },
+    [run]
+  );
+
+  const resultName =
+    file.name.replace(/\.[^.]+$/, "") + "." + target.toLowerCase();
+  const resultSize = Math.max(2048, file.size * (SIZE_FACTOR[target] ?? 0.6));
 
   return (
-    <div className="bg-paper text-ink font-sans selection:bg-signal selection:text-paper">
-      <Hero startHref={startHref} loggedIn={!!session} />
-      <ToolsIndex />
-      <TransferShowcase />
-      <PrivacyBlock />
-      <FinalCta startHref={startHref} />
+    <div className="relative w-full max-w-md">
+      {/* soft halo behind the card — single elevation language */}
+      <div className="pointer-events-none absolute -inset-4 -z-10 rounded-[28px] bg-signal/10 blur-2xl" />
+
+      <div className="overflow-hidden rounded-2xl border border-line bg-paper shadow-[0_24px_60px_-32px_rgba(27,26,23,0.45)]">
+        {/* header */}
+        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+          <div className="flex items-center gap-2 font-mono text-[12px] font-medium tracking-tight text-ink">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal/60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-signal" />
+            </span>
+            convertisseur
+          </div>
+          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
+            {FAMILIES[file.fam].label}
+          </span>
+        </div>
+
+        {/* dropzone */}
+        <div className="p-5">
+          <label
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const f = e.dataTransfer.files?.[0];
+              if (f) ingest(f);
+            }}
+            className={
+              "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-7 text-center transition-colors " +
+              (dragOver
+                ? "border-signal bg-signal-soft"
+                : "border-line bg-paper-deep/50 hover:border-signal/50 hover:bg-paper-deep")
+            }
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              className="sr-only"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) ingest(f);
+              }}
+            />
+            <UploadCloud
+              className={"h-6 w-6 " + (dragOver ? "text-signal" : "text-ink-soft")}
+              strokeWidth={1.6}
+            />
+            <span className="text-sm font-medium text-ink">Déposez un fichier</span>
+            <span className="font-mono text-[11px] text-ink-soft">
+              ou cliquez pour parcourir
+            </span>
+          </label>
+
+          {/* source → target */}
+          <div className="mt-5 flex items-center gap-3">
+            <div className="min-w-0 flex-1 rounded-lg border border-line bg-paper px-3 py-2.5">
+              <p className="truncate text-[13px] font-medium text-ink">{file.name}</p>
+              <p className="mt-0.5 font-mono text-[11px] text-ink-soft">
+                {file.ext.toUpperCase()} · {formatSize(file.size)}
+              </p>
+            </div>
+            <ConvertArrow className="h-5 w-5 shrink-0 text-signal" />
+            <div className="rounded-lg bg-ink px-3 py-2.5 text-paper">
+              <p className="font-mono text-[13px] font-semibold leading-none">
+                .{target.toLowerCase()}
+              </p>
+            </div>
+          </div>
+
+          {/* target chips */}
+          <div className="mt-4">
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-ink-soft">
+              convertir vers
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {targets.map((t) => {
+                const active = t === target;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => run(t)}
+                    className={
+                      "rounded-md border px-2.5 py-1 font-mono text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-paper " +
+                      (active
+                        ? "border-signal bg-signal text-paper"
+                        : "border-line bg-paper text-ink-soft hover:border-ink/30 hover:text-ink")
+                    }
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* progress / result */}
+          <div className="mt-5 rounded-xl border border-line bg-paper-deep/40 p-4">
+            {phase === "converting" ? (
+              <>
+                <div className="flex items-center justify-between font-mono text-[11px] text-ink-soft">
+                  <span className="flex items-center gap-1.5">
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                    conversion…
+                  </span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line">
+                  <div
+                    className="h-full rounded-full bg-signal transition-[width] duration-75 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-signal/15 text-signal">
+                    <Check className="h-4 w-4" strokeWidth={2.4} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] font-medium text-ink">
+                      {resultName}
+                    </p>
+                    <p className="font-mono text-[11px] text-ink-soft">
+                      {formatSize(resultSize)} · prêt
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/sign-up"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-ink px-3 py-2 text-[13px] font-medium text-paper transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Récupérer
+                </Link>
+              </div>
+            )}
+          </div>
+
+          <p className="mt-3 text-center font-mono text-[10px] text-ink-soft">
+            aperçu en direct · le téléchargement final passe par votre espace
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
 
-function Eyebrow({ children, tone = "ink" }: { children: React.ReactNode; tone?: "ink" | "paper" }) {
+/* ----------------------------------------------------------------------------
+ * The tool suite (Dropship signature: ten distinct modules, one collection)
+ * ------------------------------------------------------------------------- */
+
+const TOOLS: {
+  icon: typeof ImageIcon;
+  name: string;
+  blurb: string;
+  formats: string[];
+  span: string;
+  feature?: "image" | "transfer";
+}[] = [
+  {
+    icon: ImageIcon,
+    name: "Image",
+    blurb:
+      "Recadrage, rotation, agrandissement et suppression des métadonnées EXIF / GPS.",
+    formats: ["PNG", "WEBP", "AVIF", "HEIC", "PSD", "RAW"],
+    span: "lg:col-span-2",
+    feature: "image",
+  },
+  {
+    icon: FileText,
+    name: "PDF",
+    blurb: "PDF vers images ou texte, compression et sécurisation en un clic.",
+    formats: ["→ PNG", "→ JPG", "→ TXT"],
+    span: "",
+  },
+  {
+    icon: Layers,
+    name: "PDF Weaver",
+    blurb: "Fusionner, diviser et réordonner vos pages au glisser-déposer.",
+    formats: ["démo plus bas ↓"],
+    span: "",
+  },
+  {
+    icon: Video,
+    name: "Vidéo",
+    blurb: "Changez de format, extrayez la piste son ou fabriquez un GIF fluide.",
+    formats: ["MP4", "WEBM", "→ GIF", "→ MP3"],
+    span: "",
+  },
+  {
+    icon: Music,
+    name: "Audio",
+    blurb: "Conversion sans perte, plus un spectrogramme animé exporté en vidéo.",
+    formats: ["MP3", "WAV", "FLAC", "AAC"],
+    span: "",
+  },
+  {
+    icon: Globe,
+    name: "Web Downloader",
+    blurb:
+      "Récupérez une vidéo (MP4) ou son audio (MP3) depuis YouTube, TikTok, Vimeo.",
+    formats: ["URL → MP4", "URL → MP3"],
+    span: "",
+  },
+  {
+    icon: Send,
+    name: "Transfert",
+    blurb:
+      "Un lien de téléchargement temporaire, QR code intégré, qui expire tout seul.",
+    formats: ["lien éphémère", "QR"],
+    span: "lg:col-span-2",
+    feature: "transfer",
+  },
+  {
+    icon: Archive,
+    name: "MetaVault",
+    blurb: "Archives ZIP chiffrées AES-256 pour vos données les plus sensibles.",
+    formats: ["ZIP · AES-256"],
+    span: "",
+  },
+  {
+    icon: FolderUp,
+    name: "Demandes",
+    blurb:
+      "Créez un lien de dépôt public pour recevoir des fichiers sans compte tiers.",
+    formats: ["lien de dépôt"],
+    span: "",
+  },
+  {
+    icon: Cloud,
+    name: "Mon Cloud",
+    blurb:
+      "L'historique complet de vos conversions, avec prévisualisation et re-téléchargement.",
+    formats: ["historique", "aperçu"],
+    span: "",
+  },
+];
+
+function ToolCard({ tool }: { tool: (typeof TOOLS)[number] }) {
+  const Icon = tool.icon;
   return (
-    <p
+    <div
       className={
-        "text-[12px] font-semibold uppercase tracking-[0.18em] " +
-        (tone === "paper" ? "text-paper/55" : "text-signal")
+        "group flex flex-col rounded-2xl border border-line bg-paper p-6 transition-colors hover:border-ink/25 " +
+        tool.span
       }
     >
-      {children}
-    </p>
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink text-paper transition-colors group-hover:bg-signal">
+          <Icon className="h-5 w-5" strokeWidth={1.7} />
+        </span>
+        <h3 className="font-display text-lg font-semibold tracking-tight text-ink">
+          {tool.name}
+        </h3>
+      </div>
+
+      <p className="mt-4 max-w-md text-[15px] leading-relaxed text-ink-soft">
+        {tool.blurb}
+      </p>
+
+      {tool.feature === "image" && (
+        <div className="mt-5 flex items-center gap-2 font-mono text-[11px] text-ink-soft">
+          <span className="rounded-md border border-line px-2 py-1">×2</span>
+          <span className="rounded-md border border-line px-2 py-1">×4</span>
+          <span className="text-ink-soft/70">agrandissement intelligent</span>
+        </div>
+      )}
+      {tool.feature === "transfer" && (
+        <div className="mt-5 inline-flex items-center gap-3 rounded-lg border border-line bg-paper-deep/50 px-3 py-2 font-mono text-[11px] text-ink-soft">
+          <QRCodeSVG
+            value="https://metaconvert.app/t/demo"
+            size={34}
+            fgColor="#1B1A17"
+            bgColor="transparent"
+          />
+          <span>
+            expire dans 24 h
+            <br />
+            puis disparaît
+          </span>
+        </div>
+      )}
+
+      <div className="mt-auto flex flex-wrap gap-1.5 pt-6">
+        {tool.formats.map((f) => (
+          <span
+            key={f}
+            className="rounded-md bg-paper-deep px-2 py-0.5 font-mono text-[11px] text-ink-soft"
+          >
+            {f}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
-/* ----------------------------------- Hero --------------------------------- */
+/* ----------------------------------------------------------------------------
+ * PDF Weaver — real drag-to-reorder (concrete interaction metaphor, dark beat)
+ * ------------------------------------------------------------------------- */
 
-function Hero({ startHref, loggedIn }: { startHref: string; loggedIn: boolean }) {
+function PdfWeaverDemo() {
+  const [pages, setPages] = useState([
+    { id: 1, n: "01" },
+    { id: 2, n: "02" },
+    { id: 3, n: "03" },
+    { id: 4, n: "04" },
+    { id: 5, n: "05" },
+  ]);
+
   return (
-    <section className="relative overflow-hidden border-b border-line">
-      <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 py-16 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14 lg:py-24">
-        <div className="min-w-0 max-w-xl">
-          <Eyebrow>Dix outils · un seul onglet</Eyebrow>
+    <div>
+      <div className="mb-5 flex items-center justify-between">
+        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-paper/45">
+          glissez pour réordonner
+        </span>
+        <span className="font-mono text-[11px] text-paper/60">
+          {pages.length} pages · {pages.map((p) => p.n).join(" · ")}
+        </span>
+      </div>
 
-          <h1 className="mt-6 font-display text-[2.6rem] font-bold leading-[1.02] tracking-[-0.02em] text-ink sm:text-[3.4rem] lg:text-[4rem] lg:leading-[0.98]">
-            Convertir, transférer,
-            <br />
-            protéger n&apos;importe
-            <br />
-            quel <span className="text-signal">fichier</span>.
-          </h1>
+      <Reorder.Group
+        axis="x"
+        values={pages}
+        onReorder={setPages}
+        className="flex flex-wrap gap-3"
+      >
+        {pages.map((p) => (
+          <Reorder.Item
+            key={p.id}
+            value={p}
+            whileDrag={{ scale: 1.06 }}
+            className="group/page relative flex aspect-[3/4] w-[74px] cursor-grab flex-col rounded-lg border border-paper/15 bg-paper/[0.06] p-2 backdrop-blur-sm active:cursor-grabbing"
+          >
+            <div className="flex items-center justify-between">
+              <GripVertical className="h-3.5 w-3.5 text-paper/40 transition-colors group-hover/page:text-signal" />
+              <span className="font-mono text-[10px] text-paper/60">p.{p.n}</span>
+            </div>
+            <div className="mt-2 space-y-1.5">
+              <span className="block h-1 w-3/4 rounded-full bg-paper/20" />
+              <span className="block h-1 w-full rounded-full bg-paper/15" />
+              <span className="block h-1 w-2/3 rounded-full bg-paper/15" />
+              <span className="block h-1 w-5/6 rounded-full bg-paper/10" />
+            </div>
+          </Reorder.Item>
+        ))}
+      </Reorder.Group>
+    </div>
+  );
+}
 
-          <p className="mt-6 max-w-md text-[1.05rem] leading-relaxed text-ink-soft">
-            Image, PDF, vidéo, audio, archives — dix outils dans un onglet.
-            Choisissez-en un, il tourne déjà ci-contre. Traité dans le
-            navigateur, jamais conservé.
+/* ----------------------------------------------------------------------------
+ * Transfer / ephemeral link with a real QR + ticking expiry
+ * ------------------------------------------------------------------------- */
+
+function TransferCard() {
+  const reduce = useReducedMotion();
+  const [copied, setCopied] = useState(false);
+  const [secs, setSecs] = useState(24 * 3600 - 1);
+  const link = "metaconvert.app/t/8fK2-aZ9";
+
+  useEffect(() => {
+    if (reduce) return;
+    const i = setInterval(() => setSecs((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(i);
+  }, [reduce]);
+
+  const hh = String(Math.floor(secs / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
+  const ss = String(secs % 60).padStart(2, "0");
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText("https://" + link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-line bg-paper p-6 shadow-[0_24px_60px_-40px_rgba(27,26,23,0.4)]">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-ink">
+            <Send className="h-4 w-4 text-signal" />
+            <span className="font-display text-base font-semibold">
+              Lien éphémère
+            </span>
+          </div>
+          <p className="mt-1.5 text-[14px] text-ink-soft">
+            Partagez un fichier, il s&apos;efface seul.
           </p>
+        </div>
+        <div className="rounded-xl border border-line bg-paper-deep/40 p-2">
+          <QRCodeSVG
+            value={"https://" + link}
+            size={72}
+            fgColor="#1B1A17"
+            bgColor="transparent"
+          />
+        </div>
+      </div>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link
-              href={startHref}
-              className="group inline-flex h-12 items-center gap-2 rounded-full bg-signal px-7 text-sm font-medium text-paper transition hover:bg-signal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-            >
-              {loggedIn ? "Tableau de bord" : "Commencer — gratuit"}
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-            <a
-              href="#outils"
-              className="inline-flex h-12 items-center rounded-full border border-ink/20 px-7 text-sm font-medium text-ink transition hover:border-ink hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
-            >
-              Voir les dix outils
-            </a>
+      <button
+        onClick={copy}
+        className="mt-5 flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-paper-deep/40 px-3.5 py-2.5 text-left transition-colors hover:border-ink/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
+      >
+        <span className="flex items-center gap-2 truncate font-mono text-[13px] text-ink">
+          <Link2 className="h-3.5 w-3.5 shrink-0 text-ink-soft" />
+          {link}
+        </span>
+        <span className="flex shrink-0 items-center gap-1 font-mono text-[12px] font-medium text-signal">
+          {copied ? (
+            <>
+              <Check className="h-3.5 w-3.5" /> copié
+            </>
+          ) : (
+            <>
+              <Copy className="h-3.5 w-3.5" /> copier
+            </>
+          )}
+        </span>
+      </button>
+
+      <div className="mt-4 flex items-center justify-between border-t border-line pt-4">
+        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
+          expire dans
+        </span>
+        <span className="font-mono text-[15px] font-semibold tabular-nums text-ink">
+          {hh}:{mm}:{ss}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * FAQ
+ * ------------------------------------------------------------------------- */
+
+const FAQ = [
+  {
+    q: "Mes fichiers sont-ils vraiment supprimés ?",
+    a: "Oui. Les fichiers traités sont effacés des serveurs après conversion. Seules les conversions que vous choisissez de garder restent dans votre espace Cloud, et vous pouvez les supprimer à tout moment.",
+  },
+  {
+    q: "Y a-t-il une limite de taille ?",
+    a: "Le traitement se fait côté serveur, donc les fichiers lourds (vidéos, RAW, gros PDF) passent sans bloquer votre navigateur. Les quotas dépendent de votre offre — la version gratuite couvre largement un usage quotidien.",
+  },
+  {
+    q: "Quels formats d'image sont pris en charge ?",
+    a: "Plus de vingt, en lecture comme en sortie : PNG, JPG, WEBP, AVIF, HEIC, GIF, BMP, TIFF, SVG, ainsi que les formats lourds PSD et RAW d'appareils photo.",
+  },
+  {
+    q: "Le téléchargement YouTube / TikTok est-il autorisé ?",
+    a: "Le Web Downloader est destiné à un usage personnel et au contenu dont vous détenez les droits ou qui est librement réutilisable. Vous restez responsable du respect des conditions des plateformes.",
+  },
+  {
+    q: "Qui peut ouvrir mes archives chiffrées ?",
+    a: "Vous seul. MetaVault scelle vos ZIP en AES-256 avec un mot de passe que vous choisissez. Sans ce mot de passe, l'archive est illisible — y compris pour nous.",
+  },
+  {
+    q: "MetaConvert est-il gratuit ?",
+    a: "Vous pouvez essayer le convertisseur sans inscription. Créer un compte gratuit débloque l'historique Cloud, les transferts et les dix outils, sans carte bancaire.",
+  },
+];
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-line">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between gap-4 py-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-4 focus-visible:ring-offset-paper"
+        aria-expanded={open}
+      >
+        <span className="text-[17px] font-medium text-ink">{q}</span>
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center text-signal">
+          {open ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+        </span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.24, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <p className="max-w-2xl pb-6 text-[15px] leading-relaxed text-ink-soft">
+              {a}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Privacy guarantees (full-bleed colour block — rhythm beat)
+ * ------------------------------------------------------------------------- */
+
+const GUARANTEES = [
+  {
+    n: "01",
+    icon: Trash2,
+    t: "Suppression automatique",
+    d: "Vos fichiers quittent nos serveurs dès le traitement terminé. Rien n'est conservé sans votre accord explicite.",
+  },
+  {
+    n: "02",
+    icon: Lock,
+    t: "Chiffrement AES-256",
+    d: "MetaVault scelle vos archives sensibles avec un chiffrement de niveau bancaire, déverrouillable par vous seul.",
+  },
+  {
+    n: "03",
+    icon: ShieldCheck,
+    t: "Nettoyage des métadonnées",
+    d: "Effacez les données EXIF et GPS de vos images en cochant une case avant de partager.",
+  },
+];
+
+/* ----------------------------------------------------------------------------
+ * Page
+ * ------------------------------------------------------------------------- */
+
+export default function LandingPage() {
+  return (
+    <>
+      {/* ============================ HERO ============================ */}
+      <section className="relative overflow-hidden border-b border-line">
+        <div className="absolute inset-0 bg-grid bg-grid-fade" aria-hidden />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:py-28">
+          <div>
+            <Eyebrow>Dix outils · un seul espace cloud</Eyebrow>
+
+            <h1 className="mt-6 font-display text-[2.75rem] font-bold leading-[1.02] tracking-[-0.025em] text-ink sm:text-6xl lg:text-[4.1rem]">
+              Convertissez, éditez et rangez{" "}
+              <span className="text-signal">n&apos;importe quel fichier.</span>
+            </h1>
+
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
+              Image, PDF, vidéo, audio, archives. MetaConvert remplace la dizaine
+              de convertisseurs en ligne que vous gardez en favoris — dans une
+              interface propre, traitée dans le cloud puis effacée.
+            </p>
+
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link
+                href="/sign-up"
+                className="group inline-flex items-center gap-2 rounded-full bg-signal px-6 py-3 text-[15px] font-medium text-paper transition hover:bg-signal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              >
+                Commencer — gratuit
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                href="#outils"
+                className="inline-flex items-center gap-2 rounded-full border border-ink/15 px-6 py-3 text-[15px] font-medium text-ink transition hover:border-ink/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
+              >
+                Explorer les outils
+              </Link>
+            </div>
+
+            <p className="mt-5 font-mono text-[12px] text-ink-soft">
+              essai sans inscription · aucune carte requise
+            </p>
           </div>
 
-          <div className="mt-9 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-6 text-[13px] text-ink-soft">
-            {["20+ formats", "AES-256", "RGPD", "100% navigateur"].map((s, i) => (
-              <span key={s} className="flex items-center gap-4">
-                {i > 0 && <span className="h-1 w-1 rounded-full bg-signal/60" />}
-                {s}
-              </span>
+          <div className="flex justify-center lg:justify-end">
+            <Converter />
+          </div>
+        </div>
+      </section>
+
+      {/* ===================== FORMAT MARQUEE (honest proof) ===================== */}
+      <section className="border-b border-line bg-paper-deep/60 py-7">
+        <div className="mx-auto max-w-7xl px-6">
+          <p className="mb-4 text-center font-mono text-[11px] uppercase tracking-[0.22em] text-ink-soft">
+            plus de 20 formats pris en charge — voici lesquels
+          </p>
+        </div>
+        <div className="mc-marquee relative overflow-hidden">
+          <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-paper-deep to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-paper-deep to-transparent" />
+          <div className="mc-marquee-track">
+            {[0, 1].map((dup) => (
+              <div key={dup} className="flex items-center" aria-hidden={dup === 1}>
+                {[
+                  "PNG", "WEBP", "AVIF", "HEIC", "PSD", "RAW", "SVG", "TIFF",
+                  "PDF", "TXT", "MP4", "MOV", "WEBM", "MKV", "MP3", "WAV",
+                  "FLAC", "AAC", "GIF", "ZIP",
+                ].map((f) => (
+                  <span
+                    key={f + dup}
+                    className="mx-2.5 rounded-lg border border-line bg-paper px-4 py-2 font-mono text-[13px] font-medium text-ink"
+                  >
+                    {f}
+                  </span>
+                ))}
+              </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* The product, live — a switcher across the real tools (Dub signature) */}
-        <ToolSwitcher />
-      </div>
-    </section>
-  );
-}
-
-/* ----------------------------- Tool switcher ------------------------------ */
-
-const TABS = [
-  { key: "image", label: "Image", icon: FileImage },
-  { key: "pdf", label: "PDF", icon: FileText },
-  { key: "video", label: "Vidéo", icon: Video },
-  { key: "audio", label: "Audio", icon: Music },
-  { key: "transfer", label: "Transfert", icon: Send },
-] as const;
-
-function ToolSwitcher() {
-  const [active, setActive] = useState(0);
-  const reduce = useReducedMotion();
-
-  return (
-    <div className="min-w-0">
-      <div
-        role="tablist"
-        aria-label="Outils MetaConvert"
-        className="flex flex-wrap gap-2"
-      >
-        {TABS.map((t, i) => {
-          const on = i === active;
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.key}
-              role="tab"
-              aria-selected={on}
-              onClick={() => setActive(i)}
-              className={[
-                "inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal",
-                on
-                  ? "bg-signal text-paper"
-                  : "border border-ink/15 text-ink-soft hover:border-ink hover:text-ink",
-              ].join(" ")}
-            >
-              <Icon className="h-4 w-4" strokeWidth={1.9} />
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="relative mt-4 rounded-[1.4rem] border border-line bg-paper p-5 shadow-[0_30px_70px_-40px_rgba(27,26,23,0.5)] sm:p-6">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={active}
-            initial={reduce ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduce ? undefined : { opacity: 0, y: -8 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-          >
-            {active === 0 && <ImagePanel />}
-            {active === 1 && <PdfPanel />}
-            {active === 2 && <VideoPanel />}
-            {active === 3 && <AudioPanel />}
-            {active === 4 && <TransferPanel />}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    </div>
-  );
-}
-
-/* Shared little building blocks */
-function FileRow({
-  icon: Icon,
-  name,
-  ext,
-  meta,
-  tone = "plain",
-}: {
-  icon: typeof FileImage;
-  name: string;
-  ext: string;
-  meta: string;
-  tone?: "plain" | "out";
-}) {
-  return (
-    <div className="flex items-center gap-3.5 rounded-2xl bg-paper-deep px-4 py-3.5">
-      <span
-        className={
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl " +
-          (tone === "out" ? "bg-signal text-paper" : "bg-ink text-paper")
-        }
-      >
-        <Icon className="h-5 w-5" strokeWidth={1.9} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-medium text-ink">
-          {name}
-          <span className={tone === "out" ? "text-signal" : "text-ink-soft"}>.{ext}</span>
-        </p>
-        <p className="text-[13px] tabular-nums text-ink-soft">{meta}</p>
-      </div>
-    </div>
-  );
-}
-
-function PanelLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="group mt-5 flex items-center justify-between rounded-2xl border border-ink/15 px-4 py-3 text-sm font-medium text-ink transition hover:border-ink hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
-    >
-      {children}
-      <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-    </Link>
-  );
-}
-
-function GrowBar({ to, label, value }: { to: string; label: string; value: string }) {
-  const reduce = useReducedMotion();
-  return (
-    <div className="space-y-2.5">
-      <div className="flex items-center justify-between text-[13px] text-ink-soft">
-        <span>{label}</span>
-        <span className="font-medium tabular-nums text-ink">{value}</span>
-      </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-        <motion.div
-          className="h-full rounded-full bg-signal"
-          initial={reduce ? false : { width: 0 }}
-          animate={{ width: to }}
-          transition={{ duration: 1.1, ease: "easeOut" }}
-        />
-      </div>
-    </div>
-  );
-}
-
-/* Image — interactive format conversion (the live moment) */
-type Target = { ext: string; size: string; delta: string };
-const IMG_TARGETS: Target[] = [
-  { ext: "webp", size: "0,34 Mo", delta: "−74%" },
-  { ext: "avif", size: "0,22 Mo", delta: "−83%" },
-  { ext: "png", size: "2,10 Mo", delta: "−50%" },
-  { ext: "jpg", size: "0,61 Mo", delta: "−71%" },
-  { ext: "pdf", size: "0,88 Mo", delta: "—" },
-];
-
-function ImagePanel() {
-  const reduce = useReducedMotion();
-  const [sel, setSel] = useState(0);
-  const [phase, setPhase] = useState<"converting" | "done">("done");
-  const [progress, setProgress] = useState(100);
-  const raf = useRef<number | null>(null);
-
-  function go(i: number) {
-    setSel(i);
-    if (reduce) {
-      setProgress(100);
-      setPhase("done");
-      return;
-    }
-    setPhase("converting");
-    setProgress(0);
-  }
-
-  useEffect(() => {
-    if (phase !== "converting") return;
-    const start = performance.now();
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - start) / 1000);
-      setProgress(Math.round(p * 100));
-      if (p < 1) raf.current = requestAnimationFrame(tick);
-      else setPhase("done");
-    };
-    raf.current = requestAnimationFrame(tick);
-    return () => {
-      if (raf.current) cancelAnimationFrame(raf.current);
-    };
-  }, [phase]);
-
-  const target = IMG_TARGETS[sel];
-  const done = phase === "done";
-
-  return (
-    <div>
-      <FileRow icon={FileImage} name="IMG_2847" ext="heic" meta="4,2 Mo · entrée" />
-      <p className="mb-2.5 mt-5 text-[12px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-        Convertir en
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {IMG_TARGETS.map((t, i) => {
-          const on = i === sel;
-          return (
-            <button
-              key={t.ext}
-              onClick={() => go(i)}
-              aria-pressed={on}
-              className={[
-                "rounded-full px-3.5 py-1.5 text-[13px] font-medium uppercase tracking-wide transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal",
-                on ? "bg-signal text-paper" : "border border-ink/15 text-ink-soft hover:border-ink hover:text-ink",
-              ].join(" ")}
-            >
-              {t.ext}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mt-5 rounded-2xl bg-paper-deep p-4">
-        {done ? (
-          <div className="flex items-center gap-3.5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-signal text-paper">
-              <Check className="h-5 w-5" strokeWidth={3} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-medium text-ink">
-                IMG_2847.<span className="text-signal">{target.ext}</span>
-              </p>
-              <p className="text-[13px] tabular-nums text-ink-soft">{target.size} · prêt</p>
-            </div>
-            {target.delta !== "—" && (
-              <span className="rounded-full bg-signal/12 px-2.5 py-1 text-[13px] font-medium tabular-nums text-signal-deep">
-                {target.delta}
-              </span>
-            )}
+      {/* ============================ OUTILS (suite) ============================ */}
+      <section id="outils" className="scroll-mt-24 border-b border-line py-20 lg:py-28">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="max-w-2xl">
+            <Eyebrow>L&apos;atelier</Eyebrow>
+            <h2 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-ink sm:text-5xl">
+              Dix outils, une seule logique.
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-ink-soft">
+              Glisser, choisir le format, récupérer. Le même geste pour une
+              photo, un PDF de 200 pages ou une piste audio.
+            </p>
           </div>
-        ) : (
-          <div className="space-y-2.5 py-0.5">
-            <div className="flex items-center justify-between text-[13px] text-ink-soft">
-              <span>Conversion…</span>
-              <span className="font-medium tabular-nums text-ink">{progress}%</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-              <div
-                className="h-full rounded-full bg-signal transition-[width] duration-75 ease-linear"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-      <PanelLink href="/dashboard/image">Ouvrir l&apos;outil image</PanelLink>
-    </div>
-  );
-}
 
-/* PDF — merge pages into one document */
-function PdfPanel() {
-  return (
-    <div>
-      <p className="mb-3 text-[12px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-        Fusionner les pages
-      </p>
-      <div className="flex items-center gap-3">
-        {["01", "02", "03"].map((n) => (
-          <div
-            key={n}
-            className="flex h-20 w-16 flex-col justify-between rounded-lg border border-line bg-paper-deep p-2"
-          >
-            <span className="text-[11px] tabular-nums text-ink-soft">{n}</span>
-            <span className="space-y-1">
-              <span className="block h-1 w-full rounded bg-line" />
-              <span className="block h-1 w-3/4 rounded bg-line" />
-              <span className="block h-1 w-full rounded bg-line" />
-            </span>
+          <div className="mt-12 grid grid-flow-row-dense grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {TOOLS.map((tool) => (
+              <ToolCard key={tool.name} tool={tool} />
+            ))}
           </div>
-        ))}
-        <ArrowRight className="h-5 w-5 shrink-0 text-signal" />
-        <div className="flex h-20 flex-1 items-center justify-center rounded-lg border border-signal/30 bg-signal/[0.06]">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-signal text-paper">
-            <FileText className="h-5 w-5" strokeWidth={1.9} />
-          </span>
         </div>
-      </div>
-      <div className="mt-5">
-        <FileRow icon={FileText} name="rapport_final" ext="pdf" meta="1,2 Mo · 3 pages · fusionné" tone="out" />
-      </div>
-      <PanelLink href="/dashboard/pdf-weaver">Ouvrir PDF Weaver</PanelLink>
-    </div>
-  );
-}
+      </section>
 
-/* Vidéo — compress to a smaller codec */
-function VideoPanel() {
-  return (
-    <div>
-      <FileRow icon={Video} name="reel_v3" ext="mov" meta="248 Mo · H.264 · entrée" />
-      <p className="mb-2.5 mt-5 text-[12px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
-        Compresser en H.265
-      </p>
-      <div className="rounded-2xl bg-paper-deep p-4">
-        <GrowBar to="17%" label="Taille finale" value="41 Mo" />
-      </div>
-      <div className="mt-3">
-        <FileRow icon={Video} name="reel_v3" ext="mp4" meta="41 Mo · −83% · prêt" tone="out" />
-      </div>
-      <PanelLink href="/dashboard/video">Ouvrir l&apos;outil vidéo</PanelLink>
-    </div>
-  );
-}
-
-/* Audio — extract the track from a video */
-function AudioPanel() {
-  return (
-    <div>
-      <FileRow icon={Video} name="interview" ext="mp4" meta="312 Mo · extraire la piste" />
-      <div className="mt-5 flex h-16 items-end gap-[3px] rounded-2xl bg-paper-deep px-4 py-3">
-        {[7, 13, 9, 18, 24, 16, 28, 20, 30, 22, 14, 26, 12, 19, 9, 23, 15, 8, 21, 11, 17, 25, 10, 6].map(
-          (h, i) => (
-            <span
-              key={i}
-              className="w-full rounded-full bg-signal/70"
-              style={{ height: `${h * 3}%` }}
-            />
-          )
-        )}
-      </div>
-      <div className="mt-3">
-        <FileRow icon={Music} name="interview" ext="mp3" meta="3,4 Mo · 320 kbps · prêt" tone="out" />
-      </div>
-      <PanelLink href="/dashboard/audio">Ouvrir l&apos;outil audio</PanelLink>
-    </div>
-  );
-}
-
-/* Transfert — a secure, expiring link */
-function TransferPanel() {
-  return (
-    <div>
-      <FileRow icon={Send} name="Projet_Archi" ext="zip" meta="1,4 Go · 3 fichiers" />
-      <div className="mt-5 rounded-2xl bg-paper-deep p-4">
-        <GrowBar to="89%" label="Envoi chiffré" value="89%" />
-      </div>
-      <div className="mt-3 flex items-center justify-between rounded-2xl border border-dashed border-ink/20 px-4 py-3">
-        <span className="truncate text-[14px] text-ink-soft">metaconvert.app/t/x7k29q</span>
-        <span className="ml-3 flex shrink-0 items-center gap-2 text-[12px] text-ink-soft">
-          <Timer className="h-3.5 w-3.5 text-signal" /> expire dans 7 j
-        </span>
-      </div>
-      <PanelLink href="/dashboard/transfer">Ouvrir le transfert</PanelLink>
-    </div>
-  );
-}
-
-/* ------------------------------ Tools index ------------------------------- */
-
-type Tool = { n: string; name: string; desc: string; formats: string; href: string };
-
-const TOOLS: Tool[] = [
-  { n: "01", name: "Image", desc: "Convertir, upscaler, nettoyer les métadonnées EXIF", formats: "PNG · WEBP · AVIF · HEIC · RAW", href: "/dashboard/image" },
-  { n: "02", name: "PDF", desc: "Fusionner, diviser, compresser, sécuriser", formats: "PDF · PNG · JPG · TXT", href: "/dashboard/pdf" },
-  { n: "03", name: "PDF Weaver", desc: "Éditeur visuel en glisser-déposer, page par page", formats: "PDF", href: "/dashboard/pdf-weaver" },
-  { n: "04", name: "Vidéo", desc: "Convertir, compresser, extraire, créer des GIF", formats: "MP4 · MOV · WEBM · GIF", href: "/dashboard/video" },
-  { n: "05", name: "Audio", desc: "Extraire la piste, couper, générer un spectrogramme", formats: "MP3 · WAV · FLAC", href: "/dashboard/audio" },
-  { n: "06", name: "Web Capture", desc: "Page web en PDF/PNG, téléchargeur vidéo & audio", formats: "PDF · PNG · MP4", href: "/dashboard/web" },
-  { n: "07", name: "Archives", desc: "ZIP chiffré AES-256, mot de passe natif Windows", formats: "ZIP · 7Z · RAR", href: "/dashboard/archive" },
-  { n: "08", name: "Transfert", desc: "Lien de partage éphémère, jusqu'à 2 Go", formats: "Lien · QR", href: "/dashboard/transfer" },
-  { n: "09", name: "Demandes", desc: "Liens de dépôt publics pour recevoir des fichiers", formats: "Dépôt", href: "/dashboard/drop" },
-  { n: "10", name: "Cloud", desc: "Historique, stockage perso et coffre MetaVault", formats: "Sync · Coffre", href: "/dashboard/cloud" },
-];
-
-function ToolsIndex() {
-  return (
-    <section id="outils" className="border-b border-line">
-      <div className="mx-auto max-w-7xl px-6 py-20 lg:py-28">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      {/* ===================== PDF WEAVER (dark beat, interaction) ===================== */}
+      <section className="border-b border-line bg-ink py-20 text-paper lg:py-28">
+        <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-2">
           <div>
-            <Eyebrow>L&apos;index des outils</Eyebrow>
-            <h2 className="mt-4 max-w-xl font-display text-[2rem] font-bold leading-tight tracking-[-0.015em] text-ink sm:text-[2.6rem]">
-              Dix outils chirurgicaux, pas une boîte à outils en désordre.
+            <Eyebrow tone="paper">PDF Weaver</Eyebrow>
+            <h2 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-paper sm:text-5xl">
+              Vos pages PDF, réordonnées à la main.
+            </h2>
+            <p className="mt-5 max-w-md text-lg leading-relaxed text-paper/65">
+              Un éditeur visuel en glisser-déposer pour fusionner plusieurs
+              documents, retirer une page ou inverser l&apos;ordre. L&apos;aperçu
+              suit en direct, sans recharger.
+            </p>
+            <Link
+              href="/dashboard/pdf-weaver"
+              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-signal px-6 py-3 text-[15px] font-medium text-paper transition hover:bg-signal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+            >
+              Ouvrir PDF Weaver
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+
+          <div className="rounded-2xl border border-paper/10 bg-paper/[0.03] p-7">
+            <PdfWeaverDemo />
+          </div>
+        </div>
+      </section>
+
+      {/* ===================== TRANSFERT & DÉPÔT ===================== */}
+      <section id="transfert" className="scroll-mt-24 border-b border-line py-20 lg:py-28">
+        <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 lg:grid-cols-2">
+          <div>
+            <Eyebrow>Transfert &amp; dépôt</Eyebrow>
+            <h2 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-ink sm:text-5xl">
+              Faites circuler vos fichiers, pas vos données.
+            </h2>
+            <p className="mt-5 max-w-md text-lg leading-relaxed text-ink-soft">
+              Générez un lien de téléchargement temporaire avec QR code, ou un
+              lien de dépôt public pour recevoir des fichiers — sans inscrire vos
+              contacts à un service tiers.
+            </p>
+
+            <ul className="mt-7 space-y-3 text-[15px] text-ink">
+              {[
+                "Lien éphémère avec QR code intégré",
+                "Expiration automatique, aucune trace",
+                "Liens de dépôt pour recevoir sans compte tiers",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-3">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-signal/15 text-signal">
+                    <Check className="h-3 w-3" strokeWidth={3} />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex justify-center lg:justify-end">
+            <div className="w-full max-w-sm">
+              <TransferCard />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===================== CONFIDENTIALITÉ (colour block) ===================== */}
+      <section
+        id="confidentialite"
+        className="scroll-mt-24 bg-signal-deep py-20 text-paper lg:py-24"
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="max-w-2xl">
+            <Eyebrow tone="paper">Confidentialité</Eyebrow>
+            <h2 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-paper sm:text-5xl">
+              Vos fichiers ne traînent nulle part.
             </h2>
           </div>
-          <p className="max-w-xs text-[15px] leading-relaxed text-ink-soft">
-            Chaque outil ne fait qu&apos;une chose, parfaitement — et garde les
-            formats que vous utilisez vraiment.
-          </p>
-        </div>
 
-        <ul className="mt-12 border-t border-line">
-          {TOOLS.map((t) => (
-            <li key={t.n}>
+          <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-paper/15 bg-paper/15 sm:grid-cols-3">
+            {GUARANTEES.map((g) => {
+              const Icon = g.icon;
+              return (
+                <div key={g.n} className="bg-signal-deep p-7">
+                  <div className="flex items-center justify-between">
+                    <Icon className="h-6 w-6 text-paper" strokeWidth={1.7} />
+                    <span className="font-mono text-[13px] text-paper/45">{g.n}</span>
+                  </div>
+                  <h3 className="mt-5 font-display text-xl font-semibold text-paper">
+                    {g.t}
+                  </h3>
+                  <p className="mt-2.5 text-[15px] leading-relaxed text-paper/70">
+                    {g.d}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ============================ FAQ ============================ */}
+      <section className="border-b border-line py-20 lg:py-28">
+        <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <Eyebrow>Questions fréquentes</Eyebrow>
+            <h2 className="mt-5 font-display text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-ink sm:text-5xl">
+              Tout ce qu&apos;on nous demande avant de commencer.
+            </h2>
+            <p className="mt-5 text-[15px] leading-relaxed text-ink-soft">
+              Une autre question ?{" "}
               <Link
-                href={t.href}
-                className="group grid grid-cols-[2.5rem_1fr_auto] items-baseline gap-x-5 gap-y-2 border-b border-line py-6 transition-colors hover:bg-paper-deep focus-visible:bg-paper-deep focus-visible:outline-none sm:grid-cols-[3rem_13rem_1fr_auto] sm:items-center sm:px-2"
+                href="/contact"
+                className="font-medium text-signal underline-offset-4 hover:underline"
               >
-                <span className="font-display text-lg font-semibold tabular-nums text-signal">{t.n}</span>
-                <span className="font-display text-2xl font-semibold tracking-tight text-ink sm:text-[1.6rem]">
-                  {t.name}
-                </span>
-                <span className="col-start-2 row-start-2 text-[15px] text-ink-soft sm:col-start-3 sm:row-start-1">
-                  {t.desc}
-                </span>
-                <span className="col-span-3 flex items-center justify-between gap-4 pt-1 sm:col-span-1 sm:justify-end sm:pt-0">
-                  <span className="text-[13px] uppercase tracking-wide text-ink-soft/80 transition-colors group-hover:text-signal">
-                    {t.formats}
-                  </span>
-                  <ArrowUpRight className="hidden h-5 w-5 shrink-0 text-ink-soft opacity-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink group-hover:opacity-100 sm:block" />
-                </span>
+                Écrivez-nous
               </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  );
-}
+              , on répond vite.
+            </p>
+          </div>
 
-/* ---------------------------- Transfer showcase --------------------------- */
-
-function TransferShowcase() {
-  return (
-    <section id="transfert" className="border-b border-line bg-paper-deep">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-6 py-20 lg:grid-cols-2 lg:py-28">
-        <div className="max-w-lg">
-          <Eyebrow>MetaTransfer</Eyebrow>
-          <h2 className="mt-4 font-display text-[2.4rem] font-bold leading-[1.05] tracking-[-0.015em] text-ink sm:text-5xl">
-            Envoyez 2 Go. Le lien
-            <br />
-            expire <span className="text-signal">tout seul.</span>
-          </h2>
-          <p className="mt-6 max-w-md text-[1.05rem] leading-relaxed text-ink-soft">
-            Un lien propre, un mot de passe optionnel, un QR code et une date
-            d&apos;expiration. Vos destinataires reçoivent les fichiers sans créer
-            de compte.
-          </p>
-
-          <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-7 border-t border-line pt-8">
-            <Feat icon={ShieldCheck} term="Chiffré" desc="AES-256 au repos" />
-            <Feat icon={Timer} term="Éphémère" desc="Jusqu'à 30 jours" />
-            <Feat icon={QrCode} term="QR code" desc="Partage en un scan" />
-            <Feat icon={Lock} term="Verrouillé" desc="Mot de passe au choix" />
-          </dl>
-
-          <Link
-            href="/dashboard/transfer"
-            className="group mt-10 inline-flex h-12 items-center gap-2 rounded-full bg-ink px-7 text-sm font-medium text-paper transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
-          >
-            Ouvrir le transfert
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          <div>
+            {FAQ.map((f) => (
+              <FaqItem key={f.q} q={f.q} a={f.a} />
+            ))}
+          </div>
         </div>
+      </section>
 
-        <div className="relative">
-          <div className="rounded-[1.6rem] border border-ink/70 bg-ink p-7 shadow-[0_40px_80px_-44px_rgba(27,26,23,0.6)]">
-            <div className="flex items-center justify-between">
-              <span className="font-display text-base font-medium text-paper/75">Lien de réception</span>
-              <span className="flex items-center gap-2 text-[12px] text-paper/55">
-                <span className="h-1.5 w-1.5 rounded-full bg-signal" /> en attente
-              </span>
+      {/* ============================ CTA ============================ */}
+      <section className="bg-paper-deep/70 py-20 lg:py-28">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <h2 className="font-display text-4xl font-bold leading-[1.03] tracking-[-0.025em] text-ink sm:text-6xl">
+              Glissez votre
+              <br />
+              <span className="text-signal">premier fichier.</span>
+            </h2>
+            <p className="mt-6 max-w-md text-lg leading-relaxed text-ink-soft">
+              Un compte gratuit, les dix outils, l&apos;historique Cloud. Sans
+              carte, sans onglet douteux.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link
+                href="/sign-up"
+                className="group inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 text-[15px] font-medium text-paper transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
+              >
+                Créer un compte gratuit
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <Link
+                href="#outils"
+                className="inline-flex items-center gap-2 text-[15px] font-medium text-ink-soft transition hover:text-ink"
+              >
+                Revoir les outils
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
             </div>
-            <div className="mt-6 flex items-center justify-center rounded-2xl border border-paper/10 bg-paper/[0.04] p-6">
-              <div className="grid grid-cols-5 gap-1.5">
-                {Array.from({ length: 25 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={
-                      "h-4 w-4 rounded-[3px] " +
-                      ([0, 1, 2, 5, 7, 10, 12, 14, 17, 19, 22, 23, 24, 6, 18].includes(i)
-                        ? "bg-paper"
-                        : "bg-paper/15")
-                    }
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="mt-6 flex items-center justify-between rounded-2xl border border-dashed border-paper/15 px-4 py-3">
-              <span className="truncate text-[14px] text-paper/60">metaconvert.app/r/dépôt-client</span>
-              <span className="ml-3 shrink-0 rounded-full bg-signal px-3 py-1 text-[12px] font-medium text-paper">
-                Copier
+          </div>
+
+          <div className="flex justify-center lg:justify-end">
+            <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-dashed border-ink/20 bg-paper p-10 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink text-paper">
+                <Sparkles className="h-6 w-6" strokeWidth={1.6} />
               </span>
+              <p className="font-display text-lg font-semibold text-ink">
+                Déposez ici pour commencer
+              </p>
+              <p className="font-mono text-[12px] text-ink-soft">
+                PNG · PDF · MP4 · MP3 · ZIP · …
+              </p>
             </div>
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function Feat({ icon: Icon, term, desc }: { icon: typeof ShieldCheck; term: string; desc: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-signal" strokeWidth={1.75} />
-      <div>
-        <dt className="text-[15px] font-medium text-ink">{term}</dt>
-        <dd className="mt-0.5 text-[14px] text-ink-soft">{desc}</dd>
-      </div>
-    </div>
-  );
-}
-
-/* ----------- Privacy — dark block, Ordalie-style numbered claims ----------- */
-
-const CLAIMS = [
-  "Traitement éphémère côté serveur, puis suppression immédiate.",
-  "Chiffrement en transit et AES-256 pour les archives.",
-  "Aucun log de contenu, aucune revente de données.",
-  "Conçu selon les standards RGPD européens.",
-];
-
-function PrivacyBlock() {
-  return (
-    <section id="confidentialite" className="bg-ink text-paper">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-14 px-6 py-20 lg:grid-cols-[1fr_0.85fr] lg:py-28">
-        <div className="max-w-xl">
-          <Eyebrow tone="paper">Confidentialité</Eyebrow>
-          <h2 className="mt-5 font-display text-[2.8rem] font-bold leading-[1] tracking-[-0.02em] sm:text-6xl">
-            Traités. Puis <span className="text-signal">supprimés.</span>
-          </h2>
-          <p className="mt-6 max-w-md text-[1.05rem] leading-relaxed text-paper/70">
-            MetaConvert est conçu sans rétention. Vos fichiers servent à une seule
-            chose — l&apos;opération que vous demandez — puis disparaissent.
-          </p>
-        </div>
-
-        <ol className="space-y-px lg:mt-2">
-          {CLAIMS.map((c, i) => (
-            <li
-              key={c}
-              className="flex items-baseline gap-4 border-t border-paper/15 py-5 text-[15px] leading-snug text-paper/85"
-            >
-              <span className="font-display text-[15px] font-semibold tabular-nums text-signal">
-                0{i + 1}
-              </span>
-              {c}
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
-/* ------------------------------- Final CTA -------------------------------- */
-
-function FinalCta({ startHref }: { startHref: string }) {
-  return (
-    <section className="border-t border-line">
-      <div className="mx-auto max-w-7xl px-6 py-24 text-center lg:py-32">
-        <h2 className="mx-auto max-w-3xl font-display text-[2.6rem] font-bold leading-[1.05] tracking-[-0.02em] text-ink sm:text-6xl">
-          Votre prochain fichier
-          <br />
-          n&apos;attend que <span className="text-signal">vous.</span>
-        </h2>
-        <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Link
-            href={startHref}
-            className="group inline-flex h-12 items-center gap-2 rounded-full bg-signal px-8 text-sm font-medium text-paper transition hover:bg-signal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-          >
-            Commencer — gratuit
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-          <a
-            href="#outils"
-            className="text-sm font-medium text-ink-soft underline decoration-line underline-offset-[6px] transition hover:text-ink hover:decoration-ink"
-          >
-            ou parcourir les outils
-          </a>
-        </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }
