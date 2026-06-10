@@ -1,13 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { useScroll, useMotionValueEvent, motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Menu, X, ArrowRight, ChevronRight } from "lucide-react";
-import Image from "next/image";
+import { Menu, X, ArrowRight, ArrowUpRight } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+
+const navLinks = [
+  { name: "Outils", href: "/#outils" },
+  { name: "Transfert", href: "/#transfert" },
+  { name: "Confidentialité", href: "/#confidentialite" },
+];
+
+/* Inline brand mark — an ink token with a volt conversion arrow, on-palette */
+function BrandMark() {
+  return (
+    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M4 9h13M17 9l-4-4M17 9l-4 4"
+          stroke="#C6F135"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M20 15H7M7 15l4-4M7 15l4 4"
+          stroke="#F2EFE6"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity="0.55"
+        />
+      </svg>
+    </span>
+  );
+}
 
 export function MarketingNavbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -19,119 +48,138 @@ export function MarketingNavbar() {
     setScrolled(latest > 20);
   });
 
-  const navLinks = [
-    { name: "Outils", href: "/#tools" },
-    { name: "Transfert", href: "/#transfer" },
-    { name: "Sécurité", href: "/#security" },
-  ];
-
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
-        scrolled 
-          ? "bg-white/90 dark:bg-white/90 backdrop-blur-xl border-b border-slate-200/50 py-3 shadow-sm" 
-          : "bg-transparent border-transparent py-5"
+        "fixed inset-x-0 top-0 z-50 transition-all duration-300",
+        scrolled
+          ? "border-b border-line bg-paper/90 py-3 backdrop-blur-md"
+          : "border-b border-transparent bg-transparent py-5"
       )}
     >
-      <div className="container mx-auto px-6 flex items-center justify-between">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group relative z-[60]">
-          <div className="h-9 w-9 group-hover:rotate-6 transition-transform duration-500 bg-white rounded-xl shadow-lg flex items-center justify-center border border-slate-100 p-1.5">
-            <Image src="/logo.svg" alt="MetaConvert" width={24} height={24} priority />
-          </div>
-          <span className="font-[1000] text-xl tracking-tighter text-slate-950 uppercase">MetaConvert</span>
+        <Link href="/" className="relative z-[60] flex items-center gap-2.5 group">
+          <BrandMark />
+          <span className="font-display text-lg font-bold tracking-tight text-ink">
+            MetaConvert
+          </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-10">
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-9 md:flex">
           {navLinks.map((link) => (
-            <Link 
-              key={link.name} 
-              href={link.href} 
-              className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-blue-600 transition-colors"
+            <Link
+              key={link.name}
+              href={link.href}
+              className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-soft transition-colors hover:text-ink"
             >
               {link.name}
             </Link>
           ))}
         </nav>
 
-        {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-6">
+        {/* Desktop actions */}
+        <div className="hidden items-center gap-5 md:flex">
           {!isPending && (
             <>
               {session ? (
-                <Button size="sm" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-600/20 bg-blue-600 text-white hover:bg-blue-700 transition-all hover:scale-105" asChild>
-                  <Link href="/dashboard">Dashboard</Link>
-                </Button>
+                <Link
+                  href="/dashboard"
+                  className="group inline-flex items-center gap-1.5 rounded-full bg-volt px-5 py-2 font-mono text-[11px] uppercase tracking-wider text-ink ring-1 ring-inset ring-ink/15 transition hover:bg-volt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                >
+                  Dashboard
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                </Link>
               ) : (
                 <>
-                  <Link href="/sign-in" className="text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-950 transition-colors">
+                  <Link
+                    href="/sign-in"
+                    className="font-mono text-[11px] uppercase tracking-wider text-ink-soft transition-colors hover:text-ink"
+                  >
                     Connexion
                   </Link>
-                  <Button size="sm" className="rounded-xl px-6 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-600/20 bg-slate-950 text-white hover:bg-slate-800 transition-all hover:scale-105" asChild>
-                    <Link href="/sign-up">Essai Gratuit</Link>
-                  </Button>
+                  <Link
+                    href="/sign-up"
+                    className="group inline-flex items-center gap-1.5 rounded-full bg-volt px-5 py-2 font-mono text-[11px] uppercase tracking-wider text-ink ring-1 ring-inset ring-ink/15 transition hover:bg-volt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                  >
+                    Commencer
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
                 </>
               )}
             </>
           )}
         </div>
 
-        {/* Mobile Toggle */}
-        <button 
-          className="md:hidden relative z-[60] p-2 -mr-2 text-slate-950" 
+        {/* Mobile toggle */}
+        <button
+          className="relative z-[60] -mr-2 p-2 text-ink md:hidden"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Menu"
+          aria-expanded={mobileMenuOpen}
         >
-          {mobileMenuOpen ? <X size={28} strokeWidth={2.5} /> : <Menu size={28} strokeWidth={2.5} />}
+          {mobileMenuOpen ? <X size={26} strokeWidth={2.5} /> : <Menu size={26} strokeWidth={2.5} />}
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-50 bg-white dark:bg-white flex flex-col p-8 pt-32"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex flex-col bg-paper p-8 pt-28 md:hidden"
           >
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col">
               {navLinks.map((link, idx) => (
                 <motion.div
                   key={link.name}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -16 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.1 }}
+                  transition={{ delay: idx * 0.06 }}
                 >
-                  <Link 
-                    href={link.href} 
-                    className="text-4xl font-black tracking-tighter text-slate-950 flex items-center justify-between group"
+                  <Link
+                    href={link.href}
+                    className="group flex items-center justify-between border-b border-line py-5 font-display text-3xl font-bold tracking-tight text-ink"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.name}
-                    <ChevronRight className="text-slate-300 group-hover:text-blue-600 transition-colors" size={32} />
+                    <ArrowUpRight className="text-ink-soft transition-colors group-hover:text-volt-deep" size={28} />
                   </Link>
                 </motion.div>
               ))}
             </div>
 
-            <div className="mt-auto space-y-4">
+            <div className="mt-auto space-y-3">
               {!isPending && (
                 <>
                   {session ? (
-                    <Button className="w-full h-16 rounded-[1.5rem] text-lg font-black uppercase tracking-widest bg-blue-600 text-white hover:bg-blue-700" asChild onClick={() => setMobileMenuOpen(false)}>
-                      <Link href="/dashboard">Aller au Dashboard</Link>
-                    </Button>
+                    <Link
+                      href="/dashboard"
+                      className="flex h-14 items-center justify-center rounded-full bg-volt font-mono text-sm uppercase tracking-wider text-ink ring-1 ring-inset ring-ink/15"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Aller au dashboard
+                    </Link>
                   ) : (
                     <>
-                      <Button variant="outline" className="w-full h-16 rounded-[1.5rem] text-lg font-black uppercase tracking-widest border-slate-200 text-slate-950" asChild onClick={() => setMobileMenuOpen(false)}>
-                        <Link href="/sign-in">Connexion</Link>
-                      </Button>
-                      <Button className="w-full h-16 rounded-[1.5rem] text-lg font-black uppercase tracking-widest bg-slate-950 text-white shadow-2xl shadow-slate-950/20 hover:bg-slate-800" asChild onClick={() => setMobileMenuOpen(false)}>
-                        <Link href="/sign-up">Commencer gratuitement</Link>
-                      </Button>
+                      <Link
+                        href="/sign-in"
+                        className="flex h-14 items-center justify-center rounded-full border border-ink/20 font-mono text-sm uppercase tracking-wider text-ink"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Connexion
+                      </Link>
+                      <Link
+                        href="/sign-up"
+                        className="flex h-14 items-center justify-center rounded-full bg-volt font-mono text-sm uppercase tracking-wider text-ink ring-1 ring-inset ring-ink/15"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Commencer — gratuit
+                      </Link>
                     </>
                   )}
                 </>

@@ -1,391 +1,614 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { 
-  ArrowRight, Check, Zap, Layers, Globe, Shield, 
-  Image as ImageIcon, FileText, Video, Music, 
-  Send, Cloud, ArrowUpRight, ShieldCheck, 
-  ZapIcon, Share2, Archive, Download, 
-  Search, Lock, Scissors, ChevronRight,
-  Clock, HardDrive, Cpu, Smartphone, Zap as FastIcon
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  FileImage,
+  Lock,
+  QrCode,
+  Timer,
+  ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
-import Image from "next/image";
+
+/* -------------------------------------------------------------------------- */
+/*  MetaConvert — landing                                                      */
+/*  System: warm paper + warm ink + one electric "volt" accent (= action).     */
+/*  Signature: a live file-conversion demo in the hero, and the monospace      */
+/*  `.ext` token as the recurring brand atom.                                  */
+/* -------------------------------------------------------------------------- */
 
 export default function HomePage() {
   const { data: session } = authClient.useSession();
+  const startHref = session ? "/dashboard" : "/sign-up";
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-100 selection:text-blue-700">
-      {/* Hero Section - Refined */}
-      <section className="relative pt-12 pb-16 lg:pt-40 lg:pb-32 border-b border-slate-50 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-50/50 via-transparent to-transparent -z-10" />
-        <div className="container px-6 mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-8">
-            <div className="flex-1 space-y-10 text-center lg:text-left">
-              
-              <div className="space-y-6">
-                <motion.h1 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="text-5xl md:text-7xl lg:text-8xl font-[1000] tracking-tighter leading-[0.9] text-slate-950"
-                >
-                  Maîtrisez vos <br/>
-                  <span className="text-blue-600">fichiers.</span>
-                </motion.h1>
-
-                <motion.p 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-slate-500 text-lg md:text-xl max-w-xl mx-auto lg:mx-0 font-medium leading-relaxed italic"
-                >
-                  L'écosystème complet pour convertir, transférer et stocker vos médias en un éclair.
-                </motion.p>
-              </div>
-
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6 pt-2"
-              >
-                <Button size="lg" className="rounded-2xl px-10 h-16 text-sm font-black uppercase tracking-widest gap-2 shadow-xl shadow-blue-600/20 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white" asChild>
-                  <Link href={session ? "/dashboard" : "/sign-up"}>
-                    {session ? "Tableau de Bord" : "Essai Gratuit"}
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </Button>
-                
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-3">
-                      {[1,2,3].map(i => (
-                        <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-slate-100 overflow-hidden shadow-sm">
-                            <img 
-                                src={`https://i.pravatar.cc/100?u=${i+20}`} 
-                                alt="User" 
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                      ))}
-                  </div>
-                  <div className="flex flex-col items-start leading-none">
-                    <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight">+15k membres</span>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Utilisateurs pro</span>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Visual on the right */}
-            <div className="flex-1 w-full relative hidden lg:block">
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
-                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="relative z-10"
-                >
-                    <div className="bg-white rounded-[3rem] border border-slate-100 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.1)] p-4 overflow-hidden">
-                        <div className="bg-slate-50 rounded-[2.2rem] aspect-[4/3] overflow-hidden flex items-center justify-center relative group">
-                            <Image 
-                                src="/logo.svg" 
-                                alt="MetaConvert App" 
-                                width={120} 
-                                height={120}
-                                className="opacity-20 group-hover:scale-110 transition-transform duration-700"
-                            />
-                            {/* Floating UI Elements */}
-                            <div className="absolute top-8 left-8 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 animate-bounce [animation-duration:4s]">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white">
-                                        <ImageIcon size={16} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <div className="h-2 w-16 bg-slate-100 rounded" />
-                                        <div className="h-1.5 w-10 bg-slate-50 rounded" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="absolute bottom-12 right-8 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 animate-bounce [animation-duration:5s] [animation-delay:1s]">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white">
-                                        <Check size={16} />
-                                    </div>
-                                    <span className="text-[10px] font-black uppercase text-slate-400">Terminé</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Decorative Blobs */}
-                    <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-100 rounded-full blur-[100px] -z-10" />
-                    <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-100 rounded-full blur-[100px] -z-10" />
-                </motion.div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How it works - Step Section */}
-      <section className="py-20 bg-slate-50/50 border-b border-slate-100">
-        <div className="container px-6 mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <StepItem 
-                    num="01" 
-                    title="Déposez vos fichiers" 
-                    desc="Images, PDF, Vidéos... Glissez-les dans l'interface ultra-rapide." 
-                />
-                <StepItem 
-                    num="02" 
-                    title="Traitement IA" 
-                    desc="Nos moteurs optimisent chaque octet pour un rendu parfait." 
-                />
-                <StepItem 
-                    num="03" 
-                    title="Stockez & Partagez" 
-                    desc="Téléchargez ou envoyez un lien sécurisé MetaTransfer." 
-                />
-            </div>
-        </div>
-      </section>
-
-      {/* Tools Grid Section */}
-      <section id="tools" className="py-24 lg:py-32 bg-white">
-        <div className="container px-6 mx-auto">
-          <div className="flex flex-col md:flex-row items-baseline justify-between mb-16 gap-4">
-            <div className="space-y-2">
-              <h2 className="text-blue-600 font-black uppercase tracking-[0.3em] text-[10px]">La Meta-Suite</h2>
-              <h3 className="text-3xl md:text-5xl font-black tracking-tight text-slate-950">Des outils chirurgicaux.</h3>
-            </div>
-            <p className="text-slate-400 max-w-sm text-sm font-medium">Tout ce dont vous avez besoin pour vos assets numériques, en un seul endroit.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <ToolBox icon={ImageIcon} title="Image Pro" stats="Conv, Upscale, Crop" color="blue" href="/dashboard/image" />
-            <ToolBox icon={FileText} title="PDF Weaver" stats="Merge, Split, Conv" color="emerald" href="/dashboard/pdf" />
-            <ToolBox icon={Video} title="Vidéo HD" stats="Compress, Conv, GIF" color="indigo" href="/dashboard/video" />
-            <ToolBox icon={Music} title="Audio Master" stats="Extract, Trim, Conv" color="purple" href="/dashboard/audio" />
-            <ToolBox icon={Send} title="MetaTransfer" stats="2GB, Pass, Secure" color="pink" href="/dashboard/transfer" />
-            <ToolBox icon={Globe} title="Web Capture" stats="URL to PDF/PNG" color="amber" href="/dashboard/web" />
-            <ToolBox icon={Archive} title="Archives" stats="ZIP, RAR, 7Z" color="slate" href="/dashboard/archive" />
-            <ToolBox icon={Cloud} title="Cloud" stats="Sync, Share, Store" color="sky" href="/dashboard/cloud" />
-          </div>
-        </div>
-      </section>
-
-      {/* MetaTransfer Section - Specialized */}
-      <section id="transfer" className="py-24 bg-white text-slate-900 overflow-hidden relative border-y border-slate-50">
-        <div className="absolute inset-0 bg-blue-50/30 opacity-50 pointer-events-none" />
-        <div className="container px-6 mx-auto">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1 space-y-10">
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shadow-blue-600/20">
-                <Send size={24} strokeWidth={3} />
-              </div>
-              <div className="space-y-4">
-                <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] text-slate-950">
-                  Transférez vos fichiers <br/>
-                  <span className="text-blue-600">avec style.</span>
-                </h2>
-                <p className="text-slate-500 text-lg font-medium leading-relaxed max-w-xl">
-                  Plus qu'un simple upload. Offrez à vos clients et collaborateurs une expérience 
-                  de réception premium, rapide et sécurisée.
-                </p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-8 border-t border-slate-100 pt-10">
-                <FeatureSmall icon={ShieldCheck} title="Sécurité" desc="Chiffrement AES-256" dark={false} />
-                <FeatureSmall icon={Clock} title="Éphémère" desc="Jusqu'à 30 jours" dark={false} />
-                <FeatureSmall icon={FastIcon} title="Vitesse" desc="Upload multi-flux" dark={false} />
-                <FeatureSmall icon={Lock} title="Confidentialité" desc="Mot de passe inclus" dark={false} />
-              </div>
-
-              <Button size="lg" className="rounded-xl h-14 px-8 bg-slate-950 text-white hover:bg-slate-800 font-black uppercase text-xs tracking-widest mt-4" asChild>
-                <Link href="/dashboard/transfer">Ouvrir MetaTransfer</Link>
-              </Button>
-            </div>
-
-            <div className="flex-1 w-full relative">
-                <div className="absolute inset-0 bg-blue-600/10 blur-[120px] rounded-full" />
-                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-10 shadow-2xl relative z-10">
-                    <div className="space-y-8">
-                        <div className="flex justify-between items-center">
-                            <div className="flex gap-1.5">
-                                <div className="w-2.5 h-2.5 rounded-full bg-red-500/20" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-amber-500/20" />
-                                <div className="w-2.5 h-2.5 rounded-full bg-green-500/20" />
-                            </div>
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Protocol MC-Transfer</span>
-                        </div>
-                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
-                                    <FileText size={20} />
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-xs font-bold truncate text-slate-950">Projet_Architecture_Final.zip</p>
-                                    <p className="text-[9px] text-blue-600 font-black uppercase tracking-widest">1.4 GB • En cours</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <span>Envoi...</span>
-                                <span className="text-blue-600">89%</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <motion.div initial={{width: 0}} whileInView={{width: '89%'}} transition={{duration: 2}} className="h-full bg-blue-500 rounded-full" />
-                            </div>
-                        </div>
-                        <div className="pt-4 flex justify-center">
-                            <div className="px-6 py-2.5 rounded-xl border border-slate-100 bg-slate-50 text-[9px] font-black uppercase tracking-widest text-slate-400">
-                                mc-transfer.com/share/x7k29...
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Security & Stats */}
-      <section id="security" className="py-24 bg-white border-b border-slate-100">
-        <div className="container px-6 mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                <div className="space-y-10">
-                    <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-none text-slate-950">
-                        Votre vie privée <br/><span className="text-blue-600">n'est pas une option.</span>
-                    </h2>
-                    <p className="text-slate-500 text-lg font-medium leading-relaxed italic">
-                        MetaConvert a été conçu avec une architecture "Zero-Knowledge". 
-                        Vos fichiers sont traités puis supprimés. Aucun log, aucune trace.
-                    </p>
-                    <div className="space-y-4">
-                        <CheckItem text="Traitement côté serveur sécurisé & éphémère" />
-                        <CheckItem text="Chiffrement des transferts en transit" />
-                        <CheckItem text="Aucun stockage permanent sans votre accord" />
-                        <CheckItem text="Conforme aux standards RGPD Européens" />
-                    </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <StatInfo icon={Cpu} value="1.2M+" label="Fichiers traités" />
-                    <StatInfo icon={HardDrive} value="500TB" label="Données transitées" />
-                    <StatInfo icon={Smartphone} value="100%" label="Responsive UI" />
-                    <StatInfo icon={Shield} value="AES-256" label="Encryption" />
-                </div>
-            </div>
-        </div>
-      </section>
-
-      {/* Final CTA - Refined */}
-      <section className="py-32 bg-slate-50 border-t border-slate-100">
-        <div className="container px-6 mx-auto text-center">
-            <div className="max-w-2xl mx-auto space-y-10">
-                <h2 className="text-4xl md:text-6xl font-black tracking-tight text-slate-950">Prêt à transformer votre workflow ?</h2>
-                <p className="text-slate-500 text-lg font-medium">Rejoignez les professionnels qui ne perdent plus de temps avec leurs fichiers.</p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <Button size="lg" className="rounded-xl px-10 h-16 font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 bg-blue-600 text-white w-full sm:w-auto" asChild>
-                        <Link href="/sign-up">Créer un compte gratuit</Link>
-                    </Button>
-                    <Link href="#tools" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 transition-all underline underline-offset-8">Voir tous les outils</Link>
-                </div>
-            </div>
-        </div>
-      </section>
+    <div className="bg-paper text-ink font-sans selection:bg-volt selection:text-ink">
+      <Hero startHref={startHref} loggedIn={!!session} />
+      <FormatStrip />
+      <ToolsIndex />
+      <TransferShowcase />
+      <PrivacySection />
+      <FinalCta startHref={startHref} />
     </div>
   );
 }
 
-function ToolBox({ icon: Icon, title, stats, color, href }: any) {
-    const colors: any = {
-        blue: "bg-blue-500",
-        emerald: "bg-emerald-500",
-        indigo: "bg-indigo-500",
-        purple: "bg-purple-500",
-        pink: "bg-pink-500",
-        amber: "bg-amber-500",
-        slate: "bg-slate-700",
-        sky: "bg-sky-500"
+/* ----------------------------------- Hero --------------------------------- */
+
+function Hero({ startHref, loggedIn }: { startHref: string; loggedIn: boolean }) {
+  return (
+    <section className="relative overflow-hidden border-b border-line">
+      {/* faint engineering grid, not a gradient blob */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.5]"
+        style={{
+          backgroundImage:
+            "linear-gradient(#16150F08 1px, transparent 1px), linear-gradient(90deg, #16150F08 1px, transparent 1px)",
+          backgroundSize: "64px 64px",
+        }}
+      />
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-6 py-20 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:py-28">
+        {/* Left — the argument */}
+        <div className="min-w-0 max-w-xl">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-soft sm:text-[11px] sm:tracking-[0.18em]">
+            <span className="text-volt-deep">//</span> 10 outils · 1 onglet · 0 fichier conservé
+          </p>
+
+          <h1 className="mt-6 font-display text-[2.5rem] font-bold leading-[0.95] tracking-tight text-ink sm:text-6xl sm:leading-[0.92] lg:text-7xl">
+            Convertissez
+            <br />
+            n&apos;importe quoi.
+            <br />
+            Ne gardez{" "}
+            <span className="relative inline-block">
+              <span className="absolute inset-x-[-0.12em] inset-y-[0.08em] z-0 -skew-x-6 bg-volt" />
+              <span className="relative z-10">rien</span>
+            </span>
+            .
+          </h1>
+
+          <p className="mt-7 max-w-md text-base leading-relaxed text-ink-soft sm:text-lg">
+            Image, PDF, vidéo, audio, archives — dix outils dans un seul onglet.
+            Traitement instantané, transfert chiffré, et aucun fichier stocké sur
+            nos serveurs.
+          </p>
+
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Link
+              href={startHref}
+              className="group inline-flex h-12 items-center gap-2 rounded-full bg-volt px-7 font-mono text-[13px] font-medium uppercase tracking-wider text-ink ring-1 ring-inset ring-ink/15 transition hover:bg-volt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+            >
+              {loggedIn ? "Tableau de bord" : "Commencer — gratuit"}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <a
+              href="#outils"
+              className="inline-flex h-12 items-center gap-2 rounded-full border border-ink/20 px-7 font-mono text-[13px] uppercase tracking-wider text-ink transition hover:border-ink hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+            >
+              Voir les 10 outils
+            </a>
+          </div>
+
+          <div className="mt-10 flex flex-wrap gap-x-5 gap-y-2 border-t border-line pt-6 font-mono text-[11px] uppercase tracking-wider text-ink-soft">
+            <span>20+ formats</span>
+            <span className="text-line">/</span>
+            <span>AES-256</span>
+            <span className="text-line">/</span>
+            <span>RGPD</span>
+            <span className="text-line">/</span>
+            <span>100% navigateur</span>
+          </div>
+        </div>
+
+        {/* Right — the product, live */}
+        <Converter />
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------- Converter -------------------------------- */
+
+type Target = { ext: string; size: string; delta: string };
+
+const SOURCE = { name: "IMG_2847", ext: "HEIC", size: "4.2 Mo" };
+const TARGETS: Target[] = [
+  { ext: "WEBP", size: "0,34 Mo", delta: "−74%" },
+  { ext: "AVIF", size: "0,22 Mo", delta: "−83%" },
+  { ext: "PNG", size: "2,10 Mo", delta: "−50%" },
+  { ext: "JPG", size: "0,61 Mo", delta: "−71%" },
+  { ext: "PDF", size: "0,88 Mo", delta: "—" },
+];
+
+function Converter() {
+  const reduce = useReducedMotion();
+  const [selected, setSelected] = useState(0);
+  const [phase, setPhase] = useState<"converting" | "done">("done");
+  const [progress, setProgress] = useState(100);
+  const raf = useRef<number | null>(null);
+
+  function convertTo(i: number) {
+    setSelected(i);
+    if (reduce) {
+      setProgress(100);
+      setPhase("done");
+      return;
+    }
+    setPhase("converting");
+    setProgress(0);
+  }
+
+  useEffect(() => {
+    if (phase !== "converting") return;
+    const start = performance.now();
+    const dur = 1050;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / dur);
+      setProgress(Math.round(p * 100));
+      if (p < 1) {
+        raf.current = requestAnimationFrame(tick);
+      } else {
+        setPhase("done");
+      }
     };
-    return (
-        <Link href={href}>
-            <div className="group p-6 rounded-2xl bg-white border border-slate-100 hover:border-blue-600/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] transition-all duration-300 h-full flex flex-col">
-                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white mb-6 transition-transform duration-500 group-hover:scale-110", colors[color])}>
-                    <Icon size={20} strokeWidth={3} />
+    raf.current = requestAnimationFrame(tick);
+    return () => {
+      if (raf.current) cancelAnimationFrame(raf.current);
+    };
+  }, [phase]);
+
+  const target = TARGETS[selected];
+  const done = phase === "done";
+
+  return (
+    <div className="relative min-w-0">
+      <div className="rounded-2xl border border-ink/15 bg-paper shadow-[0_30px_60px_-30px_rgba(22,21,15,0.45)]">
+        {/* window bar */}
+        <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+          <div className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-ink/15" />
+            <span className="h-2.5 w-2.5 rounded-full bg-ink/15" />
+            <span className="h-2.5 w-2.5 rounded-full bg-volt" />
+          </div>
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-soft">
+            convertisseur · mc
+          </span>
+        </div>
+
+        <div className="space-y-6 p-6">
+          {/* source file */}
+          <div className="flex items-center gap-3.5 rounded-xl border border-line bg-paper-deep px-4 py-3.5">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-ink text-paper">
+              <FileImage className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-mono text-sm text-ink">
+                {SOURCE.name}
+                <span className="text-ink-soft">.{SOURCE.ext.toLowerCase()}</span>
+              </p>
+              <p className="font-mono text-[11px] uppercase tracking-wider text-ink-soft">
+                {SOURCE.size} · entrée
+              </p>
+            </div>
+          </div>
+
+          {/* targets */}
+          <div>
+            <p className="mb-2.5 font-mono text-[10px] uppercase tracking-[0.2em] text-ink-soft">
+              Convertir en
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {TARGETS.map((t, i) => {
+                const active = i === selected;
+                return (
+                  <button
+                    key={t.ext}
+                    type="button"
+                    onClick={() => convertTo(i)}
+                    aria-pressed={active}
+                    className={[
+                      "rounded-full px-3.5 py-1.5 font-mono text-xs uppercase tracking-wider transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink",
+                      active
+                        ? "bg-volt text-ink ring-1 ring-inset ring-ink/15"
+                        : "border border-ink/15 text-ink-soft hover:border-ink hover:text-ink",
+                    ].join(" ")}
+                  >
+                    .{t.ext.toLowerCase()}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* output / progress */}
+          <div className="rounded-xl border border-line bg-paper-deep p-4">
+            {done ? (
+              <div className="flex items-center gap-3.5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-volt text-ink">
+                  <Check className="h-5 w-5" strokeWidth={3} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-mono text-sm text-ink">
+                    {SOURCE.name}
+                    <span className="text-volt-deep">.{target.ext.toLowerCase()}</span>
+                  </p>
+                  <p className="font-mono text-[11px] uppercase tracking-wider text-ink-soft">
+                    {target.size} · prêt
+                  </p>
                 </div>
-                <h3 className="text-lg font-black mb-1 tracking-tight text-slate-950">{title}</h3>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">{stats}</p>
-                <div className="mt-auto flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-blue-600 opacity-0 group-hover:opacity-100 transition-all">
-                    Ouvrir l'outil <ChevronRight size={12} />
+                {target.delta !== "—" && (
+                  <span className="rounded-md bg-ink px-2 py-1 font-mono text-[11px] font-medium text-volt">
+                    {target.delta}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2.5 py-0.5">
+                <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-wider text-ink-soft">
+                  <span>Conversion…</span>
+                  <span className="text-ink">{progress}%</span>
                 </div>
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
+                  <div
+                    className="h-full rounded-full bg-volt transition-[width] duration-75 ease-linear"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Link
+            href="/dashboard/image"
+            className="group flex items-center justify-between rounded-xl border border-ink/15 px-4 py-3 font-mono text-xs uppercase tracking-wider text-ink transition hover:border-ink hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+          >
+            Ouvrir l&apos;outil image
+            <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------ Format strip ------------------------------ */
+
+const EXTS = [
+  "heic", "png", "webp", "avif", "jpg", "raw", "psd", "pdf", "docx", "txt",
+  "mp4", "mov", "webm", "gif", "mp3", "wav", "flac", "zip", "7z", "rar",
+];
+
+function FormatStrip() {
+  const reduce = useReducedMotion();
+  const row = [...EXTS, ...EXTS];
+  return (
+    <section className="overflow-hidden border-b border-ink/40 bg-ink py-4">
+      <motion.div
+        className="flex w-max gap-8 whitespace-nowrap"
+        animate={reduce ? undefined : { x: ["0%", "-50%"] }}
+        transition={{ duration: 38, ease: "linear", repeat: Infinity }}
+      >
+        {row.map((ext, i) => (
+          <span
+            key={i}
+            className="flex items-center gap-8 font-mono text-sm uppercase tracking-wider text-paper/55"
+          >
+            .{ext}
+            <span className="text-volt">+</span>
+          </span>
+        ))}
+      </motion.div>
+    </section>
+  );
+}
+
+/* ------------------------------ Tools index ------------------------------- */
+
+type Tool = {
+  n: string;
+  name: string;
+  desc: string;
+  formats: string[];
+  href: string;
+};
+
+const TOOLS: Tool[] = [
+  { n: "01", name: "Image", desc: "Convertir, upscaler, nettoyer les métadonnées EXIF", formats: ["png", "webp", "avif", "heic", "raw"], href: "/dashboard/image" },
+  { n: "02", name: "PDF", desc: "Fusionner, diviser, compresser, sécuriser", formats: ["pdf", "png", "jpg", "txt"], href: "/dashboard/pdf" },
+  { n: "03", name: "PDF Weaver", desc: "Éditeur visuel en glisser-déposer page par page", formats: ["pdf"], href: "/dashboard/pdf-weaver" },
+  { n: "04", name: "Vidéo", desc: "Convertir, compresser, extraire, créer des GIF", formats: ["mp4", "mov", "webm", "gif"], href: "/dashboard/video" },
+  { n: "05", name: "Audio", desc: "Extraire la piste, couper, générer un spectrogramme", formats: ["mp3", "wav", "flac"], href: "/dashboard/audio" },
+  { n: "06", name: "Web Capture", desc: "Page web en PDF/PNG, téléchargeur vidéo & audio", formats: ["pdf", "png", "mp4"], href: "/dashboard/web" },
+  { n: "07", name: "Archives", desc: "ZIP chiffré AES-256, mot de passe natif Windows", formats: ["zip", "7z", "rar"], href: "/dashboard/archive" },
+  { n: "08", name: "Transfert", desc: "Lien de partage éphémère, jusqu'à 2 Go", formats: ["lien", "qr"], href: "/dashboard/transfer" },
+  { n: "09", name: "Demandes", desc: "Liens de dépôt publics pour recevoir des fichiers", formats: ["dépôt"], href: "/dashboard/drop" },
+  { n: "10", name: "Cloud", desc: "Historique, stockage perso et coffre MetaVault", formats: ["sync", "store"], href: "/dashboard/cloud" },
+];
+
+function ToolsIndex() {
+  return (
+    <section id="outils" className="border-b border-line">
+      <div className="mx-auto max-w-7xl px-6 py-20 lg:py-28">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
+              <span className="text-volt-deep">//</span> l&apos;index des outils
+            </p>
+            <h2 className="mt-3 max-w-lg font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+              Dix outils chirurgicaux, pas une boîte à outils en désordre.
+            </h2>
+          </div>
+          <p className="max-w-xs text-sm text-ink-soft">
+            Chaque outil ne fait qu&apos;une chose, parfaitement. Survolez pour
+            voir les formats pris en charge.
+          </p>
+        </div>
+
+        <ul className="mt-12 border-t border-line">
+          {TOOLS.map((t) => (
+            <li key={t.n}>
+              <Link
+                href={t.href}
+                className="group grid grid-cols-[auto_1fr] items-baseline gap-x-5 gap-y-3 border-b border-line py-6 transition-colors hover:bg-paper-deep focus-visible:outline-none focus-visible:bg-paper-deep sm:grid-cols-[3rem_minmax(0,16rem)_1fr_auto] sm:items-center sm:px-2"
+              >
+                <span className="font-mono text-sm text-ink-soft transition-colors group-hover:text-volt-deep">
+                  {t.n}
+                </span>
+                <span className="font-display text-2xl font-bold tracking-tight text-ink sm:text-[1.7rem]">
+                  {t.name}
+                </span>
+                <span className="col-span-2 text-sm text-ink-soft sm:col-span-1">
+                  {t.desc}
+                </span>
+                <span className="col-span-2 flex items-center gap-3 sm:col-span-1 sm:justify-end">
+                  <span className="flex flex-wrap gap-1.5">
+                    {t.formats.map((f) => (
+                      <span
+                        key={f}
+                        className="rounded-md border border-line bg-paper px-2 py-0.5 font-mono text-[11px] lowercase tracking-wide text-ink-soft transition-colors group-hover:border-ink/25 group-hover:text-ink"
+                      >
+                        .{f}
+                      </span>
+                    ))}
+                  </span>
+                  <ArrowUpRight className="h-5 w-5 shrink-0 text-ink-soft opacity-0 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-ink group-hover:opacity-100" />
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------------------- Transfer showcase --------------------------- */
+
+function TransferShowcase() {
+  const reduce = useReducedMotion();
+  return (
+    <section id="transfert" className="border-b border-line bg-paper-deep">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-14 px-6 py-20 lg:grid-cols-2 lg:py-28">
+        <div className="max-w-lg">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-soft">
+            <span className="text-volt-deep">//</span> metatransfer
+          </p>
+          <h2 className="mt-5 font-display text-4xl font-bold leading-[0.95] tracking-tight text-ink sm:text-5xl">
+            Envoyez 2 Go.
+            <br />
+            Le lien expire tout seul.
+          </h2>
+          <p className="mt-6 max-w-md text-base leading-relaxed text-ink-soft">
+            Un lien propre, un mot de passe optionnel, un QR code, et une date
+            d&apos;expiration. Vos destinataires reçoivent les fichiers sans
+            créer de compte.
+          </p>
+
+          <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-7 border-t border-line pt-8">
+            <TransferFeat icon={ShieldCheck} term="Chiffré" desc="AES-256 au repos" />
+            <TransferFeat icon={Timer} term="Éphémère" desc="Jusqu'à 30 jours" />
+            <TransferFeat icon={QrCode} term="QR code" desc="Partage en un scan" />
+            <TransferFeat icon={Lock} term="Verrouillé" desc="Mot de passe au choix" />
+          </dl>
+
+          <Link
+            href="/dashboard/transfer"
+            className="group mt-10 inline-flex h-12 items-center gap-2 rounded-full bg-ink px-7 font-mono text-[13px] uppercase tracking-wider text-paper transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+          >
+            Ouvrir le transfert
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+
+        {/* transfer panel mock — a dark object on the deep-paper ground */}
+        <div className="relative">
+          <div className="rounded-2xl border border-ink/80 bg-ink p-7 shadow-[0_40px_70px_-35px_rgba(22,21,15,0.6)]">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-paper/45">
+                protocole mc-transfer
+              </span>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-volt">
+                ● actif
+              </span>
             </div>
-        </Link>
-    )
-}
 
-function StepItem({ num, title, desc }: any) {
-    return (
-        <div className="space-y-4">
-            <span className="text-4xl font-black text-blue-600/20">{num}</span>
-            <h4 className="text-xl font-black text-slate-950 tracking-tight">{title}</h4>
-            <p className="text-slate-500 text-sm font-medium leading-relaxed">{desc}</p>
-        </div>
-    )
-}
-
-function FeatureSmall({ icon: Icon, title, desc, dark = true }: any) {
-    return (
-        <div className="flex gap-4">
-            <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center text-blue-500 shrink-0 border",
-                dark ? "bg-white/5 border-white/5" : "bg-blue-50 border-blue-100"
-            )}>
-                <Icon size={16} />
+            <div className="mt-6 flex items-center gap-3.5 rounded-xl border border-paper/10 bg-paper/[0.04] px-4 py-3.5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-volt text-ink font-mono text-[11px] font-bold">
+                ZIP
+              </span>
+              <div className="min-w-0">
+                <p className="truncate font-mono text-sm text-paper">
+                  Projet_Archi_Final<span className="text-paper/50">.zip</span>
+                </p>
+                <p className="font-mono text-[11px] uppercase tracking-wider text-paper/45">
+                  1,4 Go · 3 fichiers
+                </p>
+              </div>
             </div>
-            <div>
-                <p className={cn("text-[10px] font-black uppercase tracking-widest", dark ? "text-white" : "text-slate-900")}>{title}</p>
-                <p className={cn("text-[10px] font-bold", dark ? "text-slate-500" : "text-slate-400")}>{desc}</p>
+
+            <div className="mt-5 space-y-2.5">
+              <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-wider text-paper/45">
+                <span>Envoi</span>
+                <span className="text-volt">89%</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-paper/10">
+                <motion.div
+                  className="h-full rounded-full bg-volt"
+                  initial={reduce ? false : { width: 0 }}
+                  whileInView={{ width: "89%" }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1.6, ease: "easeOut" }}
+                />
+              </div>
             </div>
-        </div>
-    )
-}
 
-function StatInfo({ icon: Icon, value, label }: any) {
-    return (
-        <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center text-center gap-2">
-            <Icon size={20} className="text-blue-600 mb-2" />
-            <p className="text-2xl font-[1000] text-slate-950 tracking-tighter">{value}</p>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</p>
-        </div>
-    )
-}
-
-function FooterCol({ title, links }: any) {
-    return (
-        <div className="space-y-6">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-950">{title}</h4>
-            <ul className="space-y-4">
-                {links.map((link: any, idx: number) => (
-                    <li key={idx}>
-                        <Link href={link.h} className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors">{link.l}</Link>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    )
-}
-
-function CheckItem({ text }: { text: string }) {
-    return (
-        <div className="flex items-center gap-3 font-bold text-slate-600">
-            <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
-                <Check size={12} strokeWidth={4} />
+            <div className="mt-6 flex items-center justify-between rounded-xl border border-dashed border-paper/15 px-4 py-3">
+              <span className="truncate font-mono text-xs text-paper/55">
+                metaconvert.app/t/x7k29q
+              </span>
+              <span className="ml-3 shrink-0 rounded-md bg-paper/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-paper/70">
+                copier
+              </span>
             </div>
-            <span className="text-sm">{text}</span>
+          </div>
         </div>
-    )
+      </div>
+    </section>
+  );
+}
+
+function TransferFeat({
+  icon: Icon,
+  term,
+  desc,
+}: {
+  icon: typeof ShieldCheck;
+  term: string;
+  desc: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-volt-deep" strokeWidth={2} />
+      <div>
+        <dt className="font-mono text-xs uppercase tracking-wider text-ink">{term}</dt>
+        <dd className="mt-0.5 text-sm text-ink-soft">{desc}</dd>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------- Privacy (dark) ----------------------------- */
+
+const LIFECYCLE = [
+  { label: "Upload", desc: "Le fichier arrive chiffré en transit." },
+  { label: "Traitement", desc: "Converti en mémoire, jamais indexé." },
+  { label: "Suppression", desc: "Effacé du serveur, rien n'est conservé." },
+];
+
+function PrivacySection() {
+  return (
+    <section id="confidentialite" className="border-b border-ink/40 bg-ink text-paper">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-14 px-6 py-20 lg:grid-cols-[1fr_0.85fr] lg:py-28">
+        <div className="max-w-xl">
+          <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-paper/50">
+            <span className="text-volt">//</span> confidentialité
+          </p>
+          <h2 className="mt-5 font-display text-4xl font-bold leading-[0.95] tracking-tight sm:text-6xl">
+            Traités.
+            <br />
+            Puis <span className="text-volt">supprimés.</span>
+          </h2>
+          <p className="mt-6 max-w-md text-base leading-relaxed text-paper/65">
+            MetaConvert est conçu sans rétention. Vos fichiers servent à une seule
+            chose — l&apos;opération que vous demandez — puis disparaissent. Pas de
+            log de contenu, pas de revente de données.
+          </p>
+
+          <ul className="mt-10 space-y-4">
+            {[
+              "Traitement éphémère côté serveur, suppression immédiate",
+              "Chiffrement en transit et AES-256 pour les archives",
+              "Aucun log de contenu, aucune revente de données",
+              "Conçu selon les standards RGPD européens",
+            ].map((t) => (
+              <li key={t} className="flex items-start gap-3 text-sm text-paper/80">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-volt text-ink">
+                  <Check className="h-3 w-3" strokeWidth={4} />
+                </span>
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* lifecycle: the file's whole life, in three nodes */}
+        <div className="lg:pt-4">
+          <div className="rounded-2xl border border-paper/12 bg-paper/[0.03] p-7">
+            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-paper/45">
+              <Trash2 className="h-3.5 w-3.5 text-volt" />
+              cycle de vie du fichier
+            </div>
+            <ol className="mt-6 space-y-0">
+              {LIFECYCLE.map((s, i) => (
+                <li key={s.label} className="relative flex gap-4 pb-7 last:pb-0">
+                  {i < LIFECYCLE.length - 1 && (
+                    <span className="absolute left-[11px] top-7 h-full w-px bg-paper/15" />
+                  )}
+                  <span className="relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-volt/40 bg-ink font-mono text-[10px] text-volt">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="font-mono text-sm uppercase tracking-wider text-paper">
+                      {s.label}
+                    </p>
+                    <p className="mt-1 text-sm text-paper/55">{s.desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------- Final CTA -------------------------------- */
+
+function FinalCta({ startHref }: { startHref: string }) {
+  return (
+    <section className="bg-volt">
+      <div className="mx-auto max-w-7xl px-6 py-24 lg:py-28">
+        <div className="flex flex-col items-start gap-10 lg:flex-row lg:items-end lg:justify-between">
+          <h2 className="max-w-2xl font-display text-4xl font-bold leading-[0.95] tracking-tight text-ink sm:text-6xl">
+            Votre prochain fichier
+            <br />
+            n&apos;attend que vous.
+          </h2>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <Link
+              href={startHref}
+              className="group inline-flex items-center gap-2 rounded-full bg-ink px-8 py-4 font-mono text-[13px] uppercase tracking-wider text-paper transition hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-volt"
+            >
+              Commencer — gratuit
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <a
+              href="#outils"
+              className="font-mono text-[13px] uppercase tracking-wider text-ink/70 underline decoration-ink/30 underline-offset-[6px] transition hover:text-ink hover:decoration-ink"
+            >
+              ou parcourir les outils →
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }

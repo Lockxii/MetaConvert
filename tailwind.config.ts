@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss"
+import defaultTheme from "tailwindcss/defaultTheme"
 
 const config = {
   darkMode: ["class"],
@@ -18,7 +19,26 @@ const config = {
   		}
   	},
   	extend: {
+  		fontFamily: {
+  			sans: ['var(--font-sans)', ...defaultTheme.fontFamily.sans],
+  			display: ['var(--font-display)', 'var(--font-sans)', ...defaultTheme.fontFamily.sans],
+  			mono: ['var(--font-mono)', ...defaultTheme.fontFamily.mono]
+  		},
   		colors: {
+  			// MetaConvert marketing system — warm paper, warm ink, one electric "volt" accent
+  			ink: {
+  				DEFAULT: '#16150F',
+  				soft: '#6E6C5F'
+  			},
+  			paper: {
+  				DEFAULT: '#F2EFE6',
+  				deep: '#E8E4D7'
+  			},
+  			volt: {
+  				DEFAULT: '#C6F135',
+  				deep: '#A9D71F'
+  			},
+  			line: '#D8D3C5',
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
