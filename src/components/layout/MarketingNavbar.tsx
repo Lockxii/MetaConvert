@@ -13,21 +13,21 @@ const navLinks = [
   { name: "Confidentialité", href: "/#confidentialite" },
 ];
 
-/* Inline brand mark — an ink token with a cobalt conversion arrow */
+/* Inline brand mark — an ink token with a signal-orange conversion arrow */
 function BrandMark() {
   return (
     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
           d="M4 9h13M17 9l-4-4M17 9l-4 4"
-          stroke="#7C8CE8"
+          stroke="#DD5430"
           strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           d="M20 15H7M7 15l4-4M7 15l4 4"
-          stroke="#F4EFE4"
+          stroke="#F6F2EA"
           strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -83,7 +83,7 @@ export function MarketingNavbar() {
               {session ? (
                 <Link
                   href="/dashboard"
-                  className="group inline-flex items-center gap-1.5 rounded-full bg-cobalt px-5 py-2 text-sm font-medium text-paper transition hover:bg-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+                  className="group inline-flex items-center gap-1.5 rounded-full bg-signal px-5 py-2 text-sm font-medium text-paper transition hover:bg-signal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
                 >
                   Dashboard
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -98,7 +98,7 @@ export function MarketingNavbar() {
                   </Link>
                   <Link
                     href="/sign-up"
-                    className="group inline-flex items-center gap-1.5 rounded-full bg-cobalt px-5 py-2 text-sm font-medium text-paper transition hover:bg-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
+                    className="group inline-flex items-center gap-1.5 rounded-full bg-signal px-5 py-2 text-sm font-medium text-paper transition hover:bg-signal-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal"
                   >
                     Commencer
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -142,7 +142,7 @@ export function MarketingNavbar() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.name}
-                    <ArrowUpRight className="text-ink-soft transition-colors group-hover:text-cobalt" size={28} />
+                    <ArrowUpRight className="text-ink-soft transition-colors group-hover:text-signal" size={28} />
                   </Link>
                 </motion.div>
               ))}
@@ -154,7 +154,7 @@ export function MarketingNavbar() {
                   {session ? (
                     <Link
                       href="/dashboard"
-                      className="flex h-14 items-center justify-center rounded-full bg-cobalt text-base font-medium text-paper"
+                      className="flex h-14 items-center justify-center rounded-full bg-signal text-base font-medium text-paper"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Aller au dashboard
@@ -170,7 +170,7 @@ export function MarketingNavbar() {
                       </Link>
                       <Link
                         href="/sign-up"
-                        className="flex h-14 items-center justify-center rounded-full bg-cobalt text-base font-medium text-paper"
+                        className="flex h-14 items-center justify-center rounded-full bg-signal text-base font-medium text-paper"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Commencer — gratuit

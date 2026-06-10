@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
-import { Inter, Fraunces } from "next/font/google";
+import { Inter, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes"; // Import ThemeProvider
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-// High-contrast editorial serif — the brand voice (Ordalie-grounded).
-const display = Fraunces({
+// Characterful grotesk display — the brand voice (Dub-grounded, not Inter/Linear).
+const display = Bricolage_Grotesque({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "900"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-display",
 });
 
