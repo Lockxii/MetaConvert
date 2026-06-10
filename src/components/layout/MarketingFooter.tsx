@@ -35,31 +35,20 @@ export function MarketingFooter() {
     <footer className="bg-ink text-paper/70">
       <div className="mx-auto max-w-7xl px-6 pb-10 pt-20">
         <div className="grid grid-cols-1 gap-14 border-b border-paper/10 pb-16 lg:grid-cols-[1.4fr_1fr]">
-          {/* Brand */}
           <div className="max-w-sm">
-            <span className="font-display text-3xl font-bold tracking-tight text-paper">
+            <span className="font-display text-3xl font-semibold tracking-tight text-paper">
               MetaConvert
             </span>
-            <p className="mt-4 text-sm leading-relaxed text-paper/55">
+            <p className="mt-4 text-[15px] leading-relaxed text-paper/55">
               Dix outils pour convertir, transférer et ranger n&apos;importe quel
               fichier. Traités dans le navigateur, jamais conservés.
             </p>
-            <div className="mt-6 flex flex-wrap gap-2 font-mono text-[11px] uppercase tracking-wider text-paper/40">
-              <span>.png</span>
-              <span className="text-volt">/</span>
-              <span>.pdf</span>
-              <span className="text-volt">/</span>
-              <span>.mp4</span>
-              <span className="text-volt">/</span>
-              <span>.zip</span>
-            </div>
           </div>
 
-          {/* Link columns */}
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
             {columns.map((col) => (
               <div key={col.title}>
-                <h4 className="font-mono text-[10px] uppercase tracking-[0.2em] text-paper/40">
+                <h4 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-paper/45">
                   {col.title}
                 </h4>
                 <ul className="mt-5 space-y-3">
@@ -67,7 +56,7 @@ export function MarketingFooter() {
                     <li key={link.l}>
                       <Link
                         href={link.h}
-                        className="text-sm text-paper/65 transition-colors hover:text-volt"
+                        className="text-[15px] text-paper/65 transition-colors hover:text-paper"
                       >
                         {link.l}
                       </Link>
@@ -79,11 +68,8 @@ export function MarketingFooter() {
           </div>
         </div>
 
-        {/* Bottom bar */}
         <div className="flex flex-col items-center justify-between gap-5 pt-8 sm:flex-row">
-          <p className="font-mono text-[11px] uppercase tracking-wider text-paper/40">
-            © 2026 MetaConvert — développé par Arthur
-          </p>
+          <p className="text-[13px] text-paper/45">© 2026 MetaConvert — développé par Arthur</p>
           <div className="flex items-center gap-3">
             <SocialLink href="https://twitter.com" label="Twitter" icon={Twitter} />
             <SocialLink href="https://github.com" label="GitHub" icon={Github} />
@@ -109,7 +95,7 @@ function SocialLink({
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="group flex h-9 w-9 items-center justify-center rounded-lg border border-paper/15 text-paper/55 transition-colors hover:border-volt hover:text-volt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-volt"
+      className="flex h-9 w-9 items-center justify-center rounded-lg border border-paper/15 text-paper/55 transition-colors hover:border-paper/40 hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-paper/40"
     >
       <Icon size={16} />
     </a>

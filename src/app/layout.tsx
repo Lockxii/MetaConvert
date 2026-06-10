@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Inter, Fraunces } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes"; // Import ThemeProvider
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-const display = Space_Grotesk({
+// High-contrast editorial serif — the brand voice (Ordalie-grounded).
+const display = Fraunces({
   subsets: ["latin"],
-  weight: ["500", "700"],
+  weight: ["400", "500", "600", "700", "900"],
+  style: ["normal", "italic"],
   variable: "--font-display",
-});
-const mono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -44,8 +41,7 @@ export default function RootLayout({
         className={cn(
           "min-h-screen font-sans antialiased",
           inter.variable,
-          display.variable,
-          mono.variable
+          display.variable
         )}
         suppressHydrationWarning
       >

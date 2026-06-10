@@ -25,20 +25,22 @@ const config = {
   			mono: ['var(--font-mono)', ...defaultTheme.fontFamily.mono]
   		},
   		colors: {
-  			// MetaConvert marketing system — warm paper, warm ink, one electric "volt" accent
+  			// MetaConvert marketing system — editorial: warm cream ground, warm ink,
+  			// one deep cobalt accent (Ordalie/Kanal grounded). Serif display carries it.
   			ink: {
-  				DEFAULT: '#16150F',
-  				soft: '#6E6C5F'
+  				DEFAULT: '#1A1613',
+  				soft: '#6B6258'
   			},
   			paper: {
-  				DEFAULT: '#F2EFE6',
-  				deep: '#E8E4D7'
+  				DEFAULT: '#F4EFE4',
+  				deep: '#EAE3D4'
   			},
-  			volt: {
-  				DEFAULT: '#C6F135',
-  				deep: '#A9D71F'
+  			cobalt: {
+  				DEFAULT: '#2438B8',
+  				deep: '#1A2A87',
+  				soft: '#E7E5F4'
   			},
-  			line: '#D8D3C5',
+  			line: '#DBD4C5',
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',

@@ -13,25 +13,25 @@ const navLinks = [
   { name: "Confidentialité", href: "/#confidentialite" },
 ];
 
-/* Inline brand mark — an ink token with a volt conversion arrow, on-palette */
+/* Inline brand mark — an ink token with a cobalt conversion arrow */
 function BrandMark() {
   return (
     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path
           d="M4 9h13M17 9l-4-4M17 9l-4 4"
-          stroke="#C6F135"
+          stroke="#7C8CE8"
           strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           d="M20 15H7M7 15l4-4M7 15l4 4"
-          stroke="#F2EFE6"
+          stroke="#F4EFE4"
           strokeWidth="2.2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          opacity="0.55"
+          opacity="0.5"
         />
       </svg>
     </span>
@@ -58,35 +58,32 @@ export function MarketingNavbar() {
       )}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
-        {/* Logo */}
-        <Link href="/" className="relative z-[60] flex items-center gap-2.5 group">
+        <Link href="/" className="relative z-[60] flex items-center gap-2.5">
           <BrandMark />
-          <span className="font-display text-lg font-bold tracking-tight text-ink">
+          <span className="font-display text-xl font-semibold tracking-tight text-ink">
             MetaConvert
           </span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden items-center gap-9 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
-              className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-soft transition-colors hover:text-ink"
+              className="text-sm font-medium text-ink-soft transition-colors hover:text-ink"
             >
               {link.name}
             </Link>
           ))}
         </nav>
 
-        {/* Desktop actions */}
         <div className="hidden items-center gap-5 md:flex">
           {!isPending && (
             <>
               {session ? (
                 <Link
                   href="/dashboard"
-                  className="group inline-flex items-center gap-1.5 rounded-full bg-volt px-5 py-2 font-mono text-[11px] uppercase tracking-wider text-ink ring-1 ring-inset ring-ink/15 transition hover:bg-volt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                  className="group inline-flex items-center gap-1.5 rounded-full bg-cobalt px-5 py-2 text-sm font-medium text-paper transition hover:bg-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
                 >
                   Dashboard
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -95,13 +92,13 @@ export function MarketingNavbar() {
                 <>
                   <Link
                     href="/sign-in"
-                    className="font-mono text-[11px] uppercase tracking-wider text-ink-soft transition-colors hover:text-ink"
+                    className="text-sm font-medium text-ink-soft transition-colors hover:text-ink"
                   >
                     Connexion
                   </Link>
                   <Link
                     href="/sign-up"
-                    className="group inline-flex items-center gap-1.5 rounded-full bg-volt px-5 py-2 font-mono text-[11px] uppercase tracking-wider text-ink ring-1 ring-inset ring-ink/15 transition hover:bg-volt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+                    className="group inline-flex items-center gap-1.5 rounded-full bg-cobalt px-5 py-2 text-sm font-medium text-paper transition hover:bg-cobalt-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt"
                   >
                     Commencer
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -112,18 +109,16 @@ export function MarketingNavbar() {
           )}
         </div>
 
-        {/* Mobile toggle */}
         <button
           className="relative z-[60] -mr-2 p-2 text-ink md:hidden"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Menu"
           aria-expanded={mobileMenuOpen}
         >
-          {mobileMenuOpen ? <X size={26} strokeWidth={2.5} /> : <Menu size={26} strokeWidth={2.5} />}
+          {mobileMenuOpen ? <X size={26} strokeWidth={2} /> : <Menu size={26} strokeWidth={2} />}
         </button>
       </div>
 
-      {/* Mobile overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -143,11 +138,11 @@ export function MarketingNavbar() {
                 >
                   <Link
                     href={link.href}
-                    className="group flex items-center justify-between border-b border-line py-5 font-display text-3xl font-bold tracking-tight text-ink"
+                    className="group flex items-center justify-between border-b border-line py-5 font-display text-3xl font-semibold tracking-tight text-ink"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.name}
-                    <ArrowUpRight className="text-ink-soft transition-colors group-hover:text-volt-deep" size={28} />
+                    <ArrowUpRight className="text-ink-soft transition-colors group-hover:text-cobalt" size={28} />
                   </Link>
                 </motion.div>
               ))}
@@ -159,7 +154,7 @@ export function MarketingNavbar() {
                   {session ? (
                     <Link
                       href="/dashboard"
-                      className="flex h-14 items-center justify-center rounded-full bg-volt font-mono text-sm uppercase tracking-wider text-ink ring-1 ring-inset ring-ink/15"
+                      className="flex h-14 items-center justify-center rounded-full bg-cobalt text-base font-medium text-paper"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Aller au dashboard
@@ -168,14 +163,14 @@ export function MarketingNavbar() {
                     <>
                       <Link
                         href="/sign-in"
-                        className="flex h-14 items-center justify-center rounded-full border border-ink/20 font-mono text-sm uppercase tracking-wider text-ink"
+                        className="flex h-14 items-center justify-center rounded-full border border-ink/20 text-base font-medium text-ink"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Connexion
                       </Link>
                       <Link
                         href="/sign-up"
-                        className="flex h-14 items-center justify-center rounded-full bg-volt font-mono text-sm uppercase tracking-wider text-ink ring-1 ring-inset ring-ink/15"
+                        className="flex h-14 items-center justify-center rounded-full bg-cobalt text-base font-medium text-paper"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Commencer — gratuit
